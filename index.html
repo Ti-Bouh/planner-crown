@@ -14,18 +14,19 @@
   --brass:#9a6b12; --brass-soft:#f4e8cf;
   --off:#b23a3a; --off-soft:#f6dddd; --def:#2b5fa8; --def-soft:#dbe6f6; --mix:#7a4fa0; --mix-soft:#ebe0f4;
   --ref:#2f7d55; --ref-soft:#d8efe2; --hub:#9a6b12; --hub-soft:#f4e8cf; --keep:#6b7385; --keep-soft:#e7e9ee; --c-off:#b23a3a; --c-def:#2b5fa8;
+  --p0:#b0306f; --p0-soft:#f7dde9; --p1:#0f7f86; --p1-soft:#d6eff0; --p2:#b85a12; --p2-soft:#f6e3d2; --p3:#5f6f12; --p3-soft:#e7ecd0;
   --f-display:"Cormorant SC",Georgia,serif; --f-body:"IBM Plex Sans",system-ui,sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#141821; --panel:#1c212d; --ink:#e6e8ee; --muted:#9aa2b4; --line:#2e3545;
   --brass:#d9a64a; --brass-soft:#3a2f19;
   --off:#e07070; --off-soft:#3d2224; --def:#6f9ee6; --def-soft:#1e2c44; --mix:#b593d6; --mix-soft:#2f2540;
-  --ref:#5fbf8a; --ref-soft:#1c3529; --hub:#d9a64a; --hub-soft:#3a2f19; --keep:#9aa2b4; --keep-soft:#2a3040; --c-off:#d65f5f; --c-def:#5b8ad6; color-scheme:dark}}
+  --ref:#5fbf8a; --ref-soft:#1c3529; --hub:#d9a64a; --hub-soft:#3a2f19; --keep:#9aa2b4; --keep-soft:#2a3040; --c-off:#d65f5f; --c-def:#5b8ad6; --p0:#ec84b6; --p0-soft:#3e2130; --p1:#5cc6cc; --p1-soft:#173538; --p2:#eea062; --p2-soft:#3a2818; --p3:#bccb63; --p3-soft:#2d3219; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#141821; --panel:#1c212d; --ink:#e6e8ee; --muted:#9aa2b4; --line:#2e3545;
   --brass:#d9a64a; --brass-soft:#3a2f19;
   --off:#e07070; --off-soft:#3d2224; --def:#6f9ee6; --def-soft:#1e2c44; --mix:#b593d6; --mix-soft:#2f2540;
-  --ref:#5fbf8a; --ref-soft:#1c3529; --hub:#d9a64a; --hub-soft:#3a2f19; --keep:#9aa2b4; --keep-soft:#2a3040; --c-off:#d65f5f; --c-def:#5b8ad6; color-scheme:dark}
+  --ref:#5fbf8a; --ref-soft:#1c3529; --hub:#d9a64a; --hub-soft:#3a2f19; --keep:#9aa2b4; --keep-soft:#2a3040; --c-off:#d65f5f; --c-def:#5b8ad6; --p0:#ec84b6; --p0-soft:#3e2130; --p1:#5cc6cc; --p1-soft:#173538; --p2:#eea062; --p2-soft:#3a2818; --p3:#bccb63; --p3-soft:#2d3219; color-scheme:dark}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
 .wrap{max-width:1280px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:20px}
 header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 16px}
@@ -174,6 +175,8 @@ body.wide .wrap{max-width:1880px}
 .seg button[aria-selected="true"]{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
 .seg button small{font-weight:500;color:var(--muted);margin-left:4px;font-variant-numeric:tabular-nums}
 .owner{font-size:11.5px;font-weight:600;padding:1px 7px;border-radius:4px;background:var(--brass-soft);color:var(--brass);white-space:nowrap}
+.pn{font-weight:600}
+.pdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:1px}
 .robanner{border:1px solid var(--off);background:var(--off-soft);color:var(--ink);border-radius:10px;padding:12px 16px;font-size:13.5px;line-height:1.5}
 .robanner b{color:var(--off)}
 .fmsg{margin:10px 0 0;font-size:13px;font-weight:600}
@@ -374,6 +377,7 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
       <div class="row">
         <label class="field w-sel"><span class="lbl">Type</span>
           <select id="fl-milieu"><option value="">Tous</option><option value="terre">Terrestre</option><option value="mer">Maritime</option></select></label>
+        <label class="field w-sel"><span class="lbl">Troupe</span><select id="fl-troupe"><option value="">Toutes</option></select></label>
         <label class="field w-sel"><span class="lbl">Continent</span><select id="fl-cont"><option value="">Tous</option></select></label>
         <label class="field w-sel"><span class="lbl">Trier par</span>
           <select id="fl-sort"><option value="cont">Continent</option><option value="name">Nom</option><option value="ts">TS</option><option value="joueur">Joueur</option></select></label>
@@ -825,6 +829,7 @@ function classTs(c, key="total"){
   if (c.units){ for (const t in c.units) o[TROOP_CLASS[t]||"neu"] += (+c.units[t][key]||0) * (+tsW[t]||0); }
   return o;
 }
+const cityTroops = c => c.units ? Object.keys(c.units).filter(t => +c.units[t].total > 0) : (c.troops||[]);
 function cityTs(c){ if (!c.units) return +c.ts||0; const o = classTs(c); return o.off+o.def+o.neu; }
 const NAVAL = ["Galley","Stinger","Warship"];
 function milieuOf(c){ if (c.milieu === "terre" || c.milieu === "mer") return c.milieu;
@@ -917,8 +922,12 @@ function render(){
   fc.innerHTML = `<option value="">Tous</option>` + conts.map(c => `<option value="${c}">C${String(c).padStart(2,"0")}</option>`).join("");
   fc.value = conts.map(String).includes(keep) ? keep : "";
 
-  const fMil = $("fl-milieu").value, fCont = fc.value, sort = $("fl-sort").value;
-  const base = L.filter(c => (!fMil || milieuOf(c)===fMil) && (!fCont || String(continentOf(c.x,c.y))===fCont));
+  const tps = [...new Set(L.flatMap(cityTroops))].sort((a,b) => ALL_TYPES.indexOf(a) - ALL_TYPES.indexOf(b) || a.localeCompare(b));
+  const ft = $("fl-troupe"), keepT = ft.value;
+  ft.innerHTML = `<option value="">Toutes</option>` + tps.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join("");
+  ft.value = tps.includes(keepT) ? keepT : "";
+  const fMil = $("fl-milieu").value, fCont = fc.value, fTr = ft.value, sort = $("fl-sort").value;
+  const base = L.filter(c => (!fMil || milieuOf(c)===fMil) && (!fCont || String(continentOf(c.x,c.y))===fCont) && (!fTr || cityTroops(c).includes(fTr)));
   const rt = ROLE_TABS.find(t => t[0] === roleTab) || ROLE_TABS[0];
   $("roleTabs").innerHTML = ROLE_TABS.map(([k,l,fn]) => `<button type="button" role="tab" data-role="${k}" aria-selected="${k===rt[0]}">${l}<small>${base.filter(c => fn(effRole(c))).length}</small></button>`).join("");
   let rows = base.filter(c => rt[2](effRole(c)));
@@ -937,7 +946,7 @@ function render(){
     const hub = c.hubId && byId[c._fid + "/" + c.hubId] ? esc(byId[c._fid + "/" + c.hubId].name) : `<span style="color:var(--muted)">—</span>`;
     const F = `data-fid="${esc(c._fid)}"`;
     return `<tr class="c-${r}">
-      <td><div class="namecell"><b>${esc(c.name)}</b>${isAll() ? `<span class="owner">${esc(ficheNom(c._fid))}</span>` : ""}<button class="milieu m-${milieuOf(c)}" data-milieu="${esc(c.id)}" ${F} aria-label="Type de ville : ${milieuOf(c)==="mer"?"maritime":"terrestre"}, cliquer pour changer">${milieuOf(c)==="mer"?"⚓ Maritime":"⛰ Terrestre"}</button>${c.castle ? `<span class="castle" title="Château">♜ château</span>` : ""}</div>${c.reference ? `<div class="refnote">${esc(c.reference)}${c.score ? " · score " + (+c.score).toLocaleString("fr-FR") : ""}${c.wall!=null ? " · mur " + c.wall : ""}</div>` : ""}${(a => a.length ? `<div class="alerts">${a.map(([k,t]) => `<span class="ab ${k}">${esc(t)}</span>`).join("")}</div>` : "")(alertsOf(c))}</td>
+      <td><div class="namecell"><b>${esc(c.name)}</b>${isAll() ? `<span class="owner" style="color:${pCol(c._fid)};background:${pSoft(c._fid)}">${esc(ficheNom(c._fid))}</span>` : ""}<button class="milieu m-${milieuOf(c)}" data-milieu="${esc(c.id)}" ${F} aria-label="Type de ville : ${milieuOf(c)==="mer"?"maritime":"terrestre"}, cliquer pour changer">${milieuOf(c)==="mer"?"⚓ Maritime":"⛰ Terrestre"}</button>${c.castle ? `<span class="castle" title="Château">♜ château</span>` : ""}</div>${c.reference ? `<div class="refnote">${esc(c.reference)}${c.score ? " · score " + (+c.score).toLocaleString("fr-FR") : ""}${c.wall!=null ? " · mur " + c.wall : ""}</div>` : ""}${(a => a.length ? `<div class="alerts">${a.map(([k,t]) => `<span class="ab ${k}">${esc(t)}</span>`).join("")}</div>` : "")(alertsOf(c))}</td>
       <td class="mono"><span class="cont">C${String(cont).padStart(2,"0")}</span>${c.x}:${c.y}</td>
       <td><span class="pill p-${r}">${ROLE_LABEL[r]}${c.role==="auto"||!c.role ? "" : ""}</span></td>
       <td><div class="troops">${troops}</div></td>
@@ -997,7 +1006,7 @@ $("cityForm").addEventListener("submit", async e => {
   $("saveBtn").disabled = false;
 });
 $("cancelBtn").addEventListener("click", resetForm);
-["fl-milieu","fl-cont","fl-sort"].forEach(id => $(id).addEventListener("change", render));
+["fl-milieu","fl-troupe","fl-cont","fl-sort"].forEach(id => $(id).addEventListener("change", render));
 let roleTab = "", viewAll = false;
 try { roleTab = localStorage.getItem("roleTab") || ""; viewAll = localStorage.getItem("villesTous") === "1"; } catch {}
 $("roleTabs").addEventListener("click", e => { const b = e.target.closest("[data-role]"); if (!b) return; roleTab = b.dataset.role; try { localStorage.setItem("roleTab", roleTab); } catch {} render(); });
@@ -1122,7 +1131,7 @@ const COMMON_VIEWS = ["maintenant","binome","attaques","defense","outils"];
 const countStatus = () => COMMON_VIEWS.includes(curView) ? "Enregistré automatiquement" : (countTxt || "Enregistré automatiquement");
 const col = () => db.collection(`fiches/${currentFiche}/villes`);
 function renderTabs(){
-  $("ficheTabs").innerHTML = (fiches.length > 1 ? `<button type="button" class="tab" role="tab" aria-selected="${isAll()}" data-fiche="__all">Tous</button>` : "") + fiches.map(f => `<button type="button" class="tab" role="tab" aria-selected="${!isAll() && f.id===currentFiche}" data-fiche="${esc(f.id)}">${esc(f.nom)}${f.id===moi ? " (moi)" : ""}</button>`).join("")
+  $("ficheTabs").innerHTML = (fiches.length > 1 ? `<button type="button" class="tab" role="tab" aria-selected="${isAll()}" data-fiche="__all">Tous</button>` : "") + fiches.map(f => `<button type="button" class="tab" role="tab" aria-selected="${!isAll() && f.id===currentFiche}" data-fiche="${esc(f.id)}"><i class="pdot" style="background:${pCol(f.id)}"></i>${esc(f.nom)}${f.id===moi ? " (moi)" : ""}</button>`).join("")
     || `<span class="note">Aucune fiche : crée la tienne dans Réglages.</span>`;
   const f = fiches.find(x => x.id === currentFiche);
   const common = COMMON_VIEWS.includes(curView);
@@ -1157,7 +1166,7 @@ let canWrite = null;
 function nfMsg(t, ok){ $("nf-msg").textContent = t; $("nf-msg").className = "fmsg " + (ok ? "ok" : "ko"); }
 function renderRO(){ $("roBanner").hidden = canWrite !== false; try { renderPlayers(); } catch {} }
 function renderPlayers(){
-  $("playerList").innerHTML = fiches.length ? fiches.map(f => `<span>${esc(f.nom)}${f.id===moi ? " (moi)" : ""} · ${(allCities[f.id]||[]).length} villes${canWrite !== false ? `<button type="button" class="pdel" data-fid="${esc(f.id)}" title="Supprimer la fiche, ses villes et ses envois">Supprimer</button>` : ""}</span>`).join("") : "";
+  $("playerList").innerHTML = fiches.length ? fiches.map(f => `<span style="background:${pSoft(f.id)}">${pName(f.id)}${f.id===moi ? " (moi)" : ""} · ${(allCities[f.id]||[]).length} villes${canWrite !== false ? `<button type="button" class="pdel" data-fid="${esc(f.id)}" title="Supprimer la fiche, ses villes et ses envois">Supprimer</button>` : ""}</span>`).join("") : "";
 }
 $("playerList").addEventListener("click", e => {
   const btn = e.target.closest(".pdel"); if (!btn || !db) return;
@@ -1215,7 +1224,7 @@ function gapTo(st, t){
 }
 function renderBinome(){
   const t = Math.min(Math.max((+objectif.pct||50)/100, 0.05), 0.95);
-  const rows = fiches.map(f => ({nom:f.nom, st:statsOf(allCities[f.id]||[])}));
+  const rows = fiches.map(f => ({fid:f.id, nom:f.nom, st:statsOf(allCities[f.id]||[])}));
   const team = statsOf(fiches.flatMap(f => allCities[f.id]||[]));
   const all = rows.length > 1 ? [...rows, {nom:`Ensemble (${rows.length} joueurs)`, st:team, team:true}] : rows;
   // chart
@@ -1226,7 +1235,7 @@ function renderBinome(){
   all.forEach((r,i) => {
     const y = i*rowH, by = y + 20, bh = 18, wo = sc(r.st.tsOff), wd = sc(r.st.tsDef), tot = r.st.tsOff + r.st.tsDef;
     const gap = wo && wd ? 2 : 0;
-    g += `<text x="${L}" y="${y+13}"><tspan ${r.team?'font-weight="600"':''}>${esc(r.nom)}</tspan>${tot ? `<tspan class="muted" dx="8" fill="var(--muted)" font-size="12">${Math.round(r.st.tsOff/tot*100)} % off · ${Math.round(r.st.tsDef/tot*100)} % def</tspan>` : ""}</text>`;
+    g += `<text x="${L}" y="${y+13}"><tspan font-weight="600"${r.team ? "" : ` fill="${pCol(r.fid)}"`}>${esc(r.nom)}</tspan>${tot ? `<tspan class="muted" dx="8" fill="var(--muted)" font-size="12">${Math.round(r.st.tsOff/tot*100)} % off · ${Math.round(r.st.tsDef/tot*100)} % def</tspan>` : ""}</text>`;
     if (!tot){ g += `<text class="muted" x="${L}" y="${by+13}">Aucune troupe importée</text>`; return; }
     if (wo) g += `<path d="M${L+4},${by} H${L+wo-gap} V${by+bh} H${L+4} a4,4 0 0 1 -4,-4 V${by+4} a4,4 0 0 1 4,-4 Z" fill="var(--c-off)"/>`;
     if (wd){ const x0 = L+wo+(wo?0:0), x1 = L+wo+wd; g += wo
@@ -1247,7 +1256,7 @@ function renderBinome(){
   const tmax = Math.max(1, ...present.flatMap(t => agg.map(a => a[t]?.ts||0)));
   const colorOf = t => ({off:"var(--c-off)", def:"var(--c-def)"})[TROOP_CLASS[t]] || "var(--keep)";
   const grp = {off:"Offensives", def:"Défensives", neu:"Utilitaires"};
-  let tb = `<thead><tr><th>Troupe</th>${cols.map((c,i) => `<th${all[i].team?' style="color:var(--ink)"':''}>${esc(c.nom)}</th>`).join("")}</tr></thead><tbody>`;
+  let tb = `<thead><tr><th>Troupe</th>${cols.map((c,i) => `<th style="color:${all[i].team ? "var(--ink)" : pCol(all[i].fid)}">${esc(c.nom)}</th>`).join("")}</tr></thead><tbody>`;
   ["off","def","neu"].forEach(k => { const ts = present.filter(t => (TROOP_CLASS[t]||"neu")===k); if (!ts.length) return;
     tb += `<tr class="grp"><td colspan="${cols.length+1}">${grp[k]}</td></tr>`;
     ts.forEach(t => { tb += `<tr><td>${t}</td>` + agg.map(a => { const x = a[t]; if (!x || !x.n) return `<td><span class="v zero">—</span></td>`;
@@ -1255,15 +1264,15 @@ function renderBinome(){
   $("tTable").innerHTML = present.length ? tb + "</tbody>" : `<tbody><tr><td class="zero">Aucune troupe importée pour l'instant.</td></tr></tbody>`;
   // table
   $("bTable").innerHTML = all.map(r => { const T = r.st.tsOff + r.st.tsDef;
-    return `<tr class="${r.team?"team":""}"><td>${esc(r.nom)}</td><td>${r.st.off}</td><td>${r.st.def}</td><td>${r.st.mixte}</td><td>${r.st.hub}</td><td>${r.st.terre} / ${r.st.mer}</td><td>${fmt(r.st.tsOff)}</td><td>${fmt(r.st.tsDef)}</td><td>${T ? Math.round(r.st.tsOff/T*100) + " %" : "—"}</td></tr>`; }).join("");
+    return `<tr class="${r.team?"team":""}"><td>${r.team ? esc(r.nom) : pName(r.fid, r.nom)}</td><td>${r.st.off}</td><td>${r.st.def}</td><td>${r.st.mixte}</td><td>${r.st.hub}</td><td>${r.st.terre} / ${r.st.mer}</td><td>${fmt(r.st.tsOff)}</td><td>${fmt(r.st.tsDef)}</td><td>${T ? Math.round(r.st.tsOff/T*100) + " %" : "—"}</td></tr>`; }).join("");
   // advice
   const tsFor = need => +objectif.ts || avg(need==="off" ? team.offCities : team.defCities) || avg([...team.offCities, ...team.defCities]);
   const pctTxt = `${Math.round(t*100)} % off / ${100-Math.round(t*100)} % def`;
   $("bAdvice").innerHTML = all.map(r => {
     const gp = gapTo(r.st, t); if (!gp) return "";
-    if (gp.ok) return `<p><b>${esc(r.nom)}</b> : équilibre atteint (${Math.round(gp.share*100)} % off), objectif ${pctTxt}.</p>`;
+    if (gp.ok) return `<p><b>${r.team ? esc(r.nom) : pName(r.fid, r.nom)}</b> : équilibre atteint (${Math.round(gp.share*100)} % off), objectif ${pctTxt}.</p>`;
     const per = tsFor(gp.need), n = per ? Math.ceil(gp.ts/per) : null;
-    return `<p><b>${esc(r.nom)}</b> : il manque <b>${fmt(gp.ts)} TS ${gp.need}</b> pour viser ${pctTxt}${n ? `, soit environ <b>${n} ville${n>1?"s":""} ${gp.need}</b> de ${fmt(per)} TS` : ""}.</p>`;
+    return `<p><b>${r.team ? esc(r.nom) : pName(r.fid, r.nom)}</b> : il manque <b>${fmt(gp.ts)} TS ${gp.need}</b> pour viser ${pctTxt}${n ? `, soit environ <b>${n} ville${n>1?"s":""} ${gp.need}</b> de ${fmt(per)} TS` : ""}.</p>`;
   }).join("") + `<p class="note" style="background:none;padding:0">« TS d'une nouvelle ville » vide : estimation sur la moyenne actuelle des villes off (ou def) du binôme. Indique le TS d'une ville pleine pour viser plus loin.</p>`;
 }
 // tooltip
@@ -1271,7 +1280,7 @@ $("bChart").addEventListener("mousemove", e => {
   const h = e.target.closest(".hit"); const tip = $("bTip");
   if (!h){ tip.hidden = true; return; }
   const r = $("bChart")._rows[+h.dataset.row]; const T = r.st.tsOff + r.st.tsDef;
-  tip.innerHTML = `<b>${esc(r.nom)}</b><br>Off : ${fmt(r.st.tsOff)} TS (${T?Math.round(r.st.tsOff/T*100):0} %)<br>Def : ${fmt(r.st.tsDef)} TS (${T?Math.round(r.st.tsDef/T*100):0} %)<br>${r.st.off} off · ${r.st.def} def · ${r.st.mixte} mixte`;
+  tip.innerHTML = `<b>${r.team ? esc(r.nom) : pName(r.fid, r.nom)}</b><br>Off : ${fmt(r.st.tsOff)} TS (${T?Math.round(r.st.tsOff/T*100):0} %)<br>Def : ${fmt(r.st.tsDef)} TS (${T?Math.round(r.st.tsDef/T*100):0} %)<br>${r.st.off} off · ${r.st.def} def · ${r.st.mixte} mixte`;
   const box = $("chartWrap").getBoundingClientRect(); tip.hidden = false;
   tip.style.left = Math.min(e.clientX - box.left + 12, box.width - tip.offsetWidth) + "px"; tip.style.top = (e.clientY - box.top + 12) + "px";
 });
@@ -1312,6 +1321,10 @@ const hhmm = t => !t ? "—" : (t.length >= 8 && t.slice(6,8) !== "00") ? t.slic
 const normT = t => !t ? "" : (t.length === 5 ? t + ":00" : t.slice(0,8));
 const cityByRef = (fid, vid) => (allCities[fid]||[]).find(c => c.id === vid);
 const ficheNom = fid => (fiches.find(f => f.id === fid)||{}).nom || fid;
+const pIdx = fid => { const i = fiches.findIndex(f => f.id === fid); return (i < 0 ? 0 : i) % 4; };
+const pCol = fid => `var(--p${pIdx(fid)})`;
+const pSoft = fid => `var(--p${pIdx(fid)}-soft)`;
+const pName = (fid, txt) => `<span class="pn" style="color:${pCol(fid)}">${esc(txt ?? ficheNom(fid))}</span>`;
 const dist = (a, b) => Math.hypot((+a.x)-(+b.x), (+a.y)-(+b.y));
 const affKey = (cid, vid) => cid + "__" + vid;
 function armDelete(btn, fn){
@@ -1604,7 +1617,7 @@ const dDate = d => { if (!d) return ""; const [y,m,j] = d.split("-"); return `${
 const impactKey = m => (m.date||"") + "T" + normT(m.heure||"");
 function menCity(m){ return m.fiche ? cityByRef(m.fiche, m.villeId) : null; }
 function menPos(m){ const c = menCity(m); return c ? {x:+c.x, y:+c.y} : {x:+m.x, y:+m.y}; }
-function menLabel(m){ const c = menCity(m); return c ? `${esc(c.name)} <span class="msub">(${esc(ficheNom(m.fiche))})</span>` : `${esc(m.nom || "Ville alliée")} <span class="msub">(allié)</span>`; }
+function menLabel(m){ const c = menCity(m); return c ? `${esc(c.name)} <span class="msub">(${pName(m.fiche)})</span>` : `${esc(m.nom || "Ville alliée")} <span class="msub">(allié)</span>`; }
 function homeDefTs(c){ if (!c || !c.units) return 0; let t = 0; for (const k of DEF_UNITS) t += (+((c.units[k]||{}).home)||0) * (+tsW[k]||0); return t; }
 const rfTs = r => (+r.nombre||0) * (+tsW[r.unite]||0);
 const rfLive = r => r.statut !== "annule";
@@ -1651,7 +1664,7 @@ function renderDefense(){
       const cov = `<div class="cov"><div class="covtxt">Def sur place <b>${fmt(s.surPlace)}</b> TS + renforts <b>${fmt(s.engage)}</b> TS = <b>${fmt(s.total)}</b> TS${s.voulu ? ` sur <b>${fmt(s.voulu)}</b> voulus${s.total < s.voulu ? ` · il manque <b>${fmt(s.voulu - s.total)}</b>` : ""}` : ""}</div>
         <div class="bar"><span style="width:${s.surPlace/max*100}%;background:var(--keep)" title="Def sur place"></span><span style="width:${s.engage/max*100}%;background:var(--c-def)" title="Renforts"></span></div></div>`;
       const rows = renforts.filter(r => r.menaceId === m.id).map(r => { const from = cityByRef(r.fiche, r.villeId);
-        return `<tr class="${r.fiche===moi?"mine":""}"><td><b>${esc(ficheNom(r.fiche))}</b></td><td>${from ? esc(from.name) + ` <span class="mono">${from.x}:${from.y}</span>` : "ville supprimée"}</td><td>${esc(r.unite)} × <span class="mono">${fmt(+r.nombre||0)}</span></td><td class="mono">${fmt(rfTs(r))}</td><td class="mono">${from ? dist(from, pos).toFixed(1) + " cases" : "—"}</td><td class="mono">${hhmm(r.heure || m.heure)}</td><td><button type="button" class="stbtn s-${esc(r.statut||"prevu")}" data-rfst="${esc(r.id)}">${ST_LABEL[r.statut||"prevu"]}</button></td><td><button type="button" class="link danger" data-rfdel="${esc(r.id)}">suppr.</button></td></tr>`; }).join("");
+        return `<tr class="${r.fiche===moi?"mine":""}"><td>${pName(r.fiche)}</td><td>${from ? esc(from.name) + ` <span class="mono">${from.x}:${from.y}</span>` : "ville supprimée"}</td><td>${esc(r.unite)} × <span class="mono">${fmt(+r.nombre||0)}</span></td><td class="mono">${fmt(rfTs(r))}</td><td class="mono">${from ? dist(from, pos).toFixed(1) + " cases" : "—"}</td><td class="mono">${hhmm(r.heure || m.heure)}</td><td><button type="button" class="stbtn s-${esc(r.statut||"prevu")}" data-rfst="${esc(r.id)}">${ST_LABEL[r.statut||"prevu"]}</button></td><td><button type="button" class="link danger" data-rfdel="${esc(r.id)}">suppr.</button></td></tr>`; }).join("");
       return `<article class="mcard${done?" done":""}">
         <div class="mhead"><div class="mtitle"><b>${menLabel(m)}</b><span class="mono"><span class="cont">C${continentOf(pos.x,pos.y) ?? "?"}</span>${pos.x}:${pos.y}</span>${pill}<span class="pill ${m.type==="mer"?"m-mer":"m-terre"}">${m.type==="mer"?"⚓ Maritime":"⛰ Terrestre"}</span></div>
           <div class="mactions"><span class="mimpact">Impact ${dDate(m.date)} ${hhmm(m.heure)}</span><button type="button" class="link" data-mdone="${esc(m.id)}">${done ? "rouvrir" : "terminer"}</button><button type="button" class="link" data-medit="${esc(m.id)}">modifier</button><button type="button" class="link danger" data-mdel="${esc(m.id)}">suppr.</button></div></div>
@@ -1838,10 +1851,10 @@ function renderNow(){
   $("nowAlerts").innerHTML = !moi ? `<p class="nempty">Choisis qui tu es pour voir tes alertes.</p>` : !mine.length ? `<p class="nempty">Aucune ville importée : clique « Importer mes CSV ».</p>`
     : !al.length ? `<p class="nempty">Rien à signaler sur tes ${mine.length} villes.</p>`
     : `<div class="nlist">` + al.map(({c, a}) => `<div class="nitem"><div class="nh"><b>${esc(c.name)}</b><span class="mono msub">${c.x}:${c.y}</span></div><div class="alerts">${a.map(([k,t]) => `<span class="ab ${k}">${esc(t)}</span>`).join("")}</div></div>`).join("") + `</div>`;
-  const team = fiches.map(f => ({nom:f.nom, me:f.id===moi, st:statsOf(allCities[f.id]||[])}));
+  const team = fiches.map(f => ({fid:f.id, nom:f.nom, me:f.id===moi, st:statsOf(allCities[f.id]||[])}));
   if (team.length > 1) team.push({nom:"Ensemble", team:true, st:statsOf(fiches.flatMap(f => allCities[f.id]||[]))});
   $("nowTeam").innerHTML = !team.length ? `<p class="nempty">Aucune fiche pour l'instant.</p>` : `<div class="nlist">` + team.map(r => { const T = r.st.tsOff + r.st.tsDef;
-    return `<div class="nitem"><div class="nh"><span${r.team?' style="font-weight:600"':''}>${esc(r.nom)}${r.me ? " (moi)" : ""}</span><span class="msub mono">${T ? Math.round(r.st.tsOff/T*100) + " % off · " + fmt(T) + " TS" : "pas de troupes"}</span></div>
+    return `<div class="nitem"><div class="nh"><span${r.team?' style="font-weight:600"':''}>${r.team ? esc(r.nom) : pName(r.fid, r.nom)}${r.me ? " (moi)" : ""}</span><span class="msub mono">${T ? Math.round(r.st.tsOff/T*100) + " % off · " + fmt(T) + " TS" : "pas de troupes"}</span></div>
       ${T ? `<div class="bar"><span style="width:${r.st.tsOff/T*100}%;background:var(--c-off)"></span><span style="width:${r.st.tsDef/T*100}%;background:var(--c-def)"></span></div>` : ""}</div>`; }).join("") + `</div>`;
 }
 $("nowOrders").addEventListener("click", async e => {
