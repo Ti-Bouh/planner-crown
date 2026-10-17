@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Calculs – Crown</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+:root{
+  --bg:#eef0f3; --panel:#ffffff; --ink:#1c2230; --muted:#5d6577; --line:#d6dae3;
+  --brass:#9a6b12; --brass-soft:#f4e8cf;
+  --off:#b23a3a; --off-soft:#f6dddd; --def:#2b5fa8; --def-soft:#dbe6f6; --mix:#7a4fa0; --mix-soft:#ebe0f4;
+  --ref:#2f7d55; --ref-soft:#d8efe2; --hub:#9a6b12; --hub-soft:#f4e8cf; --keep:#6b7385; --keep-soft:#e7e9ee; --c-off:#b23a3a; --c-def:#2b5fa8;
+  --p0:#b0306f; --p0-soft:#f7dde9; --p1:#0f7f86; --p1-soft:#d6eff0; --p2:#b85a12; --p2-soft:#f6e3d2; --p3:#5f6f12; --p3-soft:#e7ecd0;
+  --f-display:"Cormorant SC",Georgia,serif; --f-body:"IBM Plex Sans",system-ui,sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141821; --panel:#1c212d; --ink:#e6e8ee; --muted:#9aa2b4; --line:#2e3545;
+  --brass:#d9a64a; --brass-soft:#3a2f19;
+  --off:#e07070; --off-soft:#3d2224; --def:#6f9ee6; --def-soft:#1e2c44; --mix:#b593d6; --mix-soft:#2f2540;
+  --ref:#5fbf8a; --ref-soft:#1c3529; --hub:#d9a64a; --hub-soft:#3a2f19; --keep:#9aa2b4; --keep-soft:#2a3040; --c-off:#d65f5f; --c-def:#5b8ad6; --p0:#ec84b6; --p0-soft:#3e2130; --p1:#5cc6cc; --p1-soft:#173538; --p2:#eea062; --p2-soft:#3a2818; --p3:#bccb63; --p3-soft:#2d3219; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141821; --panel:#1c212d; --ink:#e6e8ee; --muted:#9aa2b4; --line:#2e3545;
+  --brass:#d9a64a; --brass-soft:#3a2f19;
+  --off:#e07070; --off-soft:#3d2224; --def:#6f9ee6; --def-soft:#1e2c44; --mix:#b593d6; --mix-soft:#2f2540;
+  --ref:#5fbf8a; --ref-soft:#1c3529; --hub:#d9a64a; --hub-soft:#3a2f19; --keep:#9aa2b4; --keep-soft:#2a3040; --c-off:#d65f5f; --c-def:#5b8ad6; --p0:#ec84b6; --p0-soft:#3e2130; --p1:#5cc6cc; --p1-soft:#173538; --p2:#eea062; --p2-soft:#3a2818; --p3:#bccb63; --p3-soft:#2d3219; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
+.wrap{max-width:1280px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:20px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 16px}
+h1{font-family:var(--f-display);font-size:2rem;margin:0;letter-spacing:.02em}
+h2{font-family:var(--f-display);font-size:1.25rem;margin:0 0 10px;letter-spacing:.03em}
+h3{font-size:13px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:14px 0 6px;font-weight:600}
+.sub{color:var(--muted);margin:0}
+.status{font-size:12px;color:var(--muted)}
+.hright{display:grid;justify-items:end;gap:4px}
+.me{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lbl{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+a{color:var(--brass)}
+.back{font-weight:600;text-decoration:none}
+.views{display:flex;gap:8px;flex-wrap:wrap;max-width:100%}
+.vgrp{display:flex;align-items:center;gap:4px;background:var(--keep-soft);padding:4px;border-radius:10px;flex-wrap:wrap}
+.vbtn{border:none;background:transparent;padding:7px 18px;border-radius:7px;font-weight:600;color:var(--muted);font:inherit;font-weight:600;cursor:pointer}
+.vbtn[aria-selected="true"]{background:var(--panel);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.view{display:grid;gap:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.panel.hl{border-color:var(--brass);box-shadow:inset 3px 0 var(--brass)}
+.form{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px 14px}
+.field{display:grid;gap:4px;min-width:0;align-content:start}
+.field span{font-size:12px;color:var(--muted)}
+.field input,.field select{font:inherit;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);width:100%;min-width:0}
+.field input.calc{background:transparent;border-style:dashed;color:var(--muted)}
+.field small{font-size:11px;color:var(--muted)}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--brass);outline-offset:1px}
+button{font:inherit;cursor:pointer;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:7px 14px}
+button.primary{background:var(--brass);border-color:var(--brass);color:var(--panel);font-weight:600}
+button.link{border:none;background:none;padding:2px 6px;color:var(--muted);font-size:12px}
+button.danger{color:var(--off)}
+button:disabled{opacity:.6;cursor:wait}
+.btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.kpis{display:flex;flex-wrap:wrap;gap:10px 26px}
+.kpis div{display:grid}
+.kpis b{font-size:1.4rem;font-variant-numeric:tabular-nums;line-height:1.15}
+.kpis b small{font-size:.8rem;color:var(--muted);font-weight:500}
+.big{font-family:var(--f-display);font-size:1.5rem;margin:2px 0 8px}
+.note{font-size:12px;color:var(--muted);margin:8px 0 0}
+.scroll{overflow-x:auto}
+table.t{border-collapse:collapse;width:100%;font-size:13px}
+.t th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:500;text-align:right;padding:6px 7px;border-bottom:1px solid var(--line);white-space:nowrap}
+.t td{padding:6px 7px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.t th:first-child,.t td:first-child{text-align:left}
+.t td.l,.t th.l{text-align:left}
+.t tr.best td{background:var(--brass-soft);font-weight:600}
+.t td.good{color:var(--ref);font-weight:600}
+.t input,.t select{font:inherit;font-size:12px;padding:3px 5px;border:1px solid var(--line);border-radius:5px;background:var(--bg);color:var(--ink);width:100%;min-width:56px}
+.heat td{min-width:52px}
+.ctrl{display:grid;gap:6px}
+.ctrl div{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:baseline}
+.ok{color:var(--ref);font-weight:600}
+.warn{color:var(--off);font-weight:600}
+.info{color:var(--def);font-weight:600}
+.pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;background:var(--keep-soft);color:var(--muted)}
+.pill.off{background:var(--off-soft);color:var(--off)}.pill.ref{background:var(--ref-soft);color:var(--ref)}.pill.def{background:var(--def-soft);color:var(--def)}
+details summary{cursor:pointer;color:var(--muted);font-size:13px}
+.progress{height:6px;border-radius:3px;background:var(--keep-soft);overflow:hidden;margin-top:8px}
+.progress span{display:block;height:100%;background:var(--brass);width:0}
+svg.chart{width:100%;height:auto;display:block}
+svg.chart text{font-family:var(--f-body);font-size:11px;fill:var(--muted)}
+.sw{display:inline-block;width:10px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
+@media (max-width:600px){.vbtn{padding:7px 12px}h1{font-size:1.6rem}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Calculs</h1>
+      <p class="sub">Castle, Cabines et Raids : mêmes formules que les classeurs Crown, calculées en direct. <a class="back" href="./">← Planner</a></p>
+    </div>
+    <div class="hright">
+      <div class="me"><label class="me"><span class="lbl">Je suis</span><select id="meSel"><option value="">— choisir —</option></select></label></div>
+      <span class="status" id="status">Connexion…</span>
+    </div>
+  </header>
+
+  <div class="views" role="tablist" aria-label="Outils">
+    <div class="vgrp">
+      <button type="button" class="vbtn" role="tab" data-view="cite" aria-selected="true">Ma cité</button>
+      <button type="button" class="vbtn" role="tab" data-view="castle" aria-selected="false">Castle</button>
+      <button type="button" class="vbtn" role="tab" data-view="cabines" aria-selected="false">Cabines</button>
+      <button type="button" class="vbtn" role="tab" data-view="raids" aria-selected="false">Raids</button>
+    </div>
+  </div>
+
+  <!-- ================= MA CITÉ ================= -->
+  <section class="view" id="view-cite">
+    <div class="panel">
+      <h2>Paramètres communs</h2>
+      <p class="note" style="margin:0 0 12px">Saisis-les une seule fois : le castle et les cabines s'en servent. Enregistrés sur ta fiche.</p>
+      <div class="form">
+        <label class="field"><span>Recherche Construction Speed (niveau)</span><select data-k="res"></select><small id="resBonus"></small></label>
+        <label class="field"><span>Autres bonus de vitesse (%)</span><input data-k="autresBonus" type="number" step="1" min="0"></label>
+        <label class="field"><span>Démolition des Cabines par groupes de</span><input data-k="groupes" type="number" min="1" step="1"></label>
+        <label class="field"><span>Fer envoyé par jour</span><input data-k="ferJour" type="number" min="0" step="10000" placeholder="vide = sans limite"></label>
+        <label class="field"><span>Pierre envoyée par jour</span><input data-k="pierreJour" type="number" min="0" step="10000" placeholder="vide = sans limite"></label>
+        <label class="field"><span>Bois envoyé par jour</span><input data-k="boisJour" type="number" min="0" step="10000" placeholder="vide = sans limite"></label>
+        <label class="field"><span>Objectif (Vanquishers)</span><input data-k="objectif" type="number" min="1" step="1000"></label>
+        <label class="field"><span>Stockage de fer de la cité</span><input data-k="stockage" type="number" min="0" step="1000"></label>
+      </div>
+      <h3>Plan de la cité militaire</h3>
+      <div class="form">
+        <label class="field"><span>Emplacements de la cité</span><input data-k="emplacements" type="number" min="1" step="1"></label>
+        <label class="field"><span>Training Arenas du plan</span><input data-k="arenas" type="number" min="0" step="1"></label>
+        <label class="field"><span>Barracks du plan</span><input data-k="barracks" type="number" min="0" step="1"></label>
+        <label class="field"><span>Autres bâtiments (calcul)</span><input class="calc" id="autresBat" readonly tabindex="-1"></label>
+        <label class="field"><span>Niveau actuel des Cabines</span><input data-k="cabDepart" type="number" min="0" max="10" step="1"></label>
+        <label class="field"><span>Autres constructions (h, vitesse de base)</span><input data-k="autresH" type="number" min="0" step="1"><small>Entrepôt, bâtiments divers… (modèle Cabines)</small></label>
+      </div>
+      <h3>Scénario testé</h3>
+      <div class="form">
+        <label class="field"><span>Training Arenas testées</span><input data-k="testArenas" type="number" min="0" step="1"></label>
+        <label class="field"><span>Nombre de Cabines testé</span><input data-k="testCabines" type="number" min="0" step="1"></label>
+        <label class="field"><span>Niveau des Cabines testé</span><select data-k="testNiveau"></select></label>
+      </div>
+    </div>
+    <div class="grid">
+      <div class="panel"><h2>Contrôles</h2><div class="ctrl" id="controles"></div></div>
+      <div class="panel"><h2>En bref</h2><div id="resume" class="ctrl"></div></div>
+    </div>
+  </section>
+
+  <!-- ================= CASTLE ================= -->
+  <section class="view" id="view-castle" hidden>
+    <div class="panel">
+      <h2>Solveur – meilleure combinaison Arenas / Barracks / Cabines</h2>
+      <div class="form">
+        <label class="field"><span>Arenas testées : de</span><input data-k="solvNaMin" type="number" min="0" step="1"></label>
+        <label class="field"><span>à</span><input data-k="solvNaMax" type="number" min="0" step="1"></label>
+        <label class="field"><span>par pas de</span><input data-k="solvNaPas" type="number" min="1" step="1"></label>
+        <label class="field"><span>Cabines par pas de</span><input data-k="solvCabPas" type="number" min="1" step="1"></label>
+        <label class="field"><span>Niveaux de Cabines</span><select data-k="solvNiv"><option value="4-10">4 à 10</option><option value="1-10">1 à 10</option><option value="6-10">6 à 10</option></select></label>
+        <label class="field"><span>Arenas</span><select data-k="solvFixe"><option value="libre">Libres (chercher le meilleur)</option><option value="plan">Fixées au plan</option></select></label>
+      </div>
+      <div class="btns" style="margin-top:12px"><button type="button" class="primary" id="solveBtn">Calculer</button><span class="status" id="solveInfo"></span></div>
+      <div class="progress" id="solveProg" hidden><span></span></div>
+      <div id="solveOut"></div>
+    </div>
+    <div class="panel">
+      <h2>Simulateur – une configuration</h2>
+      <div class="form">
+        <label class="field"><span>Training Arenas</span><input id="simNa" type="number" min="0" step="1"></label>
+        <label class="field"><span>Barracks (calcul)</span><input class="calc" id="simNb" readonly tabindex="-1"></label>
+        <label class="field"><span>Cabines</span><input id="simN" type="number" min="0" step="1"></label>
+        <label class="field"><span>Niveau des Cabines</span><select id="simL"></select></label>
+      </div>
+      <div class="btns" style="margin-top:10px"><button type="button" class="link" id="simFromTest">Reprendre le scénario testé</button><button type="button" class="link" id="simFromBest">Reprendre la meilleure combinaison</button></div>
+      <div id="simOut"></div>
+    </div>
+  </section>
+
+  <!-- ================= CABINES ================= -->
+  <section class="view" id="view-cabines" hidden>
+    <div class="panel">
+      <h2>Optimiseur – niveau et nombre de Cabines</h2>
+      <p class="note" style="margin:0 0 10px">Construit le plan de la cité (Arenas et Barracks de Ma cité) avec des Cabines, puis les démolit. Délai réel = le plus long entre la construction et les livraisons de pierre / bois.</p>
+      <div class="form"><label class="field"><span>Tolérance (jours)</span><input data-k="tolerance" type="number" min="0" step="0.1"><small>Parmi les solutions à moins de X jours de la plus rapide, on garde celle qui perd le moins de pierre.</small></label></div>
+      <div id="cabOut"></div>
+    </div>
+    <div class="panel">
+      <h2>Démolition – plan groupe par groupe</h2>
+      <p class="note" style="margin:0 0 10px">Cabines, niveau et taille des groupes : scénario testé et paramètres de Ma cité.</p>
+      <div class="form">
+        <label class="field"><span>Remplacer par (par défaut)</span><select data-k="demRemplacer"><option>Barracks</option><option>Training Arena</option></select></label>
+        <label class="field"><span>Niveau visé des remplaçants</span><select data-k="demVise"></select></label>
+      </div>
+      <div id="demOut"></div>
+    </div>
+  </section>
+
+  <!-- ================= RAIDS ================= -->
+  <section class="view" id="view-raids" hidden>
+    <div class="panel">
+      <h2>Simulateur de raid</h2>
+      <div class="form">
+        <label class="field"><span>Caverne</span><select data-k="rCave"><option>Forêt</option><option>Montagne</option><option>Colline</option></select></label>
+        <label class="field"><span>Niveau</span><select data-k="rNiveau"></select></label>
+        <label class="field"><span>% de la caverne</span><input data-k="rPct" type="number" min="0" max="100" step="1"></label>
+        <label class="field"><span>Marge de transport (%)</span><input data-k="rMarge" type="number" min="50" step="1"></label>
+        <label class="field"><span>Coefficient de pertes</span><input data-k="rCoef" type="number" min="0" step="0.01"></label>
+        <label class="field"><span>Valeur de 1 or (en ressources)</span><input data-k="rValeurOr" type="number" min="0" step="0.1"></label>
+        <label class="field"><span>Rangers disponibles</span><input data-k="rDispo" type="number" min="0" step="100"></label>
+        <label class="field"><span>Triaires disponibles</span><input data-k="tDispo" type="number" min="0" step="100"></label>
+      </div>
+      <div id="raidOut"></div>
+    </div>
+    <div class="panel">
+      <h2>Journal des raids</h2>
+      <p class="note" style="margin:0 0 10px">Recopie le rapport de raid. Enregistré sur ta fiche ; sert aussi à prédire l'or ramené.</p>
+      <form id="jForm" class="form">
+        <label class="field"><span>Date</span><input name="date" placeholder="17/10 20:15"></label>
+        <label class="field"><span>Caverne</span><select name="type"><option>Forêt</option><option>Montagne</option><option>Colline</option></select></label>
+        <label class="field"><span>Niveau</span><input name="niveau" type="number" min="1" max="10" required></label>
+        <label class="field"><span>Configuration</span><input name="config" placeholder="R pur, 2:1, 3:1…" required></label>
+        <label class="field"><span>Rangers envoyés / perdus</span><span style="display:flex;gap:6px"><input name="rEnv" type="number" min="0"><input name="rPerdus" type="number" min="0"></span></label>
+        <label class="field"><span>Triaires envoyés / perdus</span><span style="display:flex;gap:6px"><input name="tEnv" type="number" min="0"><input name="tPerdus" type="number" min="0"></span></label>
+        <label class="field"><span>Or ramené</span><input name="or" type="number" min="0"></label>
+        <label class="field"><span>Bois / pierre ramenés</span><span style="display:flex;gap:6px"><input name="bois" type="number" min="0"><input name="pierre" type="number" min="0"></span></label>
+        <label class="field"><span>Fer / nourriture ramenés</span><span style="display:flex;gap:6px"><input name="fer" type="number" min="0"><input name="nourriture" type="number" min="0"></span></label>
+        <label class="field"><span>Non transporté</span><input name="nonTransporte" type="number" min="0"></label>
+        <label class="field"><span>Durée aller-retour (h, facultatif)</span><input name="duree" type="number" min="0" step="0.1"></label>
+        <label class="field"><span>% du donjon avant le raid (facultatif)</span><input name="pct" type="number" min="0" max="100" step="1"></label>
+        <div class="btns" style="align-self:end"><button type="submit" class="primary">Ajouter le raid</button></div>
+      </form>
+      <div id="journalOut" style="margin-top:12px"></div>
+    </div>
+    <div class="panel">
+      <h2>Synthèse par configuration</h2>
+      <div class="form">
+        <label class="field"><span>Caverne</span><select data-k="sType"><option>Forêt</option><option>Montagne</option><option>Colline</option></select></label>
+        <label class="field"><span>Niveau</span><select data-k="sNiveau"></select></label>
+        <label class="field"><span>% minimum</span><input data-k="sPctMin" type="number" min="0" max="100"></label>
+        <label class="field"><span>% maximum</span><input data-k="sPctMax" type="number" min="0" max="100"></label>
+      </div>
+      <div id="synthOut"></div>
+      <p class="note">Ne compare que des raids sur la même caverne, le même niveau et des % proches : sinon, les écarts viennent du donjon, pas du ratio. Si les cavernes te limitent, regarde le profit net ; si ce sont tes troupes, le profit / armée.</p>
+    </div>
+    <div class="panel">
+      <h2>Unités</h2>
+      <p class="note" style="margin:0 0 10px">Mets à jour le bonus de recherche (Combat Strength) quand tu termines une recherche.</p>
+      <div id="unitsOut" class="scroll"></div>
+    </div>
+  </section>
+</div>
+
+<script src="src/firebase-shim.js"></script>
+<script src="src/calc-data.js"></script>
+<script src="src/calc-engine.js"></script>
+<script>
+(function(){
+const E = window.CrownEngine, D = window.CROWN_DATA, $ = id => document.getElementById(id);
+const nf0 = new Intl.NumberFormat("fr-FR", {maximumFractionDigits:0}), nf1 = new Intl.NumberFormat("fr-FR", {maximumFractionDigits:1, minimumFractionDigits:1}), nf2 = new Intl.NumberFormat("fr-FR", {maximumFractionDigits:2});
+const n0 = v => v == null || !isFinite(v) ? "—" : nf0.format(v), n1 = v => v == null || !isFinite(v) ? "—" : nf1.format(v), n2 = v => v == null || !isFinite(v) ? "—" : nf2.format(v);
+const pc = (v, d = 1) => v == null || !isFinite(v) ? "—" : (v * 100).toLocaleString("fr-FR", {maximumFractionDigits:d, minimumFractionDigits:d}) + " %";
+const jours = v => v == null ? "—" : !isFinite(v) ? "jamais" : n1(v) + " j";
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+/* ---------- réglages par défaut (valeurs des classeurs Crown) ---------- */
+const DEF = { res:0, autresBonus:0, groupes:5, ferJour:1000000, pierreJour:"", boisJour:"", objectif:176000, stockage:575000,
+  emplacements:94, arenas:26, barracks:65, cabDepart:0, autresH:20, testArenas:40, testCabines:50, testNiveau:8,
+  solvNaMin:20, solvNaMax:60, solvNaPas:2, solvCabPas:2, solvNiv:"4-10", solvFixe:"libre", tolerance:0.5, demRemplacer:"Barracks", demVise:10,
+  rCave:"Forêt", rNiveau:6, rPct:0.69, rMarge:1, rCoef:0.1, rValeurOr:1, rDispo:8000, tDispo:3000, sType:"Forêt", sNiveau:6, sPctMin:0, sPctMax:1,
+  bonusUnites:{}, demTypes:{} };
+let S = {...DEF}, journal = [], db = null, moi = "", fiches = [], saveT = null, unsubJ = null, unsubS = null, lastBest = null;
+try { moi = localStorage.getItem("moi") || ""; } catch {}
+
+/* ---------- listes ---------- */
+const opts = (sel, arr, lab) => { sel.innerHTML = arr.map(v => `<option value="${v}">${lab ? lab(v) : v}</option>`).join(""); };
+opts(document.querySelector('[data-k="res"]'), D.castle.RES.map((_, i) => i), i => i + " (+" + Math.round(D.castle.RES[i] * 100) + " %)");
+[document.querySelector('[data-k="testNiveau"]'), $("simL")].forEach(s => opts(s, [1,2,3,4,5,6,7,8,9,10]));
+opts(document.querySelector('[data-k="demVise"]'), [1,2,3,4,5,6,7,8,9,10]);
+[document.querySelector('[data-k="rNiveau"]'), document.querySelector('[data-k="sNiveau"]')].forEach(s => opts(s, [1,2,3,4,5,6,7,8,9,10]));
+
+/* ---------- état <-> formulaire ---------- */
+const PCT_KEYS = {autresBonus:1, rPct:1, rMarge:1, sPctMin:1, sPctMax:1}; // saisis en %, stockés en fraction
+function fill(){
+  document.querySelectorAll("[data-k]").forEach(el => { const k = el.dataset.k; let v = S[k];
+    if (PCT_KEYS[k] && v !== "" && v != null) v = Math.round(v * 1000) / 10; el.value = v == null ? "" : v; });
+}
+function readEl(el){
+  const k = el.dataset.k; let v = el.value;
+  if (el.type === "number"){ v = v === "" ? "" : +v; if (PCT_KEYS[k] && v !== "") v = v / 100; }
+  else if (/^(res|testNiveau|demVise|rNiveau|sNiveau)$/.test(k)) v = +v;
+  S[k] = v;
+}
+document.addEventListener("input", e => { const el = e.target.closest("[data-k]"); if (!el) return; readEl(el); changed(); });
+document.addEventListener("change", e => { const el = e.target.closest("[data-k]"); if (!el) return; readEl(el); changed(); });
+function changed(){ renderAll(); scheduleSave();
+  if (lastBest){ $("solveInfo").innerHTML = '<span class="warn">Paramètres modifiés : clique sur « Calculer » pour mettre le Solveur à jour.</span>'; } }
+
+/* ---------- dérivés ---------- */
+const num = (v, d) => v === "" || v == null || isNaN(+v) ? d : +v;
+const bonusVitesse = () => D.castle.RES[S.res] + num(S.autresBonus, 0);
+const mil = () => num(S.arenas, 0) + num(S.barracks, 0);
+const ferJ = () => S.ferJour === "" || S.ferJour == null ? Infinity : +S.ferJour;
+const unites = () => D.unites.map(u => ({...u, bonus: S.bonusUnites && S.bonusUnites[u.nom] != null ? +S.bonusUnites[u.nom] : u.bonus}));
+const castleBase = () => ({ grp: Math.max(1, num(S.groupes, 1)), bonus: bonusVitesse(), iron: ferJ(), store: num(S.stockage, 575000), goal: num(S.objectif, 176000) });
+
+/* ---------- MA CITÉ ---------- */
+function renderCite(){
+  $("resBonus").textContent = "Bonus : +" + Math.round(D.castle.RES[S.res] * 100) + " % · vitesse hors Cabines : " + Math.round(bonusVitesse() * 100) + " %";
+  const aut = num(S.emplacements, 0) - mil(); $("autresBat").value = aut;
+  const c = [];
+  c.push(aut >= 0 ? ["ok", "OK", "Plan : " + n0(S.arenas) + " Arenas + " + n0(S.barracks) + " Barracks = " + mil() + " emplacements militaires, " + aut + " pour d'autres bâtiments."]
+                  : ["warn", "⚠", "Le plan dépasse la cité de " + (-aut) + " emplacements."]);
+  const nbTest = mil() - num(S.testArenas, 0);
+  c.push(num(S.testCabines, 0) <= nbTest ? ["ok", "OK", "Scénario testé : " + S.testCabines + " Cabines pour " + nbTest + " Barracks (castle)."]
+                                         : ["warn", "⚠", "Scénario testé : " + S.testCabines + " Cabines mais seulement " + nbTest + " Barracks ; le castle plafonne les Cabines."]);
+  c.push(num(S.testCabines, 0) <= num(S.barracks, 0) ? ["ok", "OK", "Cabines testées ≤ Barracks du plan."]
+                                                      : ["info", "ℹ", (S.testCabines - S.barracks) + " Cabines sur des emplacements d'Arenas (le modèle Cabines le permet)."]);
+  if (S.ferJour === "" ) c.push(["info", "ℹ", "Fer sans limite : le castle n'est limité que par la construction et le recrutement."]);
+  $("controles").innerHTML = c.map(([cl, t, m]) => `<div><span class="${cl}">${t}</span><span>${esc(m)}</span></div>`).join("");
+}
+function renderResume(){
+  const r = [];
+  if (lastBest) r.push(["Castle", "meilleure combinaison : " + lastBest.na + " Arenas, " + lastBest.nb + " Barracks, " + lastBest.n + " Cabines niv. " + lastBest.l + " → objectif en " + jours(lastBest.days)]);
+  else r.push(["Castle", "lance le Solveur dans l'onglet Castle."]);
+  const o = cabOut; if (o) r.push(["Cabines", "niveau " + o.recommended.niveau + " × " + o.recommended.n + " Cabines → " + jours(o.recommended.delai) + " (" + o.recommended.limitant.toLowerCase() + ")"]);
+  const rs = raidOut; if (rs) r.push(["Raids", rs.cave + " " + rs.niveau + " à " + Math.round(rs.pct * 100) + " % : " + rs.r.best.cavernes + " si les cavernes te limitent"]);
+  $("resume").innerHTML = r.map(([a, b]) => `<div><b>${esc(a)}</b><span>${esc(b)}</span></div>`).join("");
+}
+
+/* ---------- CASTLE ---------- */
+function solverQuery(){
+  const [lvMin, lvMax] = String(S.solvNiv || "4-10").split("-").map(Number);
+  return { mil: mil(), naMin: num(S.solvNaMin, 20), naMax: num(S.solvNaMax, 60), naStep: Math.max(1, num(S.solvNaPas, 2)), cabStep: Math.max(1, num(S.solvCabPas, 2)),
+           lvMin, lvMax, fixedNa: S.solvFixe === "plan" ? num(S.arenas, 0) : null };
+}
+let solving = false;
+async function solve(){
+  if (solving) return; solving = true; const btn = $("solveBtn"); btn.disabled = true;
+  const prog = $("solveProg"); prog.hidden = false; const bar = prog.querySelector("span");
+  const q = solverQuery(), base = castleBase(), t0 = performance.now();
+  try {
+    const r = await E.castleSolve(base, q, async (i, n) => { bar.style.width = (100 * i / n) + "%"; await new Promise(res => setTimeout(res, 0)); }, 10);
+    lastBest = r.best[0] || null;
+    $("solveInfo").textContent = n0(r.tested) + " combinaisons testées en " + n1((performance.now() - t0) / 1000) + " s · " + mil() + " emplacements militaires";
+    if (!r.best.length){ $("solveOut").innerHTML = `<p class="warn">Aucune combinaison n'atteint l'objectif : le Castle est trop petit (pas assez de Barracks).</p>`; }
+    else {
+      const b = r.best[0];
+      $("solveOut").innerHTML = `<p class="big">${b.na} Training Arenas, ${b.nb} Barracks, ${b.n} Cabines niveau ${b.l}</p>
+        <div class="kpis"><div><span class="lbl">Objectif atteint en</span><b>${n1(b.days)} <small>jours</small></b></div><div><span class="lbl">Construction terminée</span><b>${n1(b.end)} <small>jours</small></b></div>
+        <div><span class="lbl">Capacité du Castle</span><b>${n0(b.cap)}</b></div><div><span class="lbl">Pierre perdue (Cabines)</span><b>${n0(b.loss)}</b></div></div>
+        <h3>Les 10 meilleures</h3><div class="scroll"><table class="t"><thead><tr><th>Rang</th><th>Arenas</th><th>Barracks</th><th>Cabines</th><th>Niveau</th><th>Objectif (j)</th><th>Construction (j)</th><th>Pierre perdue</th><th></th></tr></thead><tbody>
+        ${r.best.map((x, i) => `<tr class="${i ? "" : "best"}"><td>${i + 1}</td><td>${x.na}</td><td>${x.nb}</td><td>${x.n}</td><td>${x.l}</td><td>${n2(x.days)}</td><td>${n2(x.end)}</td><td>${n0(x.loss)}</td><td><button type="button" class="link" data-sim="${x.na},${x.n},${x.l}">Simuler</button></td></tr>`).join("")}
+        </tbody></table></div><p class="note">À durée égale, on garde la combinaison qui perd le moins de pierre, puis la plus rapide à construire.</p>`;
+      if (!$("simNa").value) setSim(b.na, b.n, b.l);
+    }
+  } finally { solving = false; btn.disabled = false; prog.hidden = true; renderResume(); }
+}
+$("solveBtn").addEventListener("click", solve);
+$("solveOut").addEventListener("click", e => { const b = e.target.closest("[data-sim]"); if (!b) return; const [na, n, l] = b.dataset.sim.split(",").map(Number); setSim(na, n, l); $("simOut").scrollIntoView({behavior:"smooth", block:"start"}); });
+function setSim(na, n, l){ $("simNa").value = na; $("simN").value = n; $("simL").value = l; renderSim(); }
+$("simFromTest").addEventListener("click", () => setSim(S.testArenas, S.testCabines, S.testNiveau));
+$("simFromBest").addEventListener("click", () => { if (lastBest) setSim(lastBest.na, lastBest.n, lastBest.l); else solve(); });
+["simNa", "simN", "simL"].forEach(id => $(id).addEventListener("input", renderSim));
+function renderSim(){
+  const na = num($("simNa").value, NaN), l = num($("simL").value, 8); let n = num($("simN").value, NaN);
+  if (isNaN(na) || isNaN(n)){ $("simOut").innerHTML = ""; return; }
+  const nb = mil() - na; $("simNb").value = nb;
+  if (nb < 0){ $("simOut").innerHTML = `<p class="warn">Plus d'Arenas que d'emplacements militaires (${mil()}).</p>`; return; }
+  let lim = ""; if (n > nb){ n = nb; lim = `<p class="note">Cabines limitées à ${nb} (une par emplacement de Barracks).</p>`; }
+  const base = castleBase(), r = E.castleCombo({...base, na, nb, n, l}, {trace:true});
+  const ok = r.cap >= base.goal;
+  const pts = []; const tEnd = Math.max(isFinite(r.days) ? r.days : r.end, r.end), step = tEnd / 60;
+  let j = 0; for (let k = 0; k <= 60; k++){ const t = k * step * 86400; while (j < r.trace.length - 1 && r.trace[j + 1].K <= t) j++; const s = r.trace[j]; if (t <= r.end * 86400 + 1) pts.push([k * step, s.O, s.M]); }
+  $("simOut").innerHTML = `${lim}<div class="kpis" style="margin-top:12px">
+      <div><span class="lbl">Objectif atteint en</span><b>${ok ? n1(r.days) + " <small>jours</small>" : "—"}</b></div>
+      <div><span class="lbl">Construction terminée</span><b>${n1(r.end)} <small>jours</small></b></div>
+      <div><span class="lbl">Capacité finale</span><b>${n0(r.cap)}</b></div>
+      <div><span class="lbl">Vanquishers à la fin de la construction</span><b>${n0(r.trEnd)}</b></div>
+      <div><span class="lbl">Premier recrutement</span><b>${r.first == null ? "—" : n1(r.first) + " <small>j</small>"}</b></div>
+      <div><span class="lbl">Enrôlement final</span><b>${n0(r.rate)} <small>/ jour</small></b></div>
+      <div><span class="lbl">Fer nécessaire</span><b>${n0(r.iron)}</b></div>
+      <div><span class="lbl">Pierre / bois perdus (Cabines)</span><b>${n0(r.loss)} <small>/ ${n0(r.lossW)}</small></b></div></div>
+    ${ok ? "" : `<p class="warn">Castle trop petit : ${n0(r.cap)} places pour un objectif de ${n0(base.goal)}.</p>`}
+    ${chart(pts, base.goal)}
+    <details style="margin-top:10px"><summary>Détail étape par étape (${n0(r.steps)} étapes)</summary><div class="scroll" style="max-height:420px;overflow-y:auto"><table class="t"><thead><tr><th>Étape</th><th class="l">Construction</th><th>Vitesse</th><th>Durée (h)</th><th>Début (j)</th><th>Capacité</th><th>Vanquishers</th><th>Fer</th></tr></thead><tbody>
+    ${r.trace.map(s => `<tr><td>${s.a}</td><td class="l">${esc(s.desc)}</td><td>${n0(s.I * 100)} %</td><td>${n2(s.J / 3600)}</td><td>${n2(s.K / 86400)}</td><td>${n0(s.M)}</td><td>${n0(s.Q)}</td><td>${n0(s.R)}</td></tr>`).join("")}</tbody></table></div></details>`;
+}
+function chart(pts, goal){
+  if (pts.length < 2) return "";
+  const W = 640, H = 240, L = 56, R = 12, T = 12, B = 30, xm = pts[pts.length - 1][0] || 1, ym = Math.max(goal, ...pts.map(p => Math.max(p[1], p[2]))) * 1.05;
+  const x = v => L + (W - L - R) * v / xm, y = v => T + (H - T - B) * (1 - v / ym);
+  const line = i => pts.map((p, k) => (k ? "L" : "M") + x(p[0]).toFixed(1) + " " + y(p[i]).toFixed(1)).join(" ");
+  const ticks = [0, .25, .5, .75, 1].map(f => f * ym);
+  return `<div style="margin-top:12px"><span class="note"><span class="sw" style="background:var(--brass)"></span>Vanquishers <span class="sw" style="background:var(--def);margin-left:12px"></span>Capacité <span class="sw" style="background:var(--off);margin-left:12px"></span>Objectif</span>
+   <svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Vanquishers et capacité au fil des jours">
+   ${ticks.map(t => `<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)"/><text x="${L - 6}" y="${y(t) + 4}" text-anchor="end">${n0(t / 1000)} k</text>`).join("")}
+   ${[0, .25, .5, .75, 1].map(f => `<text x="${x(f * xm)}" y="${H - 10}" text-anchor="middle">${n1(f * xm)} j</text>`).join("")}
+   <line x1="${L}" x2="${W - R}" y1="${y(goal)}" y2="${y(goal)}" stroke="var(--off)" stroke-dasharray="4 4"/>
+   <path d="${line(2)}" fill="none" stroke="var(--def)" stroke-width="2"/><path d="${line(1)}" fill="none" stroke="var(--brass)" stroke-width="2.5"/></svg></div>`;
+}
+
+/* ---------- CABINES ---------- */
+let cabOut = null;
+function cabP(){ return { bonus: bonusVitesse(), depart: num(S.cabDepart, 0), paquet: Math.max(1, num(S.groupes, 1)), arenas: num(S.arenas, 0), barracks: num(S.barracks, 0), autresH: num(S.autresH, 0),
+  pierreJour: S.pierreJour === "" ? null : +S.pierreJour, boisJour: S.boisJour === "" ? null : +S.boisJour }; }
+function renderCab(){
+  const o = cabOut = E.cabOptimise(cabP(), num(S.tolerance, 0.5)), r = o.recommended, f = o.fastest;
+  const counts = [5,10,15,20,25,30,35,40,45,50,55,60], minN = Math.min(...o.rows.map(x => x.delai));
+  $("cabOut").innerHTML = `<p class="big">Niveau ${r.niveau} × ${r.n} Cabines</p>
+    <div class="kpis"><div><span class="lbl">Délai réel</span><b>${n1(r.delai)} <small>jours</small></b></div><div><span class="lbl">Construction pure</span><b>${n1(r.total)} <small>jours</small></b></div>
+    <div><span class="lbl">Facteur limitant</span><b>${esc(r.limitant)}</b></div><div><span class="lbl">Construction speed atteinte</span><b>${n0(r.speed * 100)} %</b></div>
+    <div><span class="lbl">Perte nette pierre / bois</span><b>${n0(r.pertePierre)} <small>/ ${n0(r.perteBois)}</small></b></div><div><span class="lbl">Pierre / bois à envoyer</span><b>${n0(r.pierreLivrer)} <small>/ ${n0(r.boisLivrer)}</small></b></div></div>
+    ${f !== r ? `<p class="note">Solution la plus rapide (sans tolérance) : niveau ${f.niveau} × ${f.n} Cabines, ${n1(f.delai)} j, ${n0(f.pertePierre)} pierre perdue.</p>` : ""}
+    <h3>Meilleur choix par niveau</h3><div class="scroll"><table class="t"><thead><tr><th>Niveau</th><th>Cabines</th><th>Délai réel (j)</th><th>Construction (j)</th><th>Perte pierre</th><th>Limitant</th></tr></thead><tbody>
+    ${o.perLevel.map(x => `<tr class="${x === r ? "best" : ""}"><td>${x.niveau}</td><td>${x.n}</td><td>${n1(x.delai)}</td><td>${n1(x.total)}</td><td>${n0(x.pertePierre)}</td><td>${esc(x.limitant)}</td></tr>`).join("")}</tbody></table></div>
+    <details style="margin-top:10px"><summary>Délai réel (jours) pour chaque niveau × nombre de Cabines</summary><div class="scroll"><table class="t heat"><thead><tr><th>Niveau</th>${counts.map(c => `<th>${c}</th>`).join("")}</tr></thead><tbody>
+    ${[4,5,6,7,8,9,10].map(L => `<tr><td>${L}</td>${counts.map(c => { const x = o.rows.find(z => z.niveau === L && z.n === c); return `<td class="${x.delai <= minN + 1e-9 ? "good" : ""}" title="${esc(x.limitant)}">${n1(x.delai)}</td>`; }).join("")}</tr>`).join("")}</tbody></table></div></details>`;
+}
+function renderDem(){
+  const p = { n: num(S.testCabines, 0), niveau: num(S.testNiveau, 8), groupe: Math.max(1, num(S.groupes, 1)), bonus: bonusVitesse(), remplacer: S.demRemplacer, vise: num(S.demVise, 10), overrides: S.demTypes || {} };
+  if (!p.n){ $("demOut").innerHTML = `<p class="note">Indique un nombre de Cabines dans le scénario testé (Ma cité).</p>`; return; }
+  const d = E.cabDemolition(p);
+  $("demOut").innerHTML = `<div class="kpis" style="margin-top:12px"><div><span class="lbl">Groupes</span><b>${d.groups.length}</b></div><div><span class="lbl">Démolition</span><b>${n2(d.totalDemolition)} <small>j</small></b></div>
+    <div><span class="lbl">Reconstruction</span><b>${n2(d.totalReconstruction)} <small>j</small></b></div><div><span class="lbl">Temps total</span><b>${n2(d.total)} <small>jours</small></b></div>
+    <div><span class="lbl">Remboursement bois / pierre</span><b>${n0(d.rembBois)} <small>/ ${n0(d.rembPierre)}</small></b></div><div><span class="lbl">Coût des remplaçants bois / pierre</span><b>${n0(d.coutBois)} <small>/ ${n0(d.coutPierre)}</small></b></div></div>
+    <p class="note">${p.n} Cabines niveau ${p.niveau}, groupes de ${p.groupe} · vitesse ${n0(d.speedDepart * 100)} % au départ, ${n0(d.speedFin * 100)} % à la fin.</p>
+    <div class="scroll"><table class="t"><thead><tr><th>Groupe</th><th>Cabines</th><th class="l">Remplacer par</th><th>Restantes avant</th><th>Vitesse avant</th><th>Démolition (h)</th><th>Reconstruction (h)</th><th>Cumul (j)</th><th>Remb. pierre</th><th>Coût pierre</th></tr></thead><tbody>
+    ${d.groups.map(g => `<tr><td>${g.g}</td><td>${g.size}</td><td class="l"><select data-dem="${g.g}"><option ${g.type === "Barracks" ? "selected" : ""}>Barracks</option><option ${g.type === "Training Arena" ? "selected" : ""}>Training Arena</option></select></td><td>${g.rest}</td><td>${n0(g.speedAvant * 100)} %</td><td>${n2(g.demolition * 24)}</td><td>${n2(g.reconstruction * 24)}</td><td>${n2(g.cumul)}</td><td>${n0(g.rembPierre)}</td><td>${n0(g.coutPierre)}</td></tr>`).join("")}</tbody></table></div>`;
+}
+$("demOut").addEventListener("change", e => { const s = e.target.closest("[data-dem]"); if (!s) return; S.demTypes = {...(S.demTypes || {})};
+  if (s.value === S.demRemplacer) delete S.demTypes[s.dataset.dem]; else S.demTypes[s.dataset.dem] = s.value; renderDem(); scheduleSave(); });
+
+/* ---------- RAIDS ---------- */
+let raidOut = null;
+function renderRaid(){
+  const p = { cave: S.rCave, niveau: num(S.rNiveau, 6), pct: num(S.rPct, 0.69), marge: num(S.rMarge, 1), coef: num(S.rCoef, 0.1), vo: num(S.rValeurOr, 1), units: unites(), rDispo: num(S.rDispo, 0), tDispo: num(S.tDispo, 0) };
+  const r = E.raidSim(p, journal); if (!r){ $("raidOut").innerHTML = ""; return; }
+  raidOut = {cave: p.cave, niveau: p.niveau, pct: p.pct, r};
+  const st = r.comp ? `<span class="pill ${/Constaté/.test(r.comp.statut) ? "ref" : "def"}">${esc(r.comp.m1)} ${Math.round(r.comp.part * 100)} % + ${esc(r.comp.m2)} · ${esc(r.comp.statut)}</span>`
+                    : `<span class="pill off">Composition inconnue : calcul prudent avec le monstre le plus défensif de la caverne (pertes surestimées).</span>`;
+  const bestRow = (rows, k) => rows.reduce((a, b) => b[k] > a[k] ? b : a, rows[0]);
+  const seul = r.seul.filter(x => x.envoyer != null), bs = bestRow(seul, "profit");
+  const A = r.modeA, B = r.modeB;
+  $("raidOut").innerHTML = `<div class="kpis" style="margin-top:12px"><div><span class="lbl">Butin hors or prédit</span><b>${n0(r.butin)}</b></div><div><span class="lbl">Or prédit</span><b>${n0(r.or)}</b></div>
+      <div><span class="lbl">Si les cavernes te limitent</span><b style="font-size:1.05rem">${esc(r.best.cavernes)}</b></div><div><span class="lbl">Si tes troupes te limitent</span><b style="font-size:1.05rem">${esc(r.best.troupes)}</b></div><div><span class="lbl">Si tes places te limitent</span><b style="font-size:1.05rem">${esc(r.best.places)}</b></div></div>
+    <p style="margin:10px 0 0">${st}</p>
+    <h3>Avec tes troupes (Rangers / Triaires)</h3>
+    <div class="grid"><div class="panel hl"><b>A. Un raid, le plus rentable</b><p style="margin:6px 0">${n0(A.rangers)} rangers + ${n0(A.triaires)} triaires (${esc(A.ratio)}) · pertes ${pc(A.taux)} · profit ${n0(A.profit)}</p>
+      <p class="note ${A.stockOK ? "" : "warn"}" style="margin:0">${A.stockOK ? "OK : il te reste " + n0(A.resteR) + " rangers et " + n0(A.resteT) + " triaires." : "Pas assez de triaires : il en manque " + n0(A.manqueT) + " (ou vise une caverne au % plus haut / niveau plus bas)."}</p></div>
+      ${B ? `<div class="panel"><b>B. Tout ton stock en raids identiques</b><p style="margin:6px 0">${n0(B.nbRaids)} raids de ${n0(B.rangers)} rangers + ${n0(B.triaires)} triaires (stock ${esc(B.ratioStock)}) · pertes ${pc(B.taux)} · profit ${n0(B.profit)} par raid</p><p class="note" style="margin:0">Profit total : <b>${n0(B.total)}</b> contre ${n0(A.profit)} en mode A. Le mode B ne vaut que si tu as assez de cavernes à portée.</p></div>` : ""}</div>
+    <h3>Unité seule</h3><div class="scroll"><table class="t"><thead><tr><th>Unité</th><th class="l">Type</th><th>À envoyer</th><th>Pertes</th><th>Taux</th><th>Valeur pertes</th><th>Profit net</th><th>Valeur armée</th><th>Profit / armée</th><th>Profit / place</th></tr></thead><tbody>
+    ${seul.map(x => `<tr class="${x === bs ? "best" : ""}"><td>${esc(x.nom)}</td><td class="l">${esc(x.type)}</td><td>${n0(x.envoyer)}</td><td>${n0(x.pertes)}</td><td>${pc(x.taux)}</td><td>${n0(x.valeurPertes)}</td><td>${n0(x.profit)}</td><td>${n0(x.valeurArmee)}</td><td>${pc(x.profitArmee)}</td><td>${n1(x.profitPlace)}</td></tr>`).join("")}</tbody></table></div>
+    <h3>Mélanges Ranger : Triaire</h3><div class="scroll"><table class="t"><thead><tr><th>Ratio</th><th>Rangers</th><th>Triaires</th><th>Taux</th><th>Valeur pertes</th><th>Profit net</th><th>Valeur armée</th><th>Profit / armée</th><th>Profit / place</th></tr></thead><tbody>
+    ${r.mix.map(x => `<tr><td>${esc(x.ratio)}</td><td>${n0(x.rangers)}</td><td>${n0(x.triaires)}</td><td>${pc(x.taux)}</td><td>${n0(x.valeurPertes)}</td><td>${n0(x.profit)}</td><td>${n0(x.valeurArmee)}</td><td>${pc(x.profitArmee)}</td><td>${n1(x.profitPlace)}</td></tr>`).join("")}</tbody></table></div>
+    <p class="note">« À envoyer » couvre tout le butin après les pertes du raid (× la marge). Pertes = coefficient × défense des monstres / ton attaque, calé sur des raids d'infanterie en forêt 6 : à confirmer pour la cavalerie et la mystique.</p>`;
+}
+function renderJournal(){
+  const us = E.unitStats(unites(), num(S.rValeurOr, 1)), vo = num(S.rValeurOr, 1);
+  const rows = journal.map(r => ({r, c: E.journalRow(r, us, vo)})).filter(x => x.c);
+  $("journalOut").innerHTML = rows.length ? `<div class="scroll"><table class="t"><thead><tr><th>Date</th><th class="l">Caverne</th><th>Niv.</th><th class="l">Config.</th><th>Ratio réel</th><th>Pertes</th><th>Remplissage</th><th>Butin</th><th>Profit net</th><th>Profit / armée</th><th>Profit / h</th><th>% retenu</th><th>Écart butin</th><th></th></tr></thead><tbody>
+    ${rows.map(({r, c}) => `<tr><td>${esc(r.date)}</td><td class="l">${esc(r.type)}</td><td>${esc(r.niveau)}</td><td class="l">${esc(r.config)}</td><td>${esc(c.ratio)}</td><td>${pc(c.Q, 2)}</td><td>${pc(c.T)}</td><td>${n0(c.U)}</td><td>${n0(c.W)}</td><td>${pc(c.Y)}</td><td>${c.AA == null ? "—" : n0(c.AA)}</td><td>${c.AK == null ? "—" : pc(c.AK, 0)}</td><td>${c.AI == null ? "—" : pc(c.AI)}</td><td>${r.id ? `<button type="button" class="link danger" data-del="${esc(r.id)}">Supprimer</button>` : ""}</td></tr>`).join("")}</tbody></table></div>`
+    : `<p class="note">Aucun raid enregistré. <button type="button" class="link" id="jExemple">Ajouter les 4 raids du 14/10 (forêt 6)</button></p>`;
+  const ex = $("jExemple"); if (ex) ex.addEventListener("click", async () => { for (const r of D.journalExemple) await addRaid({...r}); });
+}
+$("journalOut").addEventListener("click", async e => { const b = e.target.closest("[data-del]"); if (!b || !db || !moi) return;
+  try { await db.doc(`fiches/${moi}/raids/${b.dataset.del}`).delete(); setStatus("Raid supprimé"); } catch (err){ setStatus("Suppression impossible : " + (err.message || err.code)); } });
+async function addRaid(r){
+  const us0 = unites(); const data = {bonusR: us0[0].bonus, bonusT: us0[1].bonus, ...r, creeLe: new Date().toISOString()};
+  for (const k of ["niveau","rEnv","rPerdus","tEnv","tPerdus","or","bois","pierre","fer","nourriture","nonTransporte","duree"]) data[k] = data[k] === "" || data[k] == null ? (k === "duree" ? "" : 0) : +data[k];
+  if (data.pct !== "" && data.pct != null && data.pct > 1) data.pct = data.pct / 100;
+  if (data.pct == null) data.pct = "";
+  if (!db || !moi){ journal.push(data); renderRaidsAll(); setStatus("Raid ajouté (non enregistré : choisis ta fiche)"); return; }
+  try { await db.collection(`fiches/${moi}/raids`).add(data); setStatus("Raid enregistré"); } catch (err){ setStatus("Raid non enregistré : " + (err.message || err.code)); }
+}
+$("jForm").addEventListener("submit", async e => { e.preventDefault(); const f = new FormData(e.target), r = {};
+  for (const [k, v] of f.entries()) r[k] = v.trim ? v.trim() : v; if (r.pct !== "") r.pct = +r.pct / 100; else r.pct = "";
+  await addRaid(r); e.target.reset(); e.target.querySelector('[name="type"]').value = S.rCave; });
+function renderSynth(){
+  const us = E.unitStats(unites(), num(S.rValeurOr, 1));
+  const sy = E.raidSynthese(journal, us, num(S.rValeurOr, 1), { type: S.sType, niveau: num(S.sNiveau, 6), pctMin: num(S.sPctMin, 0), pctMax: num(S.sPctMax, 1) });
+  $("synthOut").innerHTML = sy.length ? `<div class="scroll"><table class="t"><thead><tr><th>Configuration</th><th>Raids</th><th>Pertes moy.</th><th>Remplissage</th><th>Butin moyen</th><th>Profit net moyen</th><th>Valeur armée</th><th>Profit / armée</th><th>Profit / h</th><th>Pertes max. pour égaler</th><th class="l">Verdict</th></tr></thead><tbody>
+    ${sy.map(o => `<tr><td>${esc(o.config)}</td><td>${o.n}</td><td>${pc(o.taux, 2)}</td><td>${pc(o.remplissage)}</td><td>${n0(o.butin)}</td><td>${n0(o.profit)}</td><td>${n0(o.armee)}</td><td>${pc(o.profitArmee)}</td><td>${o.profitHeure == null ? "durée non saisie" : n0(o.profitHeure)}</td><td>${pc(o.tauxMax, 2)}</td><td class="l">${esc(o.verdict)}</td></tr>`).join("")}</tbody></table></div>
+    ${sy.some(o => o.n < 3) ? `<p class="note warn">Moins de 3 raids pour au moins une configuration : verdict encore fragile.</p>` : ""}` : `<p class="note">Aucun raid ne correspond à ces filtres.</p>`;
+}
+function renderUnits(){
+  const us = E.unitStats(unites(), num(S.rValeurOr, 1));
+  $("unitsOut").innerHTML = `<table class="t"><thead><tr><th>Unité</th><th class="l">Type d'attaque</th><th>Coût bois / fer / or</th><th>Attaque</th><th>Bonus recherche (%)</th><th>Attaque effective</th><th>Transport</th><th>Places</th><th>Coût valorisé</th></tr></thead><tbody>
+    ${us.map(u => `<tr><td>${esc(u.nom)}</td><td class="l">${esc(u.type)}</td><td>${n0(u.bois)} / ${n0(u.fer)} / ${n0(u.or)}</td><td>${u.att}</td><td><input type="number" step="0.5" min="0" data-ub="${esc(u.nom)}" value="${Math.round((u.bonus || 0) * 1000) / 10}"></td><td>${n1(u.attEff)}</td><td>${u.transport}</td><td>${u.places}</td><td>${n0(u.cout)}</td></tr>`).join("")}</tbody></table>
+    <p class="note">« Zerk » = Vanquisher. Sources : fiches d'unités du jeu ; transport et places : script COTG Raiding Helper.</p>`;
+}
+$("unitsOut").addEventListener("change", e => { const i = e.target.closest("[data-ub]"); if (!i) return; S.bonusUnites = {...(S.bonusUnites || {}), [i.dataset.ub]: (+i.value || 0) / 100}; renderRaidsAll(); renderUnits(); scheduleSave(); });
+function renderRaidsAll(){ renderRaid(); renderJournal(); renderSynth(); }
+
+function renderAll(){ renderCite(); renderCab(); renderDem(); renderRaidsAll(); renderSim(); renderResume(); }
+
+/* ---------- vues ---------- */
+function showView(v){ document.querySelectorAll(".vbtn").forEach(b => b.setAttribute("aria-selected", String(b.dataset.view === v)));
+  ["cite","castle","cabines","raids"].forEach(k => $("view-" + k).hidden = k !== v); try { localStorage.setItem("calcView", v); } catch {}
+  if (v === "castle" && !lastBest && !solving) solve(); }
+document.querySelector(".views").addEventListener("click", e => { const b = e.target.closest(".vbtn"); if (b) showView(b.dataset.view); });
+
+/* ---------- enregistrement ---------- */
+function setStatus(t){ $("status").textContent = t; }
+function scheduleSave(){
+  try { localStorage.setItem("calcReglages", JSON.stringify(S)); } catch {}
+  if (!db || !moi) return; clearTimeout(saveT);
+  saveT = setTimeout(async () => { try { await db.doc(`fiches/${moi}/calculs/reglages`).set({...S, maj: new Date().toISOString()}); setStatus("Réglages enregistrés sur la fiche « " + ficheNom(moi) + " »"); }
+    catch (err){ setStatus("Réglages non enregistrés : " + (err.message || err.code)); } }, 800);
+}
+const ficheNom = id => (fiches.find(f => f.id === id) || {}).nom || id;
+function renderMe(){ const sel = $("meSel"); sel.innerHTML = `<option value="">— choisir —</option>` + fiches.map(f => `<option value="${esc(f.id)}" ${f.id === moi ? "selected" : ""}>${esc(f.nom || f.id)}</option>`).join(""); }
+$("meSel").addEventListener("change", e => { moi = e.target.value; try { localStorage.setItem("moi", moi); } catch {} subscribeFiche(); });
+function subscribeFiche(){
+  if (unsubS) unsubS(); if (unsubJ) unsubJ(); unsubS = unsubJ = null;
+  if (!db || !moi){ journal = []; renderAll(); return; }
+  let first = true;
+  unsubS = db.doc(`fiches/${moi}/calculs/reglages`).onSnapshot(s => {
+    if (s.metadata && s.metadata.hasPendingWrites) return;
+    const d = s.exists ? s.data() : null;
+    if (d){ const {maj, ...rest} = d; const next = {...DEF, ...rest};
+      if (!first && JSON.stringify(next) === JSON.stringify(S)) return; // notre propre enregistrement qui revient
+      S = next; }
+    else if (first){ S = {...DEF, ...loadLocal()}; }
+    else return;
+    first = false; fill(); lastBest = null; $("solveOut").innerHTML = ""; $("solveInfo").textContent = ""; renderAll();
+    setStatus("Fiche « " + ficheNom(moi) + " »" + (d ? "" : " : réglages par défaut"));
+  }, err => setStatus("Lecture des réglages impossible : " + (err.message || err.code)));
+  unsubJ = db.collection(`fiches/${moi}/raids`).orderBy("creeLe").onSnapshot(s => { journal = s.docs.map(d => ({id: d.id, ...d.data()})); renderRaidsAll(); renderResume(); },
+    err => setStatus("Lecture du journal impossible : " + (err.message || err.code)));
+}
+function loadLocal(){ try { return JSON.parse(localStorage.getItem("calcReglages") || "{}"); } catch { return {}; } }
+
+/* ---------- démarrage ---------- */
+S = {...DEF, ...loadLocal()}; fill(); renderAll();
+let v0 = "cite"; try { v0 = localStorage.getItem("calcView") || "cite"; } catch {} showView(v0);
+(async () => {
+  if (!window.claude || !window.claude.use){ setStatus("Mode local : réglages gardés dans ce navigateur."); return; }
+  db = await window.claude.use("db");
+  if (!db){ setStatus("Base indisponible : réglages gardés dans ce navigateur."); return; }
+  db.collection("fiches").orderBy("creeLe").onSnapshot(s => { fiches = s.docs.map(d => ({id: d.id, ...d.data()})); renderMe();
+    if (moi && !fiches.some(f => f.id === moi)) moi = "";
+    if (!unsubS) subscribeFiche(); if (!moi) setStatus("Choisis ta fiche dans « Je suis » pour enregistrer."); },
+    err => setStatus("Lecture des fiches impossible : " + (err.message || err.code)));
+})();
+})();
+</script>
+</body>
+</html>
