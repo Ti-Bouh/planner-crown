@@ -2116,7 +2116,7 @@ function resaStatut(r, cm){ return cm[ck(r.x, r.y)] ? "fondee" : (r.statut || "r
 (function initCarteUI(){
   for (let c = 0; c <= 55; c++){ if (c % 10 > 5) continue; const o = document.createElement("option"); o.value = c; o.textContent = "C" + String(c).padStart(2, "0"); $("cCont").appendChild(o); }
   try { const z = localStorage.getItem("carteZoom"); if (z) $("cZoom").value = z; } catch {} if ($("cZoom").selectedIndex < 0) $("cZoom").value = "9";
-  $("cBrushes").innerHTML = Object.entries(TERR).map(([k, t]) => `<button type="button" data-brush="${k}" aria-pressed="${k === brush}"><i class="csw" style="background:${t.c}"></i>${t.n}</button>`).join("") + `<button type="button" data-brush="" aria-pressed="false"><i class="csw" style="background:var(--keep-soft);border:1px solid var(--line)"></i>Effacer</button>`;
+  $("cBrushes").innerHTML = Object.entries(TERR).map(([k, t]) => `<button type="button" data-brush="${k}" aria-pressed="${k === brush}"><i class="csw" style="background:${t.c}"></i>${t.n}</button>`).join("");
   $("cBrushes").addEventListener("click", e => { const b = e.target.closest("[data-brush]"); if (!b) return; brush = b.dataset.brush; $("cBrushes").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); });
   const setMode = m => { carteMode = m; $("cModeResa").setAttribute("aria-pressed", String(m === "resa")); $("cModeTerr").setAttribute("aria-pressed", String(m === "terr")); $("cBrushBar").hidden = m !== "terr"; };
   $("cModeResa").onclick = () => setMode("resa"); $("cModeTerr").onclick = () => setMode("terr");
