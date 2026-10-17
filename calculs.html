@@ -208,11 +208,25 @@ svg.chart text{font-family:var(--f-body);font-size:11px;fill:var(--muted)}
   <section class="view" id="view-cabines" hidden>
     <div class="panel">
       <h2>Cabines – niveau et nombre optimaux</h2>
-      <p class="note" style="margin:0 0 10px">Construit le plan de la cité (Arenas et Barracks de Ma cité) avec des Cabines, puis les démolit. Délai réel = le plus long entre la construction et les livraisons de pierre / bois.</p>
-      <div class="form"><label class="field"><span>Pierre envoyée par jour</span><input data-k="pierreJour" type="number" min="0" step="10000" placeholder="vide = sans limite"><small>Même réglage que dans Ma cité.</small></label>
-        <label class="field"><span>Bois envoyé par jour</span><input data-k="boisJour" type="number" min="0" step="10000" placeholder="vide = sans limite"><small>Même réglage que dans Ma cité.</small></label>
+      <p class="note" style="margin:0 0 10px">Temps pour construire toute la cité, chaque bâtiment au niveau 10 : on pose les Cabines (10 emplacements par niveau de Basilica), on les monte, on monte la Basilica au niveau 10, on construit le plan, puis on démolit les Cabines par groupes pour poser les derniers bâtiments. Les ressources ne comptent pas.</p>
+      <h3>Plan de la cité (bâtiments au niveau 10)</h3>
+      <div class="form">
+        <label class="field"><span>Basilica au départ (niveau)</span><select data-k="basDepart"></select><small id="basInfo"></small></label>
+        <label class="field"><span>Barracks</span><input data-k="barracks" type="number" min="0" step="1"></label>
+        <label class="field"><span>Training Arenas</span><input data-k="arenas" type="number" min="0" step="1"></label>
+        <label class="field"><span>Académies</span><input data-k="planAcademies" type="number" min="0" step="1"></label>
+        <label class="field"><span>Forums (marchés)</span><input data-k="planForums" type="number" min="0" step="1"></label>
+        <label class="field"><span>Entrepôts</span><input data-k="planEntrepots" type="number" min="0" step="1"></label>
+        <label class="field"><span>Tours de sorcier</span><input data-k="planTours" type="number" min="0" step="1"></label>
+        <label class="field"><span>Castle</span><input data-k="planCastles" type="number" min="0" step="1"></label>
+        <label class="field"><span>Cabines déjà au niveau</span><input data-k="cabDepart" type="number" min="0" max="10" step="1"><small>0 si aucune Cabine posée (même réglage que Ma cité).</small></label>
+        <label class="field"><span>Total du plan</span><input class="calc" id="planTotal" readonly tabindex="-1"><small id="planInfo"></small></label>
+      </div>
+      <h3>Choix du niveau et du nombre</h3>
+      <div class="form">
         <label class="field"><span>Gain minimum pour monter d'un niveau (jours)</span><input data-k="seuilNiveau" type="number" min="0" step="0.1"><small>On monte d'un niveau tant que le suivant fait gagner au moins ce temps.</small></label>
-        <label class="field"><span>Écart accepté sur le nombre (jours)</span><input data-k="tolerance" type="number" min="0" step="0.1"><small>Au niveau retenu, le moins de Cabines possible à moins de ce temps du meilleur délai.</small></label></div>
+        <label class="field"><span>Écart accepté sur le nombre (jours)</span><input data-k="tolerance" type="number" min="0" step="0.1"><small>Au niveau retenu, le moins de Cabines possible à moins de ce temps du meilleur délai.</small></label>
+      </div>
       <div id="cabOut"></div>
     </div>
     <div class="panel">
@@ -308,7 +322,7 @@ const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp
 /* ---------- réglages par défaut (valeurs des classeurs Crown) ---------- */
 const DEF = { res:0, autresBonus:0, groupes:5, ferJour:1000000, pierreJour:150000, boisJour:"", objectif:176000, stockage:575000,
   emplacements:94, arenas:26, barracks:65, cabDepart:0, autresH:20, testArenas:40, testCabines:50, testNiveau:8,
-  solvNaMin:20, solvNaMax:60, solvNaPas:2, solvCabPas:2, solvNiv:"4-10", solvFixe:"libre", tolerance:0.5, seuilNiveau:0.5, demRemplacer:"Barracks", demVise:10,
+  solvNaMin:20, solvNaMax:60, solvNaPas:2, solvCabPas:2, solvNiv:"4-10", solvFixe:"libre", tolerance:0.5, seuilNiveau:0.5, basDepart:8, planAcademies:1, planForums:2, planEntrepots:2, planTours:1, planCastles:1, demRemplacer:"Barracks", demVise:10,
   lienVille:"", rCave:"Forêt", rNiveau:6, rPct:0.69, rMarge:1, rCoef:0.1, rValeurOr:1, rDispo:8000, tDispo:3000, sType:"Forêt", sNiveau:6, sPctMin:0, sPctMax:1,
   bonusUnites:{}, demTypes:{} };
 let lastSaved = "";
@@ -320,6 +334,7 @@ const opts = (sel, arr, lab) => { sel.innerHTML = arr.map(v => `<option value="$
 opts(document.querySelector('[data-k="res"]'), D.castle.RES.map((_, i) => i), i => i + " (+" + Math.round(D.castle.RES[i] * 100) + " %)");
 [document.querySelector('[data-k="testNiveau"]'), $("simL")].forEach(s => opts(s, [1,2,3,4,5,6,7,8,9,10]));
 opts(document.querySelector('[data-k="demVise"]'), [1,2,3,4,5,6,7,8,9,10]);
+opts(document.querySelector('[data-k="basDepart"]'), [1,2,3,4,5,6,7,8,9,10], v => v + " (" + (10 * v) + " emplacements)");
 [document.querySelector('[data-k="rNiveau"]'), document.querySelector('[data-k="sNiveau"]')].forEach(s => opts(s, [1,2,3,4,5,6,7,8,9,10]));
 
 /* ---------- état <-> formulaire ---------- */
@@ -331,7 +346,7 @@ function fill(){
 function readEl(el){
   const k = el.dataset.k; let v = el.value;
   if (el.type === "number"){ v = v === "" ? "" : +v; if (PCT_KEYS[k] && v !== "") v = v / 100; }
-  else if (/^(res|testNiveau|demVise|rNiveau|sNiveau)$/.test(k)) v = +v;
+  else if (/^(res|testNiveau|demVise|rNiveau|sNiveau|basDepart)$/.test(k)) v = +v;
   S[k] = v;
 }
 const syncTwins = el => document.querySelectorAll(`[data-k="${el.dataset.k}"]`).forEach(o => { if (o !== el) o.value = el.value; });
@@ -367,7 +382,7 @@ function renderResume(){
   const r = [];
   if (lastBest) r.push(["Castle", "meilleure combinaison : " + lastBest.na + " Arenas, " + lastBest.nb + " Barracks, " + lastBest.n + " Cabines niv. " + lastBest.l + " → objectif en " + jours(lastBest.days)]);
   else r.push(["Castle", "lance le Solveur dans l'onglet Castle."]);
-  const o = cabOut; if (o) r.push(["Cabines", "niveau " + o.recommended.niveau + " × " + o.recommended.n + " Cabines → " + jours(o.recommended.delai) + " (" + o.recommended.limitant.toLowerCase() + ")"]);
+  const o = cabOut; if (o) r.push(["Cabines", "niveau " + o.recommended.niveau + " × " + o.recommended.n + " Cabines → cité terminée en " + jours(o.recommended.delai)]);
   const rs = raidOut; if (rs) r.push(["Raids", rs.cave + " " + rs.niveau + " à " + Math.round(rs.pct * 100) + " % : " + rs.r.best.cavernes + " si les cavernes te limitent"]);
   $("resume").innerHTML = r.map(([a, b]) => `<div><b>${esc(a)}</b><span>${esc(b)}</span></div>`).join("");
 }
@@ -448,29 +463,31 @@ function chart(pts, goal){
 let cabOut = null;
 function cabP(){ return { nMax: Math.max(60, Math.floor(mil() / 5) * 5), bonus: bonusVitesse(), depart: num(S.cabDepart, 0), paquet: Math.max(1, num(S.groupes, 1)), arenas: num(S.arenas, 0), barracks: num(S.barracks, 0), autresH: num(S.autresH, 0),
   pierreJour: S.pierreJour === "" ? null : +S.pierreJour, boisJour: S.boisJour === "" ? null : +S.boisJour }; }
+function citeP(){ return { bonus: bonusVitesse(), depart: num(S.cabDepart, 0), groupe: Math.max(1, num(S.groupes, 1)), basDepart: num(S.basDepart, 8), places: 100,
+  plan: { barracks: num(S.barracks, 0), arenas: num(S.arenas, 0), academies: num(S.planAcademies, 0), forums: num(S.planForums, 0), entrepots: num(S.planEntrepots, 0), tours: num(S.planTours, 0), castles: num(S.planCastles, 0) } }; }
 function renderCab(){
-  const o = cabOut = E.cabOptimise(cabP(), num(S.tolerance, 0.5)), tol = num(S.tolerance, 0.5), seuil = num(S.seuilNiveau, 0.5);
-  const q = E.cabRatio(o, seuil, tol), c = q.choix, f = q.plusRapide, nx = q.suivant;
-  o.recommended = c; // résumé « En bref »
-  const counts = [...new Set(o.rows.map(x => x.n))], minN = Math.min(...o.rows.map(x => x.delai));
-  const pourquoi = nx ? (nx.gain > 0 ? `Monter au niveau ${nx.niveau} ne ferait gagner que ${n2(nx.gain)} jour, pour ${n0(nx.pierreEnPlus)} de pierre perdue en plus (${n0(nx.pierreParJour)} de pierre par jour gagné).`
-                                     : `Le niveau ${nx.niveau} serait plus lent (${n2(-nx.gain)} jour de plus) : ses Cabines sont trop longues à monter.`)
-                      : `C'est le niveau maximum.`;
-  const illimite = S.pierreJour === "" || S.pierreJour == null;
-  const lv = S.lienVille ? rVilles.find(x => x.id === S.lienVille) : null;
-  const src = `<p class="note" style="margin:0 0 8px">Pierre : <b>${illimite ? "sans limite" : n0(S.pierreJour) + " / jour"}</b> · bois : <b>${S.boisJour === "" || S.boisJour == null ? "sans limite" : n0(S.boisJour) + " / jour"}</b> — ${lv ? "repris des raids de « " + esc(lv.nom || "la ville") + " » (onglet Recrutement)" : "saisie manuelle"}.</p>`;
-  $("cabOut").innerHTML = src + (illimite ? `<p class="warn" style="margin:4px 0 10px">⚠ Pierre sans limite : ce résultat ne vaut que si tes livraisons de pierre ne te limitent pas. Indique ta livraison réelle ci-dessus : en dessous d'environ 200 000 par jour, le niveau 4 redevient le meilleur choix.</p>` : "")
-    + `<div class="kpis" style="margin-top:4px"><div><span class="lbl">Niveau optimal</span><b style="font-size:2rem">${q.niveau}</b></div>
+  const P = citeP(), F = Object.values(P.plan).reduce((a, b) => a + b, 0), tol = num(S.tolerance, 0.5), seuil = num(S.seuilNiveau, 0.5);
+  $("planTotal").value = F + " / 100"; $("planInfo").innerHTML = F > 100 ? '<span class="warn">Plus de 100 bâtiments : le plan ne tient pas dans la cité.</span>' : F < 100 ? (100 - F) + " emplacement" + (100 - F > 1 ? "s" : "") + " libre" + (100 - F > 1 ? "s" : "") : "Cité pleine.";
+  $("basInfo").textContent = "Au plus " + Math.min(100, 10 * P.basDepart) + " Cabines posées au départ.";
+  if (F > 100){ cabOut = null; $("cabOut").innerHTML = `<p class="warn">Réduis le plan à 100 bâtiments au plus.</p>`; return; }
+  const q = E.citeOptimise(P, seuil, tol);
+  if (!q.choix){ cabOut = null; $("cabOut").innerHTML = `<p class="warn">Pas assez d'emplacements pour poser des Cabines : monte la Basilica d'abord.</p>`; return; }
+  const c = q.choix, f = q.plusRapide, nx = q.suivant, sans = q.sans;
+  cabOut = { recommended: { niveau: q.niveau, n: c.n, delai: c.total, limitant: "construction" } };
+  const bestN = Math.min(...q.rows.filter(r => r.niveau === q.niveau).map(r => r.total));
+  const pourquoi = nx ? (nx.gain > 0 ? `Monter au niveau ${nx.niveau} ne ferait gagner que ${n2(nx.gain)} jour.` : `Le niveau ${nx.niveau} serait plus lent (${n2(-nx.gain)} jour de plus) : ses Cabines sont trop longues à monter.`) : `C'est le niveau maximum.`;
+  const counts = [...new Set(q.rows.map(x => x.n))], lv = [...new Set(q.rows.map(x => x.niveau))];
+  $("cabOut").innerHTML = `<div class="kpis" style="margin-top:14px"><div><span class="lbl">Niveau optimal</span><b style="font-size:2rem">${q.niveau}</b></div>
       <div><span class="lbl">Nombre optimal</span><b style="font-size:2rem">${c.n} <small>Cabines</small></b></div>
-      <div><span class="lbl">Délai réel</span><b style="font-size:2rem">${n1(c.delai)} <small>jours</small></b></div>
-      <div><span class="lbl">Pierre perdue</span><b style="font-size:2rem">${n0(c.pertePierre)}</b></div></div>
-    <p style="margin:10px 0 0">${pourquoi} Au niveau ${q.niveau}, ${c.n} Cabines suffisent : en mettre plus ne ferait gagner que ${n2(c.delai - Math.min(...o.rows.filter(r => r.niveau === q.niveau).map(r => r.delai)))} jour.</p>
-    <p class="note">Facteur limitant : ${esc(c.limitant.toLowerCase())} · vitesse de construction atteinte ${n0(c.speed * 100)} % · pierre / bois à envoyer ${n0(c.pierreLivrer)} / ${n0(c.boisLivrer)}${f.niveau !== q.niveau || f.n !== c.n ? ` · solution la plus rapide : niveau ${f.niveau} × ${f.n} Cabines, ${n1(f.delai)} j, ${n0(f.pertePierre)} de pierre perdue` : ""}.</p>
-    <h3>Ce que rapporte chaque niveau</h3><div class="scroll"><table class="t"><thead><tr><th>Niveau</th><th>Meilleur délai (j)</th><th>avec</th><th>Gain sur le niveau précédent</th><th>Pierre perdue</th><th>Pierre par jour gagné</th></tr></thead><tbody>
-    ${q.niveaux.map(x => `<tr class="${x.niveau === q.niveau ? "best" : ""}"><td>${x.niveau}</td><td>${n1(x.meilleur.delai)}</td><td>${x.meilleur.n} Cabines</td><td class="${x.gain == null ? "" : x.gain >= seuil ? "good" : "neg"}">${x.gain == null ? "—" : (x.gain >= 0 ? "−" : "+") + n2(Math.abs(x.gain)) + " j"}</td><td>${n0(x.meilleur.pertePierre)}</td><td>${x.pierreParJour == null ? "—" : n0(x.pierreParJour)}</td></tr>`).join("")}</tbody></table></div>
-    <p class="note">En vert : le niveau fait gagner au moins ${n1(seuil)} jour, il vaut la peine. En rouge : gain trop faible ou temps perdu. Nombres testés : de 5 à ${counts[counts.length - 1]} Cabines (emplacements militaires de Ma cité).</p>
-    <details style="margin-top:10px"><summary>Délai réel (jours) pour chaque niveau × nombre de Cabines</summary><div class="scroll"><table class="t heat"><thead><tr><th>Niveau</th>${counts.map(k => `<th>${k}</th>`).join("")}</tr></thead><tbody>
-    ${[4,5,6,7,8,9,10].map(L => `<tr><td>${L}</td>${counts.map(k => { const x = o.rows.find(z => z.niveau === L && z.n === k); return `<td class="${x === c ? "good" : ""}" title="${esc(x.limitant)}">${n1(x.delai)}</td>`; }).join("")}</tr>`).join("")}</tbody></table></div></details>`;
+      <div><span class="lbl">Cité terminée en</span><b style="font-size:2rem">${n1(c.total)} <small>jours</small></b></div>
+      <div><span class="lbl">Sans Cabines</span><b style="font-size:2rem">${n0(sans ? sans.total : NaN)} <small>jours</small></b></div></div>
+    <p style="margin:10px 0 0">${pourquoi} Au niveau ${q.niveau}, ${c.n} Cabines suffisent : aller jusqu'à ${q.rows.filter(r => r.niveau === q.niveau).reduce((a, r) => r.total < a.total ? r : a).n} ne ferait gagner que ${n2(c.total - bestN)} jour.</p>
+    <p class="note">Déroulé : Cabines ${n1(c.montee)} j · Basilica jusqu'au niveau 10 ${n1(c.basilica)} j · bâtiments à pleine vitesse (${n0(c.vitesse * 100)} %) ${n1(c.principal)} j · démolition de ${c.demolies} Cabine${c.demolies > 1 ? "s" : ""} et pose des derniers bâtiments ${n1(c.demolition + c.reconstruction)} j${c.gardees ? ` · ${c.gardees} Cabine${c.gardees > 1 ? "s" : ""} restent (place libre)` : ""}. Pierre des Cabines : ${n0(c.coutPierre)}${f.niveau !== q.niveau || f.n !== c.n ? ` · solution la plus rapide : niveau ${f.niveau} × ${f.n} Cabines, ${n1(f.total)} j` : ""}.</p>
+    <h3>Ce que rapporte chaque niveau</h3><div class="scroll"><table class="t"><thead><tr><th>Niveau</th><th>Meilleur délai (j)</th><th>avec</th><th>Gain sur le niveau précédent</th><th>Pierre des Cabines</th><th>Pierre par jour gagné</th></tr></thead><tbody>
+    ${q.niveaux.map(x => `<tr class="${x.niveau === q.niveau ? "best" : ""}"><td>${x.niveau}</td><td>${n1(x.meilleur.total)}</td><td>${x.meilleur.n} Cabines</td><td class="${x.gain == null ? "" : x.gain >= seuil ? "good" : "neg"}">${x.gain == null ? "—" : (x.gain >= 0 ? "−" : "+") + n2(Math.abs(x.gain)) + " j"}</td><td>${n0(x.meilleur.coutPierre)}</td><td>${x.pierreParJour == null ? "—" : n0(x.pierreParJour)}</td></tr>`).join("")}</tbody></table></div>
+    <p class="note">En vert : le niveau fait gagner au moins ${n1(seuil)} jour. En rouge : gain trop faible ou temps perdu. La pierre est donnée pour information : elle n'entre pas dans le choix. Nombres testés : de 5 à ${q.maxN} Cabines (10 par niveau de Basilica au départ). Temps : crown_batiment.xlsx et fiches officielles (Académie, Forum).</p>
+    <details style="margin-top:10px"><summary>Temps total (jours) pour chaque niveau × nombre de Cabines</summary><div class="scroll"><table class="t heat"><thead><tr><th>Niveau</th>${counts.map(k => `<th>${k}</th>`).join("")}</tr></thead><tbody>
+    ${lv.map(L => `<tr><td>${L}</td>${counts.map(k => { const x = q.rows.find(z => z.niveau === L && z.n === k); return x ? `<td class="${x === c ? "good" : ""}">${n1(x.total)}</td>` : "<td>—</td>"; }).join("")}</tr>`).join("")}</tbody></table></div></details>`;
 }
 function renderDem(){
   const p = { n: num(S.testCabines, 0), niveau: num(S.testNiveau, 8), groupe: Math.max(1, num(S.groupes, 1)), bonus: bonusVitesse(), remplacer: S.demRemplacer, vise: num(S.demVise, 10), overrides: S.demTypes || {} };
