@@ -140,12 +140,27 @@
   }
   function cabOptimise(p, tol) {
     const T = cabTables(), P = cabParams(p), rows = [];
-    for (let L = 4; L <= 10; L++) for (let n = 5; n <= 60; n += 5) rows.push(cabRow(p, L, n, T, P));
+    const nMax = Math.max(5, p.nMax || 60); // 60 = grille du classeur ; la page passe le nombre d'emplacements militaires
+    for (let L = 4; L <= 10; L++) for (let n = 5; n <= nMax; n += 5) rows.push(cabRow(p, L, n, T, P));
     const minN = Math.min(...rows.map(r => r.delai));
     let rec = null; for (const r of rows) { const v = r.delai <= minN + tol ? r.pertePierre : 1e15; if (!rec || v < rec.v) rec = { v, r }; }
     let fast = null; for (const r of rows) if (!fast || r.delai < fast.delai) fast = r;
     const perLevel = []; for (let L = 4; L <= 10; L++) { let b = null; for (const r of rows) if (r.niveau === L && (!b || r.delai < b.delai)) b = r; perLevel.push(b); }
     return { rows, recommended: rec.r, fastest: fast, perLevel, params: P };
+  }
+
+  // Meilleur rapport temps / niveau : on monte d'un niveau tant que le suivant fait gagner au moins « seuil » jours ;
+  // au niveau retenu, on garde le plus petit nombre de Cabines à moins de « tol » jours du meilleur délai de ce niveau.
+  function cabRatio(o, seuil, tol) {
+    const niv = o.perLevel.map((b, i) => {
+      const prev = i ? o.perLevel[i - 1] : null, gain = prev ? prev.delai - b.delai : null, pierre = prev ? b.pertePierre - prev.pertePierre : null;
+      return { niveau: b.niveau, meilleur: b, gain, pierreEnPlus: pierre, pierreParJour: gain > 0 ? pierre / gain : null };
+    });
+    let k = 0; while (k + 1 < niv.length && niv[k + 1].gain >= seuil) k++;
+    const L = niv[k].niveau, rows = o.rows.filter(r => r.niveau === L), best = Math.min(...rows.map(r => r.delai));
+    const choix = rows.filter(r => r.delai <= best + tol).sort((a, b) => a.n - b.n)[0];
+    const suivant = niv[k + 1] || null;
+    return { niveaux: niv, niveau: L, choix, suivant, plusRapide: o.fastest };
   }
   function cabDemolition(p) {
     // p : {n, niveau, groupe, bonus, remplacer ('Barracks'|'Training Arena'), vise, overrides: {g: type}}
@@ -341,5 +356,5 @@
              zerksReelsH, excedentFer: j(excedentFer), raffinage };
   }
 
-  root.CrownEngine = { castleCombo, castleGrid, castleSolve, castleLoss, cabOptimise, cabDemolition, cabParams, raidSim, journalRow, raidSynthese, recrutement, heures, lireRapport, unitStats, butinBase, defenseParPoint, TYPES };
+  root.CrownEngine = { castleCombo, castleGrid, castleSolve, castleLoss, cabOptimise, cabRatio, cabDemolition, cabParams, raidSim, journalRow, raidSynthese, recrutement, heures, lireRapport, unitStats, butinBase, defenseParPoint, TYPES };
 })(typeof window !== "undefined" ? window : globalThis);
