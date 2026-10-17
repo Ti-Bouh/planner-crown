@@ -57,6 +57,12 @@ a{color:var(--brass)}
 .field input,.field select,.field button{font:inherit;height:36px;padding:0 9px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);width:100%;min-width:0}
 .field button.primary{background:var(--brass);border-color:var(--brass);color:var(--panel);font-weight:600;width:auto;padding:0 14px;justify-self:start}
 .pair{display:flex;gap:6px;min-width:0}
+.chk{display:flex;align-items:center;gap:8px;height:36px;font-size:14px;color:var(--ink)}
+.field .chk input{width:18px;height:18px;padding:0;accent-color:var(--brass)}
+.seg{display:flex;gap:2px;background:var(--keep-soft);padding:3px;border-radius:8px;flex-wrap:wrap}
+.seg button{border:none;background:transparent;padding:5px 12px;border-radius:6px;font-weight:600;font-size:13px;color:var(--muted)}
+.seg button[aria-selected="true"]{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.neg{color:var(--off);font-weight:600}
 .field input.calc{background:transparent;border-style:dashed;color:var(--muted)}
 .field small{font-size:11px;color:var(--muted)}
 input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--brass);outline-offset:1px}
@@ -117,6 +123,7 @@ svg.chart text{font-family:var(--f-body);font-size:11px;fill:var(--muted)}
       <button type="button" class="vbtn" role="tab" data-view="castle" aria-selected="false">Castle</button>
       <button type="button" class="vbtn" role="tab" data-view="cabines" aria-selected="false">Cabines</button>
       <button type="button" class="vbtn" role="tab" data-view="raids" aria-selected="false">Raids</button>
+      <button type="button" class="vbtn" role="tab" data-view="recrut" aria-selected="false">Recrutement</button>
     </div>
     <div class="vgrp"><a class="vbtn" href="./" style="text-decoration:none">← Planner</a></div>
   </div>
@@ -258,6 +265,18 @@ svg.chart text{font-family:var(--f-body);font-size:11px;fill:var(--muted)}
       <p class="note" style="margin:0 0 10px">Mets à jour le bonus de recherche (Combat Strength) quand tu termines une recherche.</p>
       <div id="unitsOut" class="scroll"></div>
     </div>
+  </section>
+
+  <!-- ================= RECRUTEMENT ================= -->
+  <section class="view" id="view-recrut" hidden>
+    <div class="panel">
+      <h2>Recrutement de zerks financé par les raids</h2>
+      <p class="note" style="margin:0 0 12px">Chaque ville est indépendante : ses rapports ne financent que ses propres zerks. Un zerk (Vanquisher) coûte 150 de fer et s'enrôle en 200 s à la vitesse de base.</p>
+      <div class="btns"><div class="seg" id="rvTabs" role="tablist" aria-label="Villes"></div>
+        <span class="btns"><input id="rvNewName" placeholder="Nom de la ville" style="font:inherit;height:32px;padding:0 9px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)"><button type="button" id="rvAdd">+ Ajouter une ville</button></span></div>
+      <div id="rvParams" style="margin-top:14px"></div>
+    </div>
+    <div id="rvBody" style="display:grid;gap:16px"></div>
   </section>
 </div>
 
@@ -502,11 +521,124 @@ function renderUnits(){
 $("unitsOut").addEventListener("change", e => { const i = e.target.closest("[data-ub]"); if (!i) return; S.bonusUnites = {...(S.bonusUnites || {}), [i.dataset.ub]: (+i.value || 0) / 100}; renderRaidsAll(); renderUnits(); scheduleSave(); });
 function renderRaidsAll(){ renderRaid(); renderJournal(); renderSynth(); }
 
-function renderAll(){ renderCite(); renderCab(); renderDem(); renderRaidsAll(); renderSim(); renderResume(); }
+
+/* ---------- RECRUTEMENT ---------- */
+let rVilles = [], rVille = "", rRapports = [], unsubRV = null, unsubRR = null, rSaveT = null, rDelArm = false;
+try { rVille = localStorage.getItem("recruVille") || ""; } catch {}
+const rvPath = () => `fiches/${moi}/recrutement`;
+const curVille = () => rVilles.find(v => v.id === rVille) || null;
+function renderRecrut(){
+  $("rvTabs").innerHTML = rVilles.length ? rVilles.map(v => `<button type="button" role="tab" data-rv="${esc(v.id)}" aria-selected="${v.id === rVille}">${esc(v.nom || "Ville")}</button>`).join("")
+                                          : `<span class="note" style="margin:0;padding:5px 8px">Aucune ville : ajoute la première.</span>`;
+  const v = curVille();
+  if (!v){ $("rvParams").innerHTML = ""; $("rvBody").innerHTML = ""; return; }
+  if (!document.activeElement || !document.activeElement.closest || !document.activeElement.closest("#rvParams")) {
+    $("rvParams").innerHTML = `<div class="form">
+      <label class="field"><span>Nom de la ville</span><input data-rv-k="nom" value="${esc(v.nom || "")}"></label>
+      <label class="field"><span>Training Arenas posées</span><input data-rv-k="arenas" type="number" min="0" step="1" value="${esc(v.arenas ?? 5)}"></label>
+      <label class="field"><span>Arena niveau 10</span><span class="chk"><input data-rv-k="arena10" type="checkbox" ${v.arena10 ? "checked" : ""}> 1 Arena au niveau 10</span></label>
+      <label class="field"><span>Raids par jour</span><input data-rv-k="raidsJour" type="number" min="0" step="0.5" value="${esc(v.raidsJour ?? 1)}"></label>
+      <label class="field"><span>Surplus gardé pour le raffinage (%)</span><input data-rv-k="surplus" type="number" min="0" max="100" step="1" value="${esc(Math.round((v.surplus ?? 0.1) * 1000) / 10)}"></label>
+      <div class="field"><span>&nbsp;</span><button type="button" class="${rDelArm ? "danger primary" : "danger"}" id="rvDel">${rDelArm ? "Confirmer la suppression" : "Supprimer cette ville"}</button></div></div>`;
+  }
+  const r = E.recrutement(v, rRapports);
+  const form = `<div class="panel"><h2>Rapports de raid de ${esc(v.nom || "la ville")}</h2>
+    <p class="note" style="margin:0 0 10px">Ressources ramenées par le raid et troupes perdues. Ces rapports ne servent qu'au calcul du recrutement.</p>
+    <form id="rrForm" class="form">
+      <label class="field"><span>Date</span><input name="date" placeholder="17/10 20:15"></label>
+      <label class="field"><span>Fer ramené</span><input name="fer" type="number" min="0" required></label>
+      <label class="field"><span>Bois ramené</span><input name="bois" type="number" min="0"></label>
+      <label class="field"><span>Pierre ramenée</span><input name="pierre" type="number" min="0"></label>
+      <label class="field"><span>Nourriture ramenée</span><input name="nourriture" type="number" min="0"></label>
+      <label class="field"><span>Or ramené</span><input name="or" type="number" min="0"></label>
+      <label class="field"><span>Rangers perdus</span><input name="rPerdus" type="number" min="0"></label>
+      <label class="field"><span>Triaires perdus</span><input name="tPerdus" type="number" min="0"></label>
+      <div class="field"><span>&nbsp;</span><button type="submit" class="primary">Ajouter le rapport</button></div>
+    </form>
+    ${rRapports.length ? `<div class="scroll" style="margin-top:12px"><table class="t"><thead><tr><th>Date</th><th>Fer ramené</th><th>Fer des Triaires perdus</th><th>Fer net</th><th>Zerks payés</th><th>Bois</th><th>Pierre</th><th>Nourriture</th><th>Or</th><th></th></tr></thead><tbody>
+      ${rRapports.map(x => { const fp = (+x.tPerdus || 0) * 140, fn = Math.max(0, (+x.fer || 0) - fp), z = fn * (1 - (v.surplus ?? 0.1)) / 150;
+        return `<tr><td>${esc(x.date || "")}</td><td>${n0(+x.fer || 0)}</td><td>${n0(fp)}</td><td>${n0(fn)}</td><td>${n0(Math.floor(z))}</td><td>${n0(+x.bois || 0)}</td><td>${n0(+x.pierre || 0)}</td><td>${n0(+x.nourriture || 0)}</td><td>${n0(+x.or || 0)}</td><td><button type="button" class="link danger" data-rr-del="${esc(x.id || "")}">Supprimer</button></td></tr>`; }).join("")}
+      </tbody></table></div>` : ""}</div>`;
+  if (!r){ $("rvBody").innerHTML = `<div class="panel"><p class="note" style="margin:0">Ajoute un premier rapport de raid ci-dessous pour lancer le calcul.</p></div>` + form; return; }
+  const vc = r.vitesseCible, J = r.jour;
+  let conseil;
+  if (r.autres === 0){
+    conseil = r.arenas === 0 ? `Aucune Training Arena : la ville recrute à la vitesse de base (100 %).` : `Ta seule Arena est au niveau 10 : vitesse ${n0(r.vitesseFixe * 100)} %.`;
+    conseil += r.tropRapide ? ` <span class="warn">C'est plus rapide que ce que ton fer paie : la file s'arrêtera faute de fer.</span> Il faudrait <b>${n1(r.raidsPourContinu)} raids par jour</b> de ce type pour recruter en continu.`
+                            : ` <span class="ok">Le fer suit : recrutement continu.</span>`;
+  } else if (r.choix){
+    const nxt = r.niveaux[r.choix.niveau];
+    conseil = `<span class="ok">${r.arena10 ? "1 Arena au niveau 10 + " : ""}${r.autres} Arena${r.autres > 1 ? "s" : ""} au niveau ${r.choix.niveau}</span> : vitesse ${n0(r.choix.vitesse * 100)} %, soit ${n0(r.choix.zerksJour)} zerks par jour, en recrutement continu.`
+      + (nxt ? ` Au niveau ${nxt.niveau}, la file s'arrêterait faute de fer (il faudrait ${n1(nxt.raidsNecessaires)} raids par jour).` : ` C'est le niveau maximum : le fer en trop part au raffinage.`);
+  } else {
+    conseil = `<span class="warn">Même au niveau 1, tes Arenas recrutent plus vite que ton fer ne le permet</span> (${n0(r.niveaux[0].vitesse * 100)} % contre ${n0(vc * 100)} % finançables). Il faudrait <b>${n1(r.raidsPourContinu)} raids par jour</b> de ce type, ou des cavernes qui rapportent plus de fer.`;
+  }
+  const rf = r.raffinage, cell = x => `<b class="${x < 0 ? "neg" : ""}">${n0(x)}</b>`;
+  $("rvBody").innerHTML = `<div class="panel hl"><h2>Résultat</h2>
+    <div class="kpis"><div><span class="lbl">Zerks financés par jour</span><b>${n0(Math.floor(r.zerksJour))}</b></div>
+      <div><span class="lbl">Zerks par raid</span><b>${n0(Math.floor(r.zerksParRaid))}</b></div>
+      <div><span class="lbl">Vitesse de recrutement à viser</span><b>${n0(vc * 100)} <small>% de la base</small></b></div>
+      <div><span class="lbl">Fer net par jour</span><b>${n0(J.ferNet)}</b></div>
+      <div><span class="lbl">Fer perdu (Triaires)</span><b>${n0(J.ferPertes)} <small>/ jour</small></b></div></div>
+    <p style="margin:12px 0 0">${conseil}</p>
+    <p class="note">Moyenne de ${r.n} rapport${r.n > 1 ? "s" : ""} × ${n2(+v.raidsJour || 0)} raid${(+v.raidsJour || 0) > 1 ? "s" : ""} par jour. Fer net = fer ramené − 140 par Triaire perdu ; ${n0((v.surplus ?? 0.1) * 100)} % du fer net est gardé pour le raffinage.</p>
+    <h3>Vitesse selon le niveau des Arenas</h3><div class="scroll"><table class="t"><thead><tr><th>Niveau${r.arena10 ? " des autres Arenas" : ""}</th><th>Vitesse</th><th>Zerks / jour</th><th>Fer nécessaire / jour</th><th>Raids nécessaires / jour</th><th class="l">Recrutement</th></tr></thead><tbody>
+    ${r.autres > 0 ? r.niveaux.map(x => `<tr class="${r.choix && x.niveau === r.choix.niveau ? "best" : ""}"><td>${x.niveau}</td><td>${n0(x.vitesse * 100)} %</td><td>${n0(x.zerksJour)}</td><td>${n0(x.ferJour)}</td><td>${n1(x.raidsNecessaires)}</td><td class="l">${x.continu ? '<span class="ok">continu</span>' : '<span class="warn">file à sec</span>'}</td></tr>`).join("")
+                   : `<tr><td colspan="6" class="l">Aucune Arena à régler (${r.arenas === 0 ? "pas d'Arena posée" : "la seule Arena est au niveau 10"}).</td></tr>`}</tbody></table></div></div>
+    <div class="panel"><h2>À raffiner par jour</h2>
+      <div class="kpis"><div><span class="lbl">Fer</span>${cell(rf.fer)}</div><div><span class="lbl">Bois</span>${cell(rf.bois)}</div><div><span class="lbl">Pierre</span>${cell(rf.pierre)}</div><div><span class="lbl">Nourriture</span>${cell(rf.nourriture)}</div><div><span class="lbl">Or</span>${cell(rf.or)}</div></div>
+      <p class="note">Fer : les ${n0((v.surplus ?? 0.1) * 100)} % gardés${r.excedentFer > 0.5 ? " + " + n0(r.excedentFer) + " que les Arenas ne peuvent pas consommer" : ""}. Bois : après remplacement des Rangers perdus (160 chacun). Or : après remplacement des Triaires perdus (40 chacun). En rouge : déficit, les pertes coûtent plus que ce que le raid rapporte.</p></div>` + form;
+}
+document.addEventListener("click", async e => {
+  const t = e.target.closest("[data-rv]"); if (t){ rVille = t.dataset.rv; rDelArm = false; try { localStorage.setItem("recruVille", rVille); } catch {} subscribeRapports(); renderRecrut(); return; }
+  if (e.target.id === "rvAdd"){ const nom = $("rvNewName").value.trim() || ("Ville " + (rVilles.length + 1));
+    const data = {nom, arenas:5, arena10:false, raidsJour:1, surplus:0.1, creeLe:new Date().toISOString()};
+    if (!db || !moi){ const id = "local" + Date.now(); rVilles.push({id, ...data}); rVille = id; rRapports = []; renderRecrut(); setStatus("Ville ajoutée (non enregistrée : choisis ta fiche)"); return; }
+    try { const ref = await db.collection(rvPath()).add(data); rVille = ref.id; try { localStorage.setItem("recruVille", rVille); } catch {} $("rvNewName").value = ""; subscribeRapports(); setStatus("Ville ajoutée : " + nom); }
+    catch (err){ setStatus("Ville non enregistrée : " + (err.message || err.code)); } return; }
+  if (e.target.id === "rvDel"){ if (!rDelArm){ rDelArm = true; renderRecrut(); return; }
+    rDelArm = false; const v = curVille(); if (!v) return;
+    if (db && moi && !v.id.startsWith("local")){ try { for (const x of rRapports) if (x.id) await db.doc(`${rvPath()}/${v.id}/rapports/${x.id}`).delete(); await db.doc(`${rvPath()}/${v.id}`).delete(); setStatus("Ville supprimée"); } catch (err){ setStatus("Suppression impossible : " + (err.message || err.code)); } }
+    else { rVilles = rVilles.filter(x => x.id !== v.id); }
+    rVille = ""; rRapports = []; renderRecrut(); return; }
+  const d = e.target.closest("[data-rr-del]"); if (d){ const id = d.dataset.rrDel;
+    if (db && moi && !rVille.startsWith("local")){ try { await db.doc(`${rvPath()}/${rVille}/rapports/${id}`).delete(); } catch (err){ setStatus("Suppression impossible : " + (err.message || err.code)); } }
+    else { rRapports = rRapports.filter(x => x.id !== id); renderRecrut(); } }
+});
+document.addEventListener("input", e => { const el = e.target.closest("[data-rv-k]"); if (!el) return; const v = curVille(); if (!v) return;
+  const k = el.dataset.rvK; let val = el.type === "checkbox" ? el.checked : el.value;
+  if (el.type === "number") val = val === "" ? 0 : +val; if (k === "surplus") val = val / 100;
+  v[k] = val; if (k === "nom") { $("rvTabs").querySelector(`[data-rv="${CSS.escape(v.id)}"]`).textContent = val || "Ville"; }
+  const keep = document.activeElement; renderRecrut(); if (keep && keep.isConnected) keep.focus();
+  clearTimeout(rSaveT); if (!db || !moi || v.id.startsWith("local")) return;
+  rSaveT = setTimeout(async () => { try { await db.doc(`${rvPath()}/${v.id}`).update({[k]: val}); setStatus("Ville « " + (v.nom || "") + " » enregistrée"); } catch (err){ setStatus("Ville non enregistrée : " + (err.message || err.code)); } }, 600);
+});
+document.addEventListener("submit", async e => { if (e.target.id !== "rrForm") return; e.preventDefault();
+  const f = new FormData(e.target), r = {creeLe: new Date().toISOString()};
+  for (const [k, val] of f.entries()) r[k] = k === "date" ? String(val).trim() : (val === "" ? 0 : +val);
+  if (!db || !moi || rVille.startsWith("local")){ rRapports.push({id: "local" + Date.now(), ...r}); renderRecrut(); setStatus("Rapport ajouté (non enregistré : choisis ta fiche)"); return; }
+  try { await db.collection(`${rvPath()}/${rVille}/rapports`).add(r); setStatus("Rapport enregistré"); } catch (err){ setStatus("Rapport non enregistré : " + (err.message || err.code)); } });
+function subscribeVilles(){
+  if (unsubRV) unsubRV(); unsubRV = null; if (!db || !moi){ rVilles = []; rRapports = []; renderRecrut(); return; }
+  unsubRV = db.collection(rvPath()).orderBy("creeLe").onSnapshot(s => {
+    const prev = curVille(); rVilles = s.docs.map(d => ({id: d.id, ...d.data()}));
+    if (prev && rSaveT){ const n = rVilles.find(x => x.id === prev.id); if (n) Object.assign(n, prev); } // saisie en cours : on garde la version locale
+    if (!rVilles.some(v => v.id === rVille)){ rVille = rVilles.length ? rVilles[0].id : ""; subscribeRapports(); }
+    else if (!unsubRR) subscribeRapports();
+    renderRecrut(); }, err => setStatus("Lecture des villes impossible : " + (err.message || err.code)));
+}
+function subscribeRapports(){
+  if (unsubRR) unsubRR(); unsubRR = null; rRapports = [];
+  if (!db || !moi || !rVille || rVille.startsWith("local")){ renderRecrut(); return; }
+  unsubRR = db.collection(`${rvPath()}/${rVille}/rapports`).orderBy("creeLe").onSnapshot(s => { rRapports = s.docs.map(d => ({id: d.id, ...d.data()})); renderRecrut(); },
+    err => setStatus("Lecture des rapports impossible : " + (err.message || err.code)));
+}
+
+function renderAll(){ renderCite(); renderCab(); renderDem(); renderRaidsAll(); renderSim(); renderResume(); renderRecrut(); }
 
 /* ---------- vues ---------- */
-function showView(v){ if (!["cite","castle","cabines","raids"].includes(v)) v = "cite"; document.querySelectorAll(".vbtn").forEach(b => b.setAttribute("aria-selected", String(b.dataset.view === v)));
-  ["cite","castle","cabines","raids"].forEach(k => $("view-" + k).hidden = k !== v); try { localStorage.setItem("calcView", v); } catch {}
+function showView(v){ if (!["cite","castle","cabines","raids","recrut"].includes(v)) v = "cite"; document.querySelectorAll(".vbtn").forEach(b => b.setAttribute("aria-selected", String(b.dataset.view === v)));
+  ["cite","castle","cabines","raids","recrut"].forEach(k => $("view-" + k).hidden = k !== v); try { localStorage.setItem("calcView", v); } catch {}
   if (v === "castle" && !lastBest && !solving) solve(); }
 document.querySelector(".views").addEventListener("click", e => { const b = e.target.closest("[data-view]"); if (b) showView(b.dataset.view); });
 
@@ -523,6 +655,7 @@ function renderMe(){ const sel = $("meSel"); sel.innerHTML = `<option value="">�
 $("meSel").addEventListener("change", e => { moi = e.target.value; try { localStorage.setItem("moi", moi); } catch {} subscribeFiche(); });
 function subscribeFiche(){
   if (unsubS) unsubS(); if (unsubJ) unsubJ(); unsubS = unsubJ = null;
+  subscribeVilles();
   if (!db || !moi){ journal = []; renderAll(); return; }
   let first = true;
   unsubS = db.doc(`fiches/${moi}/calculs/reglages`).onSnapshot(s => {
