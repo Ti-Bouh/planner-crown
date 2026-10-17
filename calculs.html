@@ -63,6 +63,10 @@ a{color:var(--brass)}
 .seg button{border:none;background:transparent;padding:5px 12px;border-radius:6px;font-weight:600;font-size:13px;color:var(--muted)}
 .seg button[aria-selected="true"]{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
 .neg{color:var(--off);font-weight:600}
+.glbl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:0 6px 0 8px;white-space:nowrap}
+details.avance{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+details.avance > summary{font-weight:600}
+details.avance[open] > summary{margin-bottom:8px}
 #rvTable th{white-space:normal;vertical-align:bottom;line-height:1.25}
 .drop{border:2px dashed var(--line);border-radius:10px;padding:14px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;cursor:pointer;background:var(--bg);margin-bottom:12px}
 .drop:hover,.drop.over{border-color:var(--brass);background:var(--brass-soft)}
@@ -70,8 +74,7 @@ a{color:var(--brass)}
 .field input.verif{border-color:var(--off);box-shadow:0 0 0 1px var(--off)}
 .field input.lu{border-color:var(--ref)}
 #rvTable td{padding:5px 3px}
-#rvTable input[type=number]{-moz-appearance:textfield;appearance:textfield;text-align:right}
-#rvTable input[type=number]::-webkit-inner-spin-button,#rvTable input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+#rvTable input[data-num]{text-align:right}
 .field input.calc{background:transparent;border-style:dashed;color:var(--muted)}
 .field small{font-size:11px;color:var(--muted)}
 input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--brass);outline-offset:1px}
@@ -118,7 +121,7 @@ svg.chart text{font-family:var(--f-body);font-size:11px;fill:var(--muted)}
   <header>
     <div>
       <h1>Calculs</h1>
-      <p class="sub">Castle, Cabines, Raids et Recrutement : mêmes formules que les classeurs Crown, calculées en direct. <a class="back" href="./">← Planner</a></p>
+      <p class="sub">Castle, Cabines, Raids et Recrutement : mêmes formules que les classeurs Crown, calculées en direct.</p>
     </div>
     <div class="hright">
       <div class="me"><label class="me"><span class="lbl">Je suis</span><select id="meSel"><option value="">— choisir —</option></select></label></div>
@@ -127,12 +130,14 @@ svg.chart text{font-family:var(--f-body);font-size:11px;fill:var(--muted)}
   </header>
 
   <div class="views" role="tablist" aria-label="Outils">
-    <div class="vgrp">
-      <button type="button" class="vbtn" role="tab" data-view="cite" aria-selected="true">Ma cité</button>
-      <button type="button" class="vbtn" role="tab" data-view="castle" aria-selected="false">Castle</button>
-      <button type="button" class="vbtn" role="tab" data-view="cabines" aria-selected="false">Cabines</button>
-      <button type="button" class="vbtn" role="tab" data-view="raids" aria-selected="false">Raids</button>
+    <div class="vgrp"><span class="glbl">Au quotidien</span>
       <button type="button" class="vbtn" role="tab" data-view="recrut" aria-selected="false">Recrutement</button>
+      <button type="button" class="vbtn" role="tab" data-view="raids" aria-selected="false">Raids</button>
+    </div>
+    <div class="vgrp"><span class="glbl">Préparer une cité</span>
+      <button type="button" class="vbtn" role="tab" data-view="cite" aria-selected="true">Ma cité</button>
+      <button type="button" class="vbtn" role="tab" data-view="cabines" aria-selected="false">Cabines</button>
+      <button type="button" class="vbtn" role="tab" data-view="castle" aria-selected="false">Castle</button>
     </div>
     <div class="vgrp"><a class="vbtn" href="./" style="text-decoration:none">← Planner</a></div>
   </div>
@@ -143,33 +148,26 @@ svg.chart text{font-family:var(--f-body);font-size:11px;fill:var(--muted)}
   <section class="view" id="view-cite">
     <div class="panel">
       <h2>Paramètres communs</h2>
-      <p class="note" style="margin:0 0 12px">Saisis-les une seule fois : le castle et les cabines s'en servent. Enregistrés sur ta fiche.</p>
+      <p class="note" style="margin:0 0 12px">Saisis-les une seule fois : les onglets Cabines et Castle s'en servent. Enregistrés sur ta fiche.</p>
       <div class="form">
         <label class="field"><span>Recherche Construction Speed (niveau)</span><select data-k="res"></select><small id="resBonus"></small></label>
-        <label class="field"><span>Autres bonus de vitesse (%)</span><input data-k="autresBonus" type="number" step="1" min="0"></label>
-        <label class="field"><span>Démolition des Cabines par groupes de</span><input data-k="groupes" type="number" min="1" step="1"></label>
+        <label class="field"><span>Démolition des Cabines par groupes de</span><input data-k="groupes" type="text" inputmode="decimal" data-num min="1" step="1"></label>
         <label class="field"><span>Source du fer, de la pierre et du bois</span><select id="lienSel"></select><small id="lienInfo"></small></label>
-        <label class="field"><span>Fer envoyé par jour</span><input data-k="ferJour" type="number" min="0" step="10000" placeholder="vide = sans limite"></label>
-        <label class="field"><span>Pierre envoyée par jour</span><input data-k="pierreJour" type="number" min="0" step="10000" placeholder="vide = sans limite"></label>
-        <label class="field"><span>Bois envoyé par jour</span><input data-k="boisJour" type="number" min="0" step="10000" placeholder="vide = sans limite"></label>
-        <label class="field"><span>Objectif (Vanquishers)</span><input data-k="objectif" type="number" min="1" step="1000"></label>
-        <label class="field"><span>Stockage de fer de la cité</span><input data-k="stockage" type="number" min="0" step="1000"></label>
+        <label class="field"><span>Fer envoyé par jour</span><input data-k="ferJour" type="text" inputmode="decimal" data-num min="0" step="10000" placeholder="vide = sans limite"></label>
+        <label class="field"><span>Pierre envoyée par jour</span><input data-k="pierreJour" type="text" inputmode="decimal" data-num min="0" step="10000" placeholder="vide = sans limite"></label>
+        <label class="field"><span>Bois envoyé par jour</span><input data-k="boisJour" type="text" inputmode="decimal" data-num min="0" step="10000" placeholder="vide = sans limite"></label>
       </div>
       <h3>Plan de la cité militaire</h3>
       <div class="form">
-        <label class="field"><span>Emplacements de la cité</span><input data-k="emplacements" type="number" min="1" step="1"></label>
-        <label class="field"><span>Training Arenas du plan</span><input data-k="arenas" type="number" min="0" step="1"></label>
-        <label class="field"><span>Barracks du plan</span><input data-k="barracks" type="number" min="0" step="1"></label>
+        <label class="field"><span>Emplacements de la cité</span><input data-k="emplacements" type="text" inputmode="decimal" data-num min="1" step="1"></label>
+        <label class="field"><span>Training Arenas du plan</span><input data-k="arenas" type="text" inputmode="decimal" data-num min="0" step="1"></label>
+        <label class="field"><span>Barracks du plan</span><input data-k="barracks" type="text" inputmode="decimal" data-num min="0" step="1"></label>
         <label class="field"><span>Autres bâtiments (calcul)</span><input class="calc" id="autresBat" readonly tabindex="-1"></label>
-        <label class="field"><span>Niveau actuel des Cabines</span><input data-k="cabDepart" type="number" min="0" max="10" step="1"></label>
-        <label class="field"><span>Autres constructions (h, vitesse de base)</span><input data-k="autresH" type="number" min="0" step="1"><small>Entrepôt, bâtiments divers… (modèle Cabines)</small></label>
+        <label class="field"><span>Niveau actuel des Cabines</span><input data-k="cabDepart" type="text" inputmode="decimal" data-num min="0" max="10" step="1"></label>
       </div>
-      <h3>Scénario testé</h3>
-      <div class="form">
-        <label class="field"><span>Training Arenas testées</span><input data-k="testArenas" type="number" min="0" step="1"></label>
-        <label class="field"><span>Nombre de Cabines testé</span><input data-k="testCabines" type="number" min="0" step="1"></label>
-        <label class="field"><span>Niveau des Cabines testé</span><select data-k="testNiveau"></select></label>
-      </div>
+      <details class="avance"><summary>Réglages avancés</summary><div class="form">
+        <label class="field"><span>Autres bonus de vitesse de construction (%)</span><input data-k="autresBonus" type="text" inputmode="decimal" data-num step="1" min="0"><small>Objets, événements… en plus de la recherche.</small></label>
+      </div></details>
     </div>
     <div class="grid">
       <div class="panel"><h2>Contrôles</h2><div class="ctrl" id="controles"></div></div>
@@ -182,26 +180,31 @@ svg.chart text{font-family:var(--f-body);font-size:11px;fill:var(--muted)}
     <div class="panel">
       <h2>Solveur – meilleure combinaison Arenas / Barracks / Cabines</h2>
       <div class="form">
-        <label class="field"><span>Arenas testées : de</span><input data-k="solvNaMin" type="number" min="0" step="1"></label>
-        <label class="field"><span>à</span><input data-k="solvNaMax" type="number" min="0" step="1"></label>
-        <label class="field"><span>par pas de</span><input data-k="solvNaPas" type="number" min="1" step="1"></label>
-        <label class="field"><span>Cabines par pas de</span><input data-k="solvCabPas" type="number" min="1" step="1"></label>
-        <label class="field"><span>Niveaux de Cabines</span><select data-k="solvNiv"><option value="4-10">4 à 10</option><option value="1-10">1 à 10</option><option value="6-10">6 à 10</option></select></label>
-        <label class="field"><span>Arenas</span><select data-k="solvFixe"><option value="libre">Libres (le meilleur)</option><option value="plan">Fixées au plan</option></select></label>
+        <label class="field"><span>Objectif (zerks)</span><input data-k="objectif" type="text" inputmode="decimal" data-num min="1" step="1000"></label>
+        <label class="field"><span>Fer envoyé par jour</span><input data-k="ferJour" type="text" inputmode="decimal" data-num min="0" step="10000" placeholder="vide = sans limite"><small>Même réglage que Ma cité.</small></label>
+        <label class="field"><span>Stockage de fer de la cité</span><input data-k="stockage" type="text" inputmode="decimal" data-num min="0" step="1000"></label>
       </div>
       <div class="btns" style="margin-top:12px"><button type="button" class="primary" id="solveBtn">Calculer</button><span class="status" id="solveInfo"></span></div>
       <div class="progress" id="solveProg" hidden><span></span></div>
       <div id="solveOut"></div>
+      <details class="avance"><summary>Réglages avancés</summary><div class="form">
+        <label class="field"><span>Arenas testées : de</span><input data-k="solvNaMin" type="text" inputmode="decimal" data-num min="0" step="1"></label>
+        <label class="field"><span>à</span><input data-k="solvNaMax" type="text" inputmode="decimal" data-num min="0" step="1"></label>
+        <label class="field"><span>par pas de</span><input data-k="solvNaPas" type="text" inputmode="decimal" data-num min="1" step="1"></label>
+        <label class="field"><span>Cabines par pas de</span><input data-k="solvCabPas" type="text" inputmode="decimal" data-num min="1" step="1"></label>
+        <label class="field"><span>Niveaux de Cabines</span><select data-k="solvNiv"><option value="4-10">4 à 10</option><option value="1-10">1 à 10</option><option value="6-10">6 à 10</option></select></label>
+        <label class="field"><span>Arenas</span><select data-k="solvFixe"><option value="libre">Libres (le meilleur)</option><option value="plan">Fixées au plan</option></select></label>
+      </div></details>
     </div>
     <div class="panel">
       <h2>Simulateur – une configuration</h2>
       <div class="form">
-        <label class="field"><span>Training Arenas</span><input id="simNa" type="number" min="0" step="1"></label>
+        <label class="field"><span>Training Arenas</span><input id="simNa" type="text" inputmode="decimal" data-num min="0" step="1"></label>
         <label class="field"><span>Barracks (calcul)</span><input class="calc" id="simNb" readonly tabindex="-1"></label>
-        <label class="field"><span>Cabines</span><input id="simN" type="number" min="0" step="1"></label>
+        <label class="field"><span>Cabines</span><input id="simN" type="text" inputmode="decimal" data-num min="0" step="1"></label>
         <label class="field"><span>Niveau des Cabines</span><select id="simL"></select></label>
       </div>
-      <div class="btns" style="margin-top:10px"><button type="button" class="link" id="simFromTest">Reprendre le scénario testé</button><button type="button" class="link" id="simFromBest">Reprendre la meilleure combinaison</button></div>
+      <div class="btns" style="margin-top:10px"><button type="button" class="link" id="simFromBest">Reprendre la meilleure combinaison</button></div>
       <div id="simOut"></div>
     </div>
   </section>
@@ -211,33 +214,39 @@ svg.chart text{font-family:var(--f-body);font-size:11px;fill:var(--muted)}
     <div class="panel">
       <h2>Cabines – niveau et nombre optimaux</h2>
       <p class="note" style="margin:0 0 10px">Temps pour construire toute la cité, chaque bâtiment au niveau 10 : on pose les Cabines (10 emplacements par niveau de Basilica), on les monte, on monte la Basilica au niveau 10, on construit le plan, puis on démolit les Cabines par groupes pour poser les derniers bâtiments. Les ressources ne comptent pas.</p>
+      <div id="cabOut"></div>
       <h3>Plan de la cité (bâtiments au niveau 10)</h3>
       <div class="form">
         <label class="field"><span>Basilica au départ (niveau)</span><select data-k="basDepart"></select><small id="basInfo"></small></label>
-        <label class="field"><span>Barracks</span><input data-k="barracks" type="number" min="0" step="1"></label>
-        <label class="field"><span>Training Arenas</span><input data-k="arenas" type="number" min="0" step="1"></label>
-        <label class="field"><span>Académies</span><input data-k="planAcademies" type="number" min="0" step="1"></label>
-        <label class="field"><span>Forums (marchés)</span><input data-k="planForums" type="number" min="0" step="1"></label>
-        <label class="field"><span>Entrepôts</span><input data-k="planEntrepots" type="number" min="0" step="1"></label>
-        <label class="field"><span>Tours de sorcier</span><input data-k="planTours" type="number" min="0" step="1"></label>
-        <label class="field"><span>Castle</span><input data-k="planCastles" type="number" min="0" step="1"></label>
-        <label class="field"><span>Cabines déjà au niveau</span><input data-k="cabDepart" type="number" min="0" max="10" step="1"><small>0 si aucune Cabine posée (même réglage que Ma cité).</small></label>
+        <label class="field"><span>Barracks</span><input data-k="barracks" type="text" inputmode="decimal" data-num min="0" step="1"></label>
+        <label class="field"><span>Training Arenas</span><input data-k="arenas" type="text" inputmode="decimal" data-num min="0" step="1"></label>
+        <label class="field"><span>Académies</span><input data-k="planAcademies" type="text" inputmode="decimal" data-num min="0" step="1"></label>
+        <label class="field"><span>Marchés <small>(Forum)</small></span><input data-k="planForums" type="text" inputmode="decimal" data-num min="0" step="1"></label>
+        <label class="field"><span>Entrepôts</span><input data-k="planEntrepots" type="text" inputmode="decimal" data-num min="0" step="1"></label>
+        <label class="field"><span>Tours de sorcier</span><input data-k="planTours" type="text" inputmode="decimal" data-num min="0" step="1"></label>
+        <label class="field"><span>Castle</span><input data-k="planCastles" type="text" inputmode="decimal" data-num min="0" step="1"></label>
+        <label class="field"><span>Cabines déjà au niveau</span><input data-k="cabDepart" type="text" inputmode="decimal" data-num min="0" max="10" step="1"><small>0 si aucune Cabine posée (même réglage que Ma cité).</small></label>
         <label class="field"><span>Total du plan</span><input class="calc" id="planTotal" readonly tabindex="-1"><small id="planInfo"></small></label>
       </div>
-      <h3>Choix du niveau et du nombre</h3>
+      <details class="avance"><summary>Réglages avancés</summary>
       <div class="form">
-        <label class="field"><span>Gain minimum pour monter d'un niveau (jours)</span><input data-k="seuilNiveau" type="number" min="0" step="0.1"><small>On monte d'un niveau tant que le suivant fait gagner au moins ce temps.</small></label>
-        <label class="field"><span>Écart accepté sur le nombre (jours)</span><input data-k="tolerance" type="number" min="0" step="0.1"><small>Au niveau retenu, le moins de Cabines possible à moins de ce temps du meilleur délai.</small></label>
-      </div>
-      <div id="cabOut"></div>
+        <label class="field"><span>Gain minimum pour monter d'un niveau (jours)</span><input data-k="seuilNiveau" type="text" inputmode="decimal" data-num min="0" step="0.1"><small>On monte d'un niveau tant que le suivant fait gagner au moins ce temps.</small></label>
+        <label class="field"><span>Écart accepté sur le nombre (jours)</span><input data-k="tolerance" type="text" inputmode="decimal" data-num min="0" step="0.1"><small>Au niveau retenu, le moins de Cabines possible à moins de ce temps du meilleur délai.</small></label>
+      </div></details>
     </div>
     <div class="panel">
       <h2>Démolition – plan groupe par groupe</h2>
-      <p class="note" style="margin:0 0 10px">Cabines, niveau et taille des groupes : scénario testé et paramètres de Ma cité.</p>
+      <p class="note" style="margin:0 0 10px">Combien de temps pour démolir tes Cabines et les remplacer, groupe par groupe.</p>
+      <div class="form">
+        <label class="field"><span>Nombre de Cabines à démolir</span><input data-k="testCabines" type="text" inputmode="decimal" data-num min="0" step="1"></label>
+        <label class="field"><span>Niveau des Cabines</span><select data-k="testNiveau"></select></label>
+        <label class="field"><span>Démolies par groupes de</span><input data-k="groupes" type="text" inputmode="decimal" data-num min="1" step="1"><small>Même réglage que Ma cité.</small></label>
+      </div>
+      <details class="avance"><summary>Réglages avancés</summary>
       <div class="form">
         <label class="field"><span>Remplacer par (par défaut)</span><select data-k="demRemplacer"><option>Barracks</option><option>Training Arena</option></select></label>
         <label class="field"><span>Niveau visé des remplaçants</span><select data-k="demVise"></select></label>
-      </div>
+      </div></details>
       <div id="demOut"></div>
     </div>
   </section>
@@ -249,13 +258,16 @@ svg.chart text{font-family:var(--f-body);font-size:11px;fill:var(--muted)}
       <div class="form">
         <label class="field"><span>Caverne</span><select data-k="rCave"><option>Forêt</option><option>Montagne</option><option>Colline</option></select></label>
         <label class="field"><span>Niveau</span><select data-k="rNiveau"></select></label>
-        <label class="field"><span>% de la caverne</span><input data-k="rPct" type="number" min="0" max="100" step="1"></label>
-        <label class="field"><span>Marge de transport (%)</span><input data-k="rMarge" type="number" min="50" step="1"></label>
-        <label class="field"><span>Coefficient de pertes</span><input data-k="rCoef" type="number" min="0" step="0.01"></label>
-        <label class="field"><span>Valeur de 1 or (en ressources)</span><input data-k="rValeurOr" type="number" min="0" step="0.1"></label>
-        <label class="field"><span>Rangers disponibles</span><input data-k="rDispo" type="number" min="0" step="100"></label>
-        <label class="field"><span>Triaires disponibles</span><input data-k="tDispo" type="number" min="0" step="100"></label>
+        <label class="field"><span>% de la caverne</span><input data-k="rPct" type="text" inputmode="decimal" data-num min="0" max="100" step="1"></label>
+        <label class="field"><span>Troupes d'une ville du planner</span><select id="rTroupes"></select><small>Reprend les Rangers et Triaires à la maison (import CSV).</small></label>
+        <label class="field"><span>Rangers disponibles</span><input data-k="rDispo" type="text" inputmode="decimal" data-num min="0" step="100"></label>
+        <label class="field"><span>Triaires disponibles</span><input data-k="tDispo" type="text" inputmode="decimal" data-num min="0" step="100"></label>
       </div>
+      <details class="avance"><summary>Réglages avancés</summary><div class="form">
+        <label class="field"><span>Marge de transport (%)</span><input data-k="rMarge" type="text" inputmode="decimal" data-num min="50" step="1"></label>
+        <label class="field"><span>Coefficient de pertes</span><input data-k="rCoef" type="text" inputmode="decimal" data-num min="0" step="0.01"></label>
+        <label class="field"><span>Valeur de 1 or (en ressources)</span><input data-k="rValeurOr" type="text" inputmode="decimal" data-num min="0" step="0.1"></label>
+      </div></details>
       <div id="raidOut"></div>
     </div>
     <div class="panel">
@@ -264,16 +276,16 @@ svg.chart text{font-family:var(--f-body);font-size:11px;fill:var(--muted)}
       <form id="jForm" class="form">
         <label class="field"><span>Date</span><input name="date" placeholder="17/10 20:15"></label>
         <label class="field"><span>Caverne</span><select name="type"><option>Forêt</option><option>Montagne</option><option>Colline</option></select></label>
-        <label class="field"><span>Niveau</span><input name="niveau" type="number" min="1" max="10" required></label>
+        <label class="field"><span>Niveau</span><input name="niveau" type="text" inputmode="decimal" data-num min="1" max="10" required></label>
         <label class="field"><span>Configuration</span><input name="config" placeholder="R pur, 2:1, 3:1…" required></label>
-        <label class="field"><span>Rangers envoyés / perdus</span><span class="pair"><input name="rEnv" type="number" min="0"><input name="rPerdus" type="number" min="0"></span></label>
-        <label class="field"><span>Triaires envoyés / perdus</span><span class="pair"><input name="tEnv" type="number" min="0"><input name="tPerdus" type="number" min="0"></span></label>
-        <label class="field"><span>Or ramené</span><input name="or" type="number" min="0"></label>
-        <label class="field"><span>Bois / pierre ramenés</span><span class="pair"><input name="bois" type="number" min="0"><input name="pierre" type="number" min="0"></span></label>
-        <label class="field"><span>Fer / nourriture ramenés</span><span class="pair"><input name="fer" type="number" min="0"><input name="nourriture" type="number" min="0"></span></label>
-        <label class="field"><span>Non transporté</span><input name="nonTransporte" type="number" min="0"></label>
-        <label class="field"><span>Durée aller-retour (h, facultatif)</span><input name="duree" type="number" min="0" step="0.1"></label>
-        <label class="field"><span>% du donjon avant le raid (facultatif)</span><input name="pct" type="number" min="0" max="100" step="1"></label>
+        <label class="field"><span>Rangers envoyés / perdus</span><span class="pair"><input name="rEnv" type="text" inputmode="decimal" data-num min="0"><input name="rPerdus" type="text" inputmode="decimal" data-num min="0"></span></label>
+        <label class="field"><span>Triaires envoyés / perdus</span><span class="pair"><input name="tEnv" type="text" inputmode="decimal" data-num min="0"><input name="tPerdus" type="text" inputmode="decimal" data-num min="0"></span></label>
+        <label class="field"><span>Or ramené</span><input name="or" type="text" inputmode="decimal" data-num min="0"></label>
+        <label class="field"><span>Bois / pierre ramenés</span><span class="pair"><input name="bois" type="text" inputmode="decimal" data-num min="0"><input name="pierre" type="text" inputmode="decimal" data-num min="0"></span></label>
+        <label class="field"><span>Fer / nourriture ramenés</span><span class="pair"><input name="fer" type="text" inputmode="decimal" data-num min="0"><input name="nourriture" type="text" inputmode="decimal" data-num min="0"></span></label>
+        <label class="field"><span>Non transporté</span><input name="nonTransporte" type="text" inputmode="decimal" data-num min="0"></label>
+        <label class="field"><span>Durée aller-retour (h, facultatif)</span><input name="duree" type="text" inputmode="decimal" data-num min="0" step="0.1"></label>
+        <label class="field"><span>% du donjon avant le raid (facultatif)</span><input name="pct" type="text" inputmode="decimal" data-num min="0" max="100" step="1"></label>
         <div class="field"><span>&nbsp;</span><button type="submit" class="primary">Ajouter le raid</button></div>
       </form>
       <div id="journalOut" style="margin-top:12px"></div>
@@ -283,8 +295,8 @@ svg.chart text{font-family:var(--f-body);font-size:11px;fill:var(--muted)}
       <div class="form">
         <label class="field"><span>Caverne</span><select data-k="sType"><option>Forêt</option><option>Montagne</option><option>Colline</option></select></label>
         <label class="field"><span>Niveau</span><select data-k="sNiveau"></select></label>
-        <label class="field"><span>% minimum</span><input data-k="sPctMin" type="number" min="0" max="100"></label>
-        <label class="field"><span>% maximum</span><input data-k="sPctMax" type="number" min="0" max="100"></label>
+        <label class="field"><span>% minimum</span><input data-k="sPctMin" type="text" inputmode="decimal" data-num min="0" max="100"></label>
+        <label class="field"><span>% maximum</span><input data-k="sPctMax" type="text" inputmode="decimal" data-num min="0" max="100"></label>
       </div>
       <div id="synthOut"></div>
       <p class="note">Ne compare que des raids sur la même caverne, le même niveau et des % proches : sinon, les écarts viennent du donjon, pas du ratio. Si les cavernes te limitent, regarde le profit net ; si ce sont tes troupes, le profit / armée.</p>
@@ -302,7 +314,7 @@ svg.chart text{font-family:var(--f-body);font-size:11px;fill:var(--muted)}
       <h2>Recrutement de zerks financé par les raids</h2>
       <p class="note" style="margin:0 0 12px">Chaque ville est indépendante : ses rapports ne financent que ses propres zerks. Un zerk (Vanquisher) coûte 150 de fer et s'enrôle en 200 s à la vitesse de base.</p>
       <div class="btns"><div class="seg" id="rvTabs" role="tablist" aria-label="Villes"></div>
-        <span class="btns"><input id="rvNewName" placeholder="Nom de la ville" style="font:inherit;height:32px;padding:0 9px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)"><button type="button" id="rvAdd">+ Ajouter une ville</button></span></div>
+        <span class="btns"><select id="rvNewPick" style="font:inherit;height:32px;padding:0 9px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)"></select><input id="rvNewName" placeholder="Nom de la ville" hidden style="font:inherit;height:32px;padding:0 9px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)"><button type="button" id="rvAdd">+ Ajouter une ville</button></span></div>
       <div id="rvParams" style="margin-top:14px"></div>
     </div>
     <div id="rvBody" style="display:grid;gap:16px"></div>
@@ -316,6 +328,12 @@ svg.chart text{font-family:var(--f-body);font-size:11px;fill:var(--muted)}
 (function(){
 const E = window.CrownEngine, D = window.CROWN_DATA, $ = id => document.getElementById(id);
 const nf0 = new Intl.NumberFormat("fr-FR", {maximumFractionDigits:0}), nf1 = new Intl.NumberFormat("fr-FR", {maximumFractionDigits:1, minimumFractionDigits:1}), nf2 = new Intl.NumberFormat("fr-FR", {maximumFractionDigits:2});
+// saisie des nombres : « 1 000 000 », « 1M », « 150k », « 0,5 »
+const nfIn = new Intl.NumberFormat("fr-FR", {maximumFractionDigits:3});
+function parseNum(x){ if (typeof x === "number") return x; const t = String(x == null ? "" : x).trim().replace(/[\s\u00a0\u202f']/g, "").replace(",", ".");
+  const m = t.match(/^(-?(?:\d+\.?\d*|\.\d+))([kKmM])?$/); if (!m) return NaN; return +m[1] * (m[2] ? (/k/i.test(m[2]) ? 1e3 : 1e6) : 1); }
+const pn0 = x => { const v = parseNum(x); return isNaN(v) ? 0 : v; };
+const fmtIn = v => v === "" || v == null || (typeof v === "number" && isNaN(v)) ? "" : typeof v === "number" ? nfIn.format(v) : v;
 const n0 = v => v == null || !isFinite(v) ? "—" : nf0.format(v), n1 = v => v == null || !isFinite(v) ? "—" : nf1.format(v), n2 = v => v == null || !isFinite(v) ? "—" : nf2.format(v);
 const pc = (v, d = 1) => v == null || !isFinite(v) ? "—" : (v * 100).toLocaleString("fr-FR", {maximumFractionDigits:d, minimumFractionDigits:d}) + " %";
 const jours = v => v == null ? "—" : !isFinite(v) ? "jamais" : n1(v) + " j";
@@ -343,22 +361,24 @@ opts(document.querySelector('[data-k="basDepart"]'), [1,2,3,4,5,6,7,8,9,10], v =
 const PCT_KEYS = {autresBonus:1, rPct:1, rMarge:1, sPctMin:1, sPctMax:1}; // saisis en %, stockés en fraction
 function fill(){
   document.querySelectorAll("[data-k]").forEach(el => { const k = el.dataset.k; let v = S[k];
-    if (PCT_KEYS[k] && v !== "" && v != null) v = Math.round(v * 1000) / 10; el.value = v == null ? "" : v; });
+    if (PCT_KEYS[k] && v !== "" && v != null) v = Math.round(v * 1000) / 10; el.value = v == null ? "" : ("num" in el.dataset ? fmtIn(v) : v); });
 }
 function readEl(el){
   const k = el.dataset.k; let v = el.value;
-  if (el.type === "number"){ v = v === "" ? "" : +v; if (PCT_KEYS[k] && v !== "") v = v / 100; }
+  if ("num" in el.dataset){ if (v !== ""){ v = parseNum(v); if (isNaN(v)) return false; } if (PCT_KEYS[k] && v !== "") v = v / 100; }
   else if (/^(res|testNiveau|demVise|rNiveau|sNiveau|basDepart)$/.test(k)) v = +v;
   S[k] = v;
 }
 const syncTwins = el => document.querySelectorAll(`[data-k="${el.dataset.k}"]`).forEach(o => { if (o !== el) o.value = el.value; });
-document.addEventListener("input", e => { const el = e.target.closest("[data-k]"); if (!el) return; readEl(el); syncTwins(el); changed(); });
-document.addEventListener("change", e => { const el = e.target.closest("[data-k]"); if (!el) return; readEl(el); syncTwins(el); changed(); });
+document.addEventListener("focusout", e => { const el = e.target; if (!el.matches || !el.matches("input[data-num]")) return; if (el.value === ""){ el.classList.remove("verif"); return; }
+  const v = parseNum(el.value); if (isNaN(v)){ el.classList.add("verif"); el.title = "Nombre illisible : écris par exemple 150000, 150 000, 150k ou 1,5M"; } else { el.value = fmtIn(v); el.classList.remove("verif"); el.title = ""; } });
+document.addEventListener("input", e => { const el = e.target.closest("[data-k]"); if (!el) return; if (readEl(el) === false) return; syncTwins(el); changed(); });
+document.addEventListener("change", e => { const el = e.target.closest("[data-k]"); if (!el) return; if (readEl(el) === false) return; syncTwins(el); changed(); });
 function changed(){ renderAll(); scheduleSave();
   if (lastBest){ $("solveInfo").innerHTML = '<span class="warn">Paramètres modifiés : clique sur « Calculer » pour mettre le Solveur à jour.</span>'; } }
 
 /* ---------- dérivés ---------- */
-const num = (v, d) => v === "" || v == null || isNaN(+v) ? d : +v;
+const num = (v, d) => { if (v === "" || v == null) return d; const x = parseNum(v); return isNaN(x) ? d : x; };
 const bonusVitesse = () => D.castle.RES[S.res] + num(S.autresBonus, 0);
 const mil = () => num(S.arenas, 0) + num(S.barracks, 0);
 const ferJ = () => S.ferJour === "" || S.ferJour == null ? Infinity : +S.ferJour;
@@ -372,11 +392,6 @@ function renderCite(){
   const c = [];
   c.push(aut >= 0 ? ["ok", "OK", "Plan : " + n0(S.arenas) + " Arenas + " + n0(S.barracks) + " Barracks = " + mil() + " emplacements militaires, " + aut + " pour d'autres bâtiments."]
                   : ["warn", "⚠", "Le plan dépasse la cité de " + (-aut) + " emplacements."]);
-  const nbTest = mil() - num(S.testArenas, 0);
-  c.push(num(S.testCabines, 0) <= nbTest ? ["ok", "OK", "Scénario testé : " + S.testCabines + " Cabines pour " + nbTest + " Barracks (castle)."]
-                                         : ["warn", "⚠", "Scénario testé : " + S.testCabines + " Cabines mais seulement " + nbTest + " Barracks ; le castle plafonne les Cabines."]);
-  c.push(num(S.testCabines, 0) <= num(S.barracks, 0) ? ["ok", "OK", "Cabines testées ≤ Barracks du plan."]
-                                                      : ["info", "ℹ", (S.testCabines - S.barracks) + " Cabines sur des emplacements d'Arenas (le modèle Cabines le permet)."]);
   if (S.ferJour === "" ) c.push(["info", "ℹ", "Fer sans limite : le castle n'est limité que par la construction et le recrutement."]);
   $("controles").innerHTML = c.map(([cl, t, m]) => `<div><span class="${cl}">${t}</span><span>${esc(m)}</span></div>`).join("");
 }
@@ -420,7 +435,6 @@ async function solve(){
 $("solveBtn").addEventListener("click", solve);
 $("solveOut").addEventListener("click", e => { const b = e.target.closest("[data-sim]"); if (!b) return; const [na, n, l] = b.dataset.sim.split(",").map(Number); setSim(na, n, l); $("simOut").scrollIntoView({behavior:"smooth", block:"start"}); });
 function setSim(na, n, l){ $("simNa").value = na; $("simN").value = n; $("simL").value = l; renderSim(); }
-$("simFromTest").addEventListener("click", () => setSim(S.testArenas, S.testCabines, S.testNiveau));
 $("simFromBest").addEventListener("click", () => { if (lastBest) setSim(lastBest.na, lastBest.n, lastBest.l); else solve(); });
 ["simNa", "simN", "simL"].forEach(id => $(id).addEventListener("input", renderSim));
 function renderSim(){
@@ -437,7 +451,7 @@ function renderSim(){
       <div><span class="lbl">Objectif atteint en</span><b>${ok ? n1(r.days) + " <small>jours</small>" : "—"}</b></div>
       <div><span class="lbl">Construction terminée</span><b>${n1(r.end)} <small>jours</small></b></div>
       <div><span class="lbl">Capacité finale</span><b>${n0(r.cap)}</b></div>
-      <div><span class="lbl">Vanquishers à la fin de la construction</span><b>${n0(r.trEnd)}</b></div>
+      <div><span class="lbl">Zerks à la fin de la construction</span><b>${n0(r.trEnd)}</b></div>
       <div><span class="lbl">Premier recrutement</span><b>${r.first == null ? "—" : n1(r.first) + " <small>j</small>"}</b></div>
       <div><span class="lbl">Enrôlement final</span><b>${n0(r.rate)} <small>/ jour</small></b></div>
       <div><span class="lbl">Fer nécessaire</span><b>${n0(r.iron)}</b></div>
@@ -453,8 +467,8 @@ function chart(pts, goal){
   const x = v => L + (W - L - R) * v / xm, y = v => T + (H - T - B) * (1 - v / ym);
   const line = i => pts.map((p, k) => (k ? "L" : "M") + x(p[0]).toFixed(1) + " " + y(p[i]).toFixed(1)).join(" ");
   const ticks = [0, .25, .5, .75, 1].map(f => f * ym);
-  return `<div style="margin-top:12px"><span class="note"><span class="sw" style="background:var(--brass)"></span>Vanquishers <span class="sw" style="background:var(--def);margin-left:12px"></span>Capacité <span class="sw" style="background:var(--off);margin-left:12px"></span>Objectif</span>
-   <svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Vanquishers et capacité au fil des jours">
+  return `<div style="margin-top:12px"><span class="note"><span class="sw" style="background:var(--brass)"></span>Zerks <span class="sw" style="background:var(--def);margin-left:12px"></span>Capacité <span class="sw" style="background:var(--off);margin-left:12px"></span>Objectif</span>
+   <svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Zerks et capacité au fil des jours">
    ${ticks.map(t => `<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)"/><text x="${L - 6}" y="${y(t) + 4}" text-anchor="end">${n0(t / 1000)} k</text>`).join("")}
    ${[0, .25, .5, .75, 1].map(f => `<text x="${x(f * xm)}" y="${H - 10}" text-anchor="middle">${n1(f * xm)} j</text>`).join("")}
    <line x1="${L}" x2="${W - R}" y1="${y(goal)}" y2="${y(goal)}" stroke="var(--off)" stroke-dasharray="4 4"/>
@@ -500,7 +514,7 @@ function renderCab(){
 }
 function renderDem(){
   const p = { n: num(S.testCabines, 0), niveau: num(S.testNiveau, 8), groupe: Math.max(1, num(S.groupes, 1)), bonus: bonusVitesse(), remplacer: S.demRemplacer, vise: num(S.demVise, 10), overrides: S.demTypes || {} };
-  if (!p.n){ $("demOut").innerHTML = `<p class="note">Indique un nombre de Cabines dans le scénario testé (Ma cité).</p>`; return; }
+  if (!p.n){ $("demOut").innerHTML = `<p class="note">Indique le nombre de Cabines à démolir.</p>`; return; }
   const d = E.cabDemolition(p);
   $("demOut").innerHTML = `<div class="kpis" style="margin-top:12px"><div><span class="lbl">Groupes</span><b>${d.groups.length}</b></div><div><span class="lbl">Démolition</span><b>${n2(d.totalDemolition)} <small>j</small></b></div>
     <div><span class="lbl">Reconstruction</span><b>${n2(d.totalReconstruction)} <small>j</small></b></div><div><span class="lbl">Temps total</span><b>${n2(d.total)} <small>jours</small></b></div>
@@ -548,14 +562,14 @@ $("journalOut").addEventListener("click", async e => { const b = e.target.closes
   try { await db.doc(`fiches/${moi}/raids/${b.dataset.del}`).delete(); setStatus("Raid supprimé"); } catch (err){ setStatus("Suppression impossible : " + (err.message || err.code)); } });
 async function addRaid(r){
   const us0 = unites(); const data = {bonusR: us0[0].bonus, bonusT: us0[1].bonus, ...r, creeLe: new Date().toISOString()};
-  for (const k of ["niveau","rEnv","rPerdus","tEnv","tPerdus","or","bois","pierre","fer","nourriture","nonTransporte","duree"]) data[k] = data[k] === "" || data[k] == null ? (k === "duree" ? "" : 0) : +data[k];
+  for (const k of ["niveau","rEnv","rPerdus","tEnv","tPerdus","or","bois","pierre","fer","nourriture","nonTransporte","duree"]) data[k] = data[k] === "" || data[k] == null ? (k === "duree" ? "" : 0) : pn0(data[k]);
   if (data.pct !== "" && data.pct != null && data.pct > 1) data.pct = data.pct / 100;
   if (data.pct == null) data.pct = "";
   if (!db || !moi){ journal.push(data); renderRaidsAll(); setStatus("Raid ajouté (non enregistré : choisis ta fiche)"); return; }
   try { await db.collection(`fiches/${moi}/raids`).add(data); setStatus("Raid enregistré"); } catch (err){ setStatus("Raid non enregistré : " + (err.message || err.code)); }
 }
 $("jForm").addEventListener("submit", async e => { e.preventDefault(); const f = new FormData(e.target), r = {};
-  for (const [k, v] of f.entries()) r[k] = v.trim ? v.trim() : v; if (r.pct !== "") r.pct = +r.pct / 100; else r.pct = "";
+  for (const [k, v] of f.entries()) r[k] = v.trim ? v.trim() : v; if (r.pct !== "") r.pct = pn0(r.pct) / 100; else r.pct = "";
   await addRaid(r); e.target.reset(); e.target.querySelector('[name="type"]').value = S.rCave; });
 function renderSynth(){
   const us = E.unitStats(unites(), num(S.rValeurOr, 1));
@@ -567,10 +581,10 @@ function renderSynth(){
 function renderUnits(){
   const us = E.unitStats(unites(), num(S.rValeurOr, 1));
   $("unitsOut").innerHTML = `<table class="t"><thead><tr><th>Unité</th><th class="l">Type d'attaque</th><th>Coût bois / fer / or</th><th>Attaque</th><th>Bonus recherche (%)</th><th>Attaque effective</th><th>Transport</th><th>Places</th><th>Coût valorisé</th></tr></thead><tbody>
-    ${us.map(u => `<tr><td>${esc(u.nom)}</td><td class="l">${esc(u.type)}</td><td>${n0(u.bois)} / ${n0(u.fer)} / ${n0(u.or)}</td><td>${u.att}</td><td><input type="number" step="0.5" min="0" data-ub="${esc(u.nom)}" value="${Math.round((u.bonus || 0) * 1000) / 10}"></td><td>${n1(u.attEff)}</td><td>${u.transport}</td><td>${u.places}</td><td>${n0(u.cout)}</td></tr>`).join("")}</tbody></table>
+    ${us.map(u => `<tr><td>${esc(u.nom)}</td><td class="l">${esc(u.type)}</td><td>${n0(u.bois)} / ${n0(u.fer)} / ${n0(u.or)}</td><td>${u.att}</td><td><input type="text" inputmode="decimal" data-num step="0.5" min="0" data-ub="${esc(u.nom)}" value="${Math.round((u.bonus || 0) * 1000) / 10}"></td><td>${n1(u.attEff)}</td><td>${u.transport}</td><td>${u.places}</td><td>${n0(u.cout)}</td></tr>`).join("")}</tbody></table>
     <p class="note">« Zerk » = Vanquisher. Sources : fiches d'unités du jeu ; transport et places : script COTG Raiding Helper.</p>`;
 }
-$("unitsOut").addEventListener("change", e => { const i = e.target.closest("[data-ub]"); if (!i) return; S.bonusUnites = {...(S.bonusUnites || {}), [i.dataset.ub]: (+i.value || 0) / 100}; renderRaidsAll(); renderUnits(); scheduleSave(); });
+$("unitsOut").addEventListener("change", e => { const i = e.target.closest("[data-ub]"); if (!i) return; S.bonusUnites = {...(S.bonusUnites || {}), [i.dataset.ub]: pn0(i.value) / 100}; renderRaidsAll(); renderUnits(); scheduleSave(); });
 function renderRaidsAll(){ renderRaid(); renderJournal(); renderSynth(); }
 
 
@@ -584,16 +598,17 @@ const focusIn = sel => { const a = document.activeElement; return a && a.closest
 const RR_COLS = [["trajet","Trajet aller","text"],["fer","Fer","number"],["bois","Bois","number"],["pierre","Pierre","number"],["nourriture","Nourriture","number"],["or","Or","number"],["dFer","Pertes fer","number"],["dBois","Pertes bois","number"],["dOr","Pertes or","number"]];
 const rrVal = (x, k) => x[k] !== undefined && x[k] !== "" ? x[k] : k === "dFer" ? (+x.tPerdus || 0) * 140 : k === "dBois" ? (+x.rPerdus || 0) * 160 : k === "dOr" ? (+x.tPerdus || 0) * 40 : (x[k] ?? "");
 function renderRecrut(){
-  $("rvTabs").innerHTML = rVilles.length ? rVilles.map(v => `<button type="button" role="tab" data-rv="${esc(v.id)}" aria-selected="${v.id === rVille}">${esc(v.nom || "Ville")}</button>`).join("")
+  $("rvTabs").innerHTML = rVilles.length ? rVilles.map(v => `<button type="button" role="tab" data-rv="${esc(v.id)}" aria-selected="${v.id === rVille}">${esc(v.nom || "Ville")}${v.coords ? ` <small style="font-weight:500;color:var(--muted)">${esc(v.coords)}</small>` : ""}</button>`).join("")
                                           : `<span class="note" style="margin:0;padding:5px 8px">Aucune ville : ajoute la première.</span>`;
   const v = curVille();
   if (!v){ $("rvParams").innerHTML = ""; $("rvBody").innerHTML = ""; return; }
   if (!focusIn("#rvParams")) $("rvParams").innerHTML = `<div class="form">
+      <label class="field"><span>Ville du planner</span><select data-rv-k="villeId"><option value="">— aucune —</option>${pVilles.map(c => `<option value="${esc(c.id)}" ${c.id === v.villeId ? "selected" : ""}>${esc(c.name)} (${c.x}:${c.y})</option>`).join("")}</select><small>${troupesTxt(pVilles.find(c => c.id === v.villeId))}</small></label>
       <label class="field"><span>Nom de la ville</span><input data-rv-k="nom" value="${esc(v.nom || "")}"></label>
-      <label class="field"><span>Training Arenas posées</span><input data-rv-k="arenas" type="number" min="0" step="1" value="${esc(v.arenas ?? 5)}"></label>
+      <label class="field"><span>Training Arenas posées</span><input data-rv-k="arenas" type="text" inputmode="decimal" data-num min="0" step="1" value="${esc(v.arenas ?? 5)}"></label>
       <label class="field"><span>Arena niveau 10</span><span class="chk"><input data-rv-k="arena10" type="checkbox" ${v.arena10 ? "checked" : ""}> 1 Arena au niveau 10</span></label>
       <label class="field"><span>Pierre et bois</span><span class="chk"><input data-rv-k="chantier" type="checkbox" ${v.chantier ? "checked" : ""}> Chantier en cours : gardés pour construire</span></label>
-      <label class="field"><span>Surplus de fer gardé pour le raffinage (%)</span><input data-rv-k="surplus" type="number" min="0" max="100" step="1" value="${esc(Math.round((v.surplus ?? 0.1) * 1000) / 10)}"></label>
+      <label class="field"><span>Surplus de fer gardé pour le raffinage (%)</span><input data-rv-k="surplus" type="text" inputmode="decimal" data-num min="0" max="100" step="1" value="${esc(Math.round((v.surplus ?? 0.1) * 1000) / 10)}"></label>
       <div class="field"><span>&nbsp;</span><button type="button" class="${rDelArm ? "danger primary" : "danger"}" id="rvDel">${rDelArm ? "Confirmer la suppression" : "Supprimer cette ville"}</button></div></div>`;
   if (!$("rvRes")) $("rvBody").innerHTML = `<div id="rvRes" style="display:grid;gap:16px"></div><div class="panel" id="rvRaids"></div>`;
   renderRecrutRes();
@@ -645,28 +660,32 @@ function renderRecrutRaids(){
       <label class="field"><span>Nom du raid (facultatif)</span><input name="date" placeholder="Mountain Level 8 (351:330)"></label>
       <label class="field"><span>Armée</span><select name="armee"><option value="rt">Rangers / Triaires</option><option value="zerks">Zerks</option></select></label>
       <label class="field"><span>Trajet aller (h:mm:ss)</span><input name="trajet" placeholder="02:45:30"></label>
-      <label class="field"><span>Fer ramené</span><input name="fer" type="number" min="0" required></label>
-      <label class="field"><span>Bois ramené</span><input name="bois" type="number" min="0"></label>
-      <label class="field"><span>Pierre ramenée</span><input name="pierre" type="number" min="0"></label>
-      <label class="field"><span>Nourriture ramenée</span><input name="nourriture" type="number" min="0"></label>
-      <label class="field"><span>Or ramené</span><input name="or" type="number" min="0"></label>
-      <label class="field"><span>Pertes en fer (Expended)</span><input name="dFer" type="number" min="0"></label>
-      <label class="field"><span>Pertes en bois (Expended)</span><input name="dBois" type="number" min="0"></label>
-      <label class="field"><span>Pertes en or (Expended)</span><input name="dOr" type="number" min="0"></label>
-      <input type="hidden" name="dPierre"><input type="hidden" name="dNourriture">
+      <label class="field"><span>Fer ramené</span><input name="fer" type="text" inputmode="decimal" data-num min="0" required></label>
+      <label class="field"><span>Bois ramené</span><input name="bois" type="text" inputmode="decimal" data-num min="0"></label>
+      <label class="field"><span>Pierre ramenée</span><input name="pierre" type="text" inputmode="decimal" data-num min="0"></label>
+      <label class="field"><span>Nourriture ramenée</span><input name="nourriture" type="text" inputmode="decimal" data-num min="0"></label>
+      <label class="field"><span>Or ramené</span><input name="or" type="text" inputmode="decimal" data-num min="0"></label>
+      <label class="field"><span>Pertes en fer (Expended)</span><input name="dFer" type="text" inputmode="decimal" data-num min="0"></label>
+      <label class="field"><span>Pertes en bois (Expended)</span><input name="dBois" type="text" inputmode="decimal" data-num min="0"></label>
+      <label class="field"><span>Pertes en or (Expended)</span><input name="dOr" type="text" inputmode="decimal" data-num min="0"></label>
+      <label class="field" data-rt-only><span>Rangers envoyés</span><input name="rEnv" type="text" inputmode="decimal" data-num min="0"><small>Pour le Journal des raids.</small></label>
+      <label class="field" data-rt-only><span>Triaires envoyés</span><input name="tEnv" type="text" inputmode="decimal" data-num min="0"><small>Pour le Journal des raids.</small></label>
+      <input type="hidden" name="dPierre"><input type="hidden" name="dNourriture"><input type="hidden" name="caverne"><input type="hidden" name="niveauCav"><input type="hidden" name="rapportDate"><input type="hidden" name="nonTransporte">
       <div class="btns" style="grid-column:1/-1;margin-top:4px"><button type="submit" class="primary">Ajouter le raid</button><span id="rrMajBox" hidden><button type="button" id="rrMaj">Remplacer les chiffres</button></span></div>
     </form>
     ${rRapports.length ? `<div class="scroll" style="margin-top:12px"><table class="t" id="rvTable"><thead><tr><th class="l">Raid</th><th class="l">Armée</th>${RR_COLS.map(c => `<th>${c[1]}</th>`).join("")}<th>Aller-retour</th><th>Raids / jour</th><th>Fer net / h</th><th>Zerks par raid</th><th></th></tr></thead><tbody>
       ${rRapports.map(x => `<tr data-row="${esc(x.id)}"><td class="l"><input data-rr-id="${esc(x.id)}" data-rr-k="date" value="${esc(x.date || "")}" style="width:138px;min-width:0" title="${esc(x.date || "")}"></td>
         <td class="l"><select data-rr-id="${esc(x.id)}" data-rr-k="armee" style="width:auto;min-width:0"><option value="rt" ${x.armee !== "zerks" ? "selected" : ""}>R / T</option><option value="zerks" ${x.armee === "zerks" ? "selected" : ""}>Zerks</option></select></td>
-        ${RR_COLS.map(([k, , t]) => `<td><input data-rr-id="${esc(x.id)}" data-rr-k="${k}" ${t === "number" ? 'type="number" min="0"' : 'placeholder="h:mm:ss"'} value="${esc(rrVal(x, k))}" style="width:${k === "trajet" ? 70 : 66}px;min-width:0"></td>`).join("")}
+        ${RR_COLS.map(([k, , t]) => `<td><input data-rr-id="${esc(x.id)}" data-rr-k="${k}" ${t === "number" ? 'type="text" inputmode="decimal" data-num' : 'placeholder="h:mm:ss"'} value="${esc(t === "number" ? fmtIn(rrVal(x, k) === "" ? "" : +rrVal(x, k)) : rrVal(x, k))}" style="width:${k === "trajet" ? 70 : 66}px;min-width:0"></td>`).join("")}
         <td class="c-cycle"></td><td class="c-rj"></td><td class="c-fh"></td><td class="c-z"></td><td><button type="button" class="link danger" data-rr-del="${esc(x.id)}">Supprimer</button></td></tr>`).join("")}
       </tbody></table></div>` : ""}`;
+  if (capMem) capMsg(capMem[0], capMem[1]);
   renderRecrutRes();
 }
 document.addEventListener("click", async e => {
   const t = e.target.closest("[data-rv]"); if (t){ rVille = t.dataset.rv; rDelArm = false; try { localStorage.setItem("recruVille", rVille); } catch {} $("rvBody").innerHTML = ""; subscribeRapports(); renderRecrut(); return; }
-  if (e.target.id === "rvAdd"){ await addVille($("rvNewName").value.trim()); return; }
+  if (e.target.id === "rvAdd"){ const pick = $("rvNewPick").value, c = pVilles.find(x => x.id === pick);
+    if (c) await addVille(c.name, {villeId: c.id, coords: c.x + ":" + c.y}); else await addVille($("rvNewName").value.trim()); return; }
   if (e.target.id === "rvDel"){ if (!rDelArm){ rDelArm = true; $("rvParams").innerHTML = ""; renderRecrut(); return; }
     rDelArm = false; const v = curVille(); if (!v) return;
     if (!isLocal(v.id)){ try { for (const x of rRapports) await db.doc(`${rvPath()}/${v.id}/rapports/${x.id}`).delete(); await db.doc(`${rvPath()}/${v.id}`).delete(); setStatus("Ville supprimée"); } catch (err){ setStatus("Suppression impossible : " + (err.message || err.code)); } }
@@ -679,7 +698,8 @@ document.addEventListener("click", async e => {
 document.addEventListener("input", e => {
   const c = e.target.closest("[data-rr-id]");
   if (c){ const x = rRapports.find(r => r.id === c.dataset.rrId); if (!x) return; const k = c.dataset.rrK;
-    const val = c.type === "number" ? (c.value === "" ? 0 : +c.value) : c.value.trim(); x[k] = val;
+    if ("num" in c.dataset && c.value !== "" && isNaN(parseNum(c.value))) return;
+    const val = "num" in c.dataset ? (c.value === "" ? 0 : pn0(c.value)) : c.value.trim(); x[k] = val;
     setTimeout(applyLien, 0);
     if (/^d(Fer|Bois|Or)$/.test(k)) ["dFer","dBois","dOr"].forEach(q => { if (x[q] === undefined || x[q] === "") x[q] = +rrVal(x, q) || 0; }); // passage aux pertes « Expended »
     renderRecrutRes();
@@ -688,23 +708,42 @@ document.addEventListener("input", e => {
       catch (err){ setStatus("Raid non enregistré : " + (err.message || err.code)); } }, 600); return; }
   const el = e.target.closest("[data-rv-k]"); if (!el) return; const v = curVille(); if (!v) return;
   const k = el.dataset.rvK; let val = el.type === "checkbox" ? el.checked : el.value;
-  if (el.type === "number") val = val === "" ? 0 : +val; if (k === "surplus") val = val / 100;
+  if ("num" in el.dataset){ if (val !== "" && isNaN(parseNum(val))) return; val = val === "" ? 0 : pn0(val); } if (k === "surplus") val = val / 100;
   v[k] = val; if (k === "nom"){ const b = $("rvTabs").querySelector(`[data-rv="${CSS.escape(v.id)}"]`); if (b) b.textContent = val || "Ville"; }
+  if (k === "villeId"){ const c = pVilles.find(x => x.id === val); if (c){ v.nom = c.name; v.coords = c.x + ":" + c.y; } else v.coords = "";
+    $("rvParams").innerHTML = ""; renderRecrut(); saveVilleChamps(v, {villeId: val, nom: v.nom, coords: v.coords}); return; }
   renderRecrutRes(); clearTimeout(rSaveT); if (isLocal(v.id)) return;
   rSaveT = setTimeout(async () => { rSaveT = null; try { await db.doc(`${rvPath()}/${v.id}`).update({[k]: val}); setStatus("Ville « " + (v.nom || "") + " » enregistrée"); } catch (err){ setStatus("Ville non enregistrée : " + (err.message || err.code)); } }, 600);
 });
 document.addEventListener("submit", async e => { if (e.target.id !== "rrForm") return; e.preventDefault();
   const f = new FormData(e.target), r = {creeLe: new Date().toISOString()};
-  for (const [k, val] of f.entries()) r[k] = (k === "date" || k === "trajet") ? String(val).trim() : (val === "" ? 0 : +val);
+  for (const [k, val] of f.entries()) r[k] = RR_TEXTE.has(k) ? String(val).trim() : (val === "" ? 0 : pn0(val));
   r.armee = String(f.get("armee") || "rt");
   if (E.heures(r.trajet) == null){ const tr = e.target.querySelector('[name="trajet"]'); tr.classList.add("verif"); tr.focus();
     capMsg(`<span class="warn">⏱ ${r.trajet ? "Trajet illisible" : "Il me manque le temps de trajet aller"}</span> : écris-le en h:mm:ss (par exemple 02:45:30) pour que je calcule le fer à l'heure.`, "warn"); return; }
-  if (isLocal(rVille)){ rRapports.push({id: "local" + Date.now(), ...r}); renderRecrutRaids(); setStatus("Raid ajouté (non enregistré : choisis ta fiche)"); return; }
-  try { await db.collection(`${rvPath()}/${rVille}/rapports`).add(r); setStatus("Raid enregistré"); } catch (err){ setStatus("Raid non enregistré : " + (err.message || err.code)); } });
+  const jr = await versJournal(r);
+  if (isLocal(rVille)){ rRapports.push({id: "local" + Date.now(), ...r}); renderRecrutRaids(); setStatus("Raid ajouté (non enregistré : choisis ta fiche)"); capMsg(jr); return; }
+  try { await db.collection(`${rvPath()}/${rVille}/rapports`).add(r); setStatus("Raid enregistré"); capMsg(`<span class="ok">Raid ajouté au Recrutement.</span> ` + jr); } catch (err){ setStatus("Raid non enregistré : " + (err.message || err.code)); } });
 
-async function addVille(nomSaisi){
+// Un rapport alimente aussi le Journal des raids (onglet Raids) : armées Rangers / Triaires uniquement
+const RR_TEXTE = new Set(["date", "trajet", "armee", "caverne", "rapportDate"]);
+async function versJournal(r){
+  if (r.armee === "zerks") return `<span class="note">Raid de zerks : pas inscrit au Journal des raids, qui compare les mélanges Rangers / Triaires.</span>`;
+  const rEnv = +r.rEnv || 0, tEnv = +r.tEnv || 0;
+  if (!rEnv && !tEnv) return `<span class="warn">Journal des raids : indique les Rangers / Triaires envoyés pour l'y inscrire aussi.</span>`;
+  const q = tEnv ? rEnv / tEnv : 0, cfg = !tEnv ? "R pur" : q >= 1.75 ? Math.round(q) + ":1" : q >= 1.25 ? "1,5:1" : "1:1";
+  const h = E.heures(r.trajet);
+  const j = { date: r.rapportDate || r.date || new Date().toLocaleString("fr-FR"), type: r.caverne || "", niveau: +r.niveauCav || "", config: cfg,
+    rEnv, rPerdus: Math.round((+r.dBois || 0) / 160), tEnv, tPerdus: Math.round((+r.dFer || 0) / 140),
+    or: +r.or || 0, bois: +r.bois || 0, pierre: +r.pierre || 0, fer: +r.fer || 0, nourriture: +r.nourriture || 0, nonTransporte: +r.nonTransporte || 0,
+    duree: h ? 2 * h : "", pct: "" };
+  await addRaid(j);
+  return `<span class="ok">Inscrit aussi au Journal des raids</span> (${esc(j.type || "caverne ?")} ${j.niveau || ""}, ${esc(cfg)}, ${n0(j.rPerdus)} Rangers et ${n0(j.tPerdus)} Triaires perdus).` + (j.type ? "" : ` <span class="warn">Caverne inconnue : complète-la dans le journal.</span>`);
+}
+
+async function addVille(nomSaisi, extra){
   const nom = nomSaisi || ("Ville " + (rVilles.length + 1));
-  const data = {nom, arenas:5, arena10:false, surplus:0.1, creeLe:new Date().toISOString()};
+  const data = {nom, arenas:5, arena10:false, surplus:0.1, creeLe:new Date().toISOString(), ...(extra || {})};
   if (!db || !moi){ const id = "local" + Date.now(); rVilles.push({id, ...data}); rVille = id; rRapports = []; $("rvBody").innerHTML = ""; renderRecrut(); setStatus("Ville ajoutée (non enregistrée : choisis ta fiche)"); return id; }
   try { const ref = await db.collection(rvPath()).add(data); rVille = ref.id; try { localStorage.setItem("recruVille", rVille); } catch {} $("rvNewName").value = "";
     if (!rVilles.some(v => v.id === ref.id)) rVilles.push({id: ref.id, ...data}); $("rvBody").innerHTML = ""; subscribeRapports(); renderRecrut(); setStatus("Ville ajoutée : " + nom); return ref.id; }
@@ -721,7 +760,8 @@ async function getWorker(msg){
   const o = { langPath: TESS.langPath }; if (TESS.workerPath) o.workerPath = TESS.workerPath; if (TESS.corePath) o.corePath = TESS.corePath;
   tessWorker = await Tesseract.createWorker("eng", 1, o); return tessWorker;
 }
-function capMsg(html, cls){ const m = $("rrCapMsg"); if (!m) return; m.hidden = false; m.className = "note " + (cls || ""); m.innerHTML = html; }
+let capMem = null;
+function capMsg(html, cls){ capMem = [html, cls]; const m = $("rrCapMsg"); if (!m) return; m.hidden = false; m.className = "note " + (cls || ""); m.innerHTML = html; }
 async function prepImage(file){
   const url = URL.createObjectURL(file);
   try { const img = await new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ko(new Error("image illisible")); i.src = url; });
@@ -734,14 +774,21 @@ async function lireCapture(file){
   if (!file || !/^image\//.test(file.type)){ capMsg("Ce fichier n'est pas une image.", "warn"); return; }
   try {
     const w = await getWorker(t => capMsg(t)); capMsg("Lecture de la capture…");
-    const { data } = await w.recognize(await prepImage(file)); const r = E.lireRapport(data.text);
+    // 1re lecture sur l'image telle quelle ; 2e lecture agrandie si les contrôles échouent ; les troupes envoyées sont prises là où elles sont lisibles
+    let { data } = await w.recognize(file), r = E.lireRapport(data.text); window.__dernierTexteLu = data.text;
+    if (!r.fiable){ capMsg("Seconde lecture, image agrandie…"); const d2 = (await w.recognize(await prepImage(file))).data, r2 = E.lireRapport(d2.text);
+      if (r2.fiable || r2.manquant.length < r.manquant.length){ if (!r2.envoyes.length && r.envoyes.length) r2.envoyes = r.envoyes; r = r2; window.__dernierTexteLu = d2.text; } }
     if (r.manquant.length){ capMsg("Je n'ai pas trouvé les lignes " + r.manquant.map(k => ({ramene:"« Carried »", depense:"« Expended »", profit:"« Profit »"})[k]).join(", ") + " : vérifie que la capture montre tout le tableau « Resource Overview ».", "warn"); return; }
-    const f = $("rrForm"), set = (n, v) => { const el = f.querySelector(`[name="${n}"]`); if (el){ el.value = v; el.classList.remove("verif"); el.classList.add("lu"); } };
+    const f = $("rrForm"), set = (n, v) => { const el = f.querySelector(`[name="${n}"]`); if (el){ el.value = "num" in el.dataset ? fmtIn(v) : v; el.classList.remove("verif"); el.classList.add("lu"); } };
     if (r.sujet) set("date", r.sujet);
     ["fer","bois","pierre","nourriture","or"].forEach(k => set(k, r.ramene[k]));
     set("dFer", r.depense.fer); set("dBois", r.depense.bois); set("dOr", r.depense.or); set("dPierre", r.depense.pierre); set("dNourriture", r.depense.nourriture);
+    set("caverne", r.caverne || ""); set("niveauCav", r.niveau || ""); set("rapportDate", r.date || ""); set("nonTransporte", r.nonTransporte || 0);
+    const ev = r.envoyes || []; let rE = "", tE = "";
+    if (ev.length >= 2){ rE = ev[0]; tE = ev[1]; } else if (ev.length === 1){ if (r.depense.bois > 0 || !r.depense.fer) rE = ev[0]; else tE = ev[0]; }
+    set("rEnv", rE); set("tEnv", tE); ["rEnv","tEnv"].forEach(n => { const el = f.querySelector(`[name="${n}"]`); if (el && el.value === ""){ el.classList.remove("lu"); } });
     const zerks = r.depense.fer > 0 && !r.depense.bois && !r.depense.or && r.depense.fer % 150 === 0;
-    f.querySelector('[name="armee"]').value = zerks ? "zerks" : "rt";
+    f.querySelector('[name="armee"]').value = zerks ? "zerks" : "rt"; f.querySelectorAll("[data-rt-only]").forEach(x => x.hidden = zerks);
     const NOMS = {or:"or", bois:"bois", pierre:"pierre", fer:"fer", nourriture:"nourriture", total:"totaux", pertes:"total des pertes"};
     r.douteux.forEach(k => { [k, "d" + k[0].toUpperCase() + k.slice(1)].forEach(n => { const el = f.querySelector(`[name="${n}"]`); if (el){ el.classList.remove("lu"); el.classList.add("verif"); } }); });
     rrLu = r; const ex = rRapports.find(x => (x.date || "").trim() && (x.date || "").trim() === r.sujet);
@@ -763,12 +810,23 @@ document.addEventListener("drop", e => { const d = e.target.closest && e.target.
 document.addEventListener("paste", async e => { const it = [...(e.clipboardData || {}).items || []].find(i => i.type && i.type.startsWith("image/")); if (!it) return; e.preventDefault();
   const file = it.getAsFile(); if ($("view-recrut").hidden) showView("recrut"); if (!curVille()) await addVille("Ma ville"); if (!$("rrForm")) renderRecrut(); lireCapture(file); });
 document.addEventListener("click", async e => { if (e.target.id !== "rrMaj") return; const id = e.target.dataset.id, x = rRapports.find(r => r.id === id); if (!x || !rrLu) return;
-  const f = $("rrForm"), g = n => { const v = f.querySelector(`[name="${n}"]`).value; return v === "" ? 0 : +v; };
+  const f = $("rrForm"), g = n => { const v = f.querySelector(`[name="${n}"]`).value; return v === "" ? 0 : pn0(v); };
   const upd = { fer: g("fer"), bois: g("bois"), pierre: g("pierre"), nourriture: g("nourriture"), or: g("or"), dFer: g("dFer"), dBois: g("dBois"), dOr: g("dOr"), dPierre: g("dPierre"), dNourriture: g("dNourriture"), armee: f.querySelector('[name="armee"]').value, maj: new Date().toISOString() };
+  const tx = n => (f.querySelector(`[name="${n}"]`) || {}).value || "";
+  const jr = await versJournal({ ...upd, trajet: x.trajet, date: x.date, rEnv: g("rEnv"), tEnv: g("tEnv"), caverne: tx("caverne"), niveauCav: tx("niveauCav"), rapportDate: tx("rapportDate"), nonTransporte: g("nonTransporte") });
   Object.assign(x, upd); f.reset(); $("rrMajBox").hidden = true; rrLu = null;
-  if (isLocal(rVille)){ renderRecrutRaids(); capMsg("Chiffres remplacés.", "ok"); return; }
-  try { await db.doc(`${rvPath()}/${rVille}/rapports/${id}`).update(upd); capMsg(`<span class="ok">Chiffres de « ${esc(x.date)} » remplacés</span> (trajet conservé).`); setStatus("Raid mis à jour"); }
+  if (isLocal(rVille)){ renderRecrutRaids(); capMsg("Chiffres remplacés. " + jr, "ok"); return; }
+  try { await db.doc(`${rvPath()}/${rVille}/rapports/${id}`).update(upd); capMsg(`<span class="ok">Chiffres de « ${esc(x.date)} » remplacés</span> (trajet conservé). ` + jr); setStatus("Raid mis à jour"); }
   catch (err){ setStatus("Raid non enregistré : " + (err.message || err.code)); } });
+
+/* ---------- capture collée dans le planner (transmise par sessionStorage) ---------- */
+let capPlanner = null; try { capPlanner = sessionStorage.getItem("calcCapture"); if (capPlanner) sessionStorage.removeItem("calcCapture"); } catch {}
+async function traiterCapPlanner(){
+  if (!capPlanner) return; const url = capPlanner; capPlanner = null;
+  try { const blob = await (await fetch(url)).blob(); const file = new File([blob], "rapport." + (blob.type.split("/")[1] || "png"), {type: blob.type});
+    showView("recrut"); if (!curVille()) await addVille("Ma ville"); if (!$("rrForm")) renderRecrut(); lireCapture(file); }
+  catch (err){ setStatus("Capture du planner illisible : colle-la à nouveau ici."); }
+}
 
 /* ---------- Ma cité alimentée par les raids d'une ville du Recrutement ---------- */
 let lienRapports = [], unsubLien = null, lienFor = null;
@@ -803,10 +861,41 @@ function renderLien(){
     : !x ? '<span class="warn">Ville introuvable dans le Recrutement.</span>'
     : !x.r.n ? '<span class="warn">Aucun raid avec trajet dans cette ville.</span>'
     : `Nets des pertes, à l'heure × 24 (${x.r.n} armée${x.r.n > 1 ? "s" : ""}). Fer : sans les ${n0((x.v.surplus ?? 0.1) * 100)} % de raffinage.`;
-  document.querySelectorAll('#view-cite [data-k="ferJour"],#view-cite [data-k="pierreJour"],#view-cite [data-k="boisJour"],#view-cabines [data-k="pierreJour"],#view-cabines [data-k="boisJour"]')
+  document.querySelectorAll('#view-castle [data-k="ferJour"],#view-cite [data-k="ferJour"],#view-cite [data-k="pierreJour"],#view-cite [data-k="boisJour"],#view-cabines [data-k="pierreJour"],#view-cabines [data-k="boisJour"]')
     .forEach(el => { el.readOnly = !!S.lienVille; el.classList.toggle("calc", !!S.lienVille); el.title = S.lienVille ? "Repris des raids (onglet Recrutement) — choisis « Saisie manuelle » pour modifier" : ""; });
 }
 document.addEventListener("change", e => { if (e.target.id !== "lienSel") return; S.lienVille = e.target.value; subscribeLien(); renderAll(); scheduleSave(); });
+
+/* ---------- villes du planner (fiches/{fiche}/villes, importées par CSV) ---------- */
+let pVilles = [], unsubPV = null;
+const unitTot = (c, t, k) => +(((c || {}).units || {})[t] || {})[k || "home"] || 0;
+function troupesTxt(c){ if (!c) return "Relie la ville pour reprendre ses troupes."; if (!c.units) return "Pas de troupes importées pour cette ville.";
+  const parts = [["Ranger","Rangers"],["Triari","Triaires"],["Vanquisher","zerks"]].map(([t, l]) => unitTot(c, t, "total") ? n0(unitTot(c, t, "total")) + " " + l : "").filter(Boolean);
+  return parts.length ? "Troupes (import CSV) : " + parts.join(", ") + "." : "Aucun Ranger, Triaire ni zerk dans l'import."; }
+function subscribePVilles(){
+  if (unsubPV) unsubPV(); unsubPV = null; pVilles = [];
+  if (!db || !moi){ renderPVilles(); return; }
+  unsubPV = db.collection(`fiches/${moi}/villes`).onSnapshot(s => { pVilles = s.docs.map(d => ({id: d.id, ...d.data()})).sort((a, b) => String(a.name || "").localeCompare(String(b.name || ""), "fr")); renderPVilles(); if (!focusIn("#rvParams")){ $("rvParams").innerHTML = ""; renderRecrut(); } }, () => {});
+}
+function renderPVilles(){
+  const lie = new Set(rVilles.map(v => v.villeId).filter(Boolean));
+  const np = $("rvNewPick"); if (np && document.activeElement !== np){ const cur = np.value;
+    np.innerHTML = (pVilles.length ? `<option value="">— ville du planner —</option>` : "") + pVilles.filter(c => !lie.has(c.id)).map(c => `<option value="${esc(c.id)}">${esc(c.name)} (${c.x}:${c.y})</option>`).join("") + `<option value="__libre">Autre (nom libre)</option>`;
+    np.value = [...np.options].some(o => o.value === cur) ? cur : (pVilles.length ? "" : "__libre"); $("rvNewName").hidden = np.value !== "__libre"; }
+  const rt = $("rTroupes"); if (rt && document.activeElement !== rt){ const cur = rt.value;
+    rt.innerHTML = `<option value="">— saisie manuelle —</option>` + pVilles.filter(c => unitTot(c, "Ranger", "total") || unitTot(c, "Triari", "total")).map(c => `<option value="${esc(c.id)}">${esc(c.name)} : ${n0(unitTot(c, "Ranger"))} R / ${n0(unitTot(c, "Triari"))} T</option>`).join("");
+    rt.value = [...rt.options].some(o => o.value === cur) ? cur : ""; }
+}
+document.addEventListener("change", e => {
+  if (e.target.name === "armee" && e.target.closest("#rrForm")) e.target.closest("#rrForm").querySelectorAll("[data-rt-only]").forEach(x => x.hidden = e.target.value === "zerks");
+  if (e.target.id === "rvNewPick"){ $("rvNewName").hidden = e.target.value !== "__libre"; if (!$("rvNewName").hidden) $("rvNewName").focus(); }
+  if (e.target.id === "rTroupes"){ const c = pVilles.find(x => x.id === e.target.value); if (!c) return;
+    S.rDispo = unitTot(c, "Ranger"); S.tDispo = unitTot(c, "Triari"); fill(); renderAll(); scheduleSave(); setStatus("Troupes à la maison de « " + c.name + " » reprises du planner"); }
+});
+async function saveVilleChamps(v, champs){
+  if (isLocal(v.id)) return;
+  try { await db.doc(`${rvPath()}/${v.id}`).update(champs); setStatus("Ville « " + (v.nom || "") + " » enregistrée"); } catch (err){ setStatus("Ville non enregistrée : " + (err.message || err.code)); }
+}
 
 function subscribeVilles(){
   if (unsubRV) unsubRV(); unsubRV = null; if (!db || !moi){ rVilles = []; rRapports = []; renderRecrut(); return; }
@@ -815,7 +904,7 @@ function subscribeVilles(){
     if (prev && rSaveT){ const n = rVilles.find(x => x.id === prev.id); if (n) Object.assign(n, prev); } // saisie en cours : on garde la version locale
     if (!rVilles.some(v => v.id === rVille)){ rVille = rVilles.length ? rVilles[0].id : ""; $("rvBody").innerHTML = ""; subscribeRapports(); }
     else if (!unsubRR) subscribeRapports();
-    renderRecrut(); applyLien(); }, err => setStatus("Lecture des villes impossible : " + (err.message || err.code)));
+    renderRecrut(); applyLien(); traiterCapPlanner(); }, err => setStatus("Lecture des villes impossible : " + (err.message || err.code)));
 }
 function subscribeRapports(){
   if (unsubRR) unsubRR(); unsubRR = null; rRapports = [];
@@ -828,12 +917,12 @@ function subscribeRapports(){
     err => setStatus("Lecture des raids impossible : " + (err.message || err.code)));
 }
 
-function renderAll(){ renderCite(); renderCab(); renderDem(); renderRaidsAll(); renderSim(); renderResume(); renderRecrut(); renderLien(); }
+function renderAll(){ renderPVilles(); renderCite(); renderCab(); renderDem(); renderRaidsAll(); renderSim(); renderResume(); renderRecrut(); renderLien(); }
 
 /* ---------- vues ---------- */
 const GUIDE = {
   cite: ["À quoi sert Ma cité", "les réglages communs, saisis une fois : recherche, fer / pierre / bois par jour, plan de la cité. Les autres onglets s'en servent. Colle un rapport de raid pour remplir le fer, la pierre et le bois automatiquement."],
-  castle: ["À quoi sert Castle", "trouver la meilleure répartition Arenas / Barracks / Cabines pour atteindre ton objectif de Vanquishers le plus vite, puis simuler une configuration jour par jour."],
+  castle: ["À quoi sert Castle", "trouver la meilleure répartition Arenas / Barracks / Cabines pour atteindre ton objectif de zerks le plus vite, puis simuler une configuration jour par jour."],
   cabines: ["À quoi sert Cabines", "savoir combien de Cabines poser et à quel niveau pour construire toute la cité au niveau 10 le plus vite, puis préparer la démolition groupe par groupe."],
   raids: ["À quoi sert Raids", "savoir combien de troupes envoyer sur une caverne, quel mélange Rangers / Triaires rapporte le plus, et comparer tes raids dans le journal."],
   recrut: ["À quoi sert Recrutement", "coller un rapport de raid pour savoir combien de zerks ton fer paie à l'heure et à quel niveau mettre tes Training Arenas pour recruter sans arrêt."]
@@ -857,7 +946,7 @@ function renderMe(){ const sel = $("meSel"); sel.innerHTML = `<option value="">�
 $("meSel").addEventListener("change", e => { moi = e.target.value; try { localStorage.setItem("moi", moi); } catch {} subscribeFiche(); });
 function subscribeFiche(){
   if (unsubS) unsubS(); if (unsubJ) unsubJ(); unsubS = unsubJ = null;
-  subscribeVilles();
+  subscribeVilles(); subscribePVilles();
   if (!db || !moi){ journal = []; renderAll(); return; }
   let first = true;
   unsubS = db.doc(`fiches/${moi}/calculs/reglages`).onSnapshot(s => {
@@ -882,7 +971,7 @@ let v0 = "cite"; try { v0 = localStorage.getItem("calcView") || "cite"; } catch 
 (async () => {
   if (!window.claude || !window.claude.use){ setStatus("Mode local : réglages gardés dans ce navigateur."); return; }
   db = await window.claude.use("db");
-  if (!db){ setStatus("Base indisponible : réglages gardés dans ce navigateur."); return; }
+  if (!db){ setStatus("Base indisponible : réglages gardés dans ce navigateur."); traiterCapPlanner(); return; }
   db.collection("fiches").orderBy("creeLe").onSnapshot(s => { fiches = s.docs.map(d => ({id: d.id, ...d.data()})); renderMe();
     if (moi && !fiches.some(f => f.id === moi)) moi = "";
     if (!unsubS) subscribeFiche(); if (!moi) setStatus("Choisis ta fiche dans « Je suis » pour enregistrer."); },

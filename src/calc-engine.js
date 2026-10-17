@@ -351,6 +351,14 @@
     if (r.ramene && r.depense && r.totalProfit != null && sum(RES5.slice(1).map(k => r.ramene[k])) - sum(RES5.map(k => r.depense[k])) !== r.totalProfit) douteux.add("total");
     if (r.dispo && r.totalDispo != null && sum(RES5.slice(1).map(k => r.dispo[k])) !== r.totalDispo) douteux.add("total");
     if (r.depense && r.totalPerdu != null && sum(RES5.map(k => r.depense[k])) !== r.totalPerdu) douteux.add("pertes");
+    // caverne et niveau d'après le sujet (« Mountain Level 8 (351:330) »)
+    const cav = r.sujet.match(/(Mountain|Forest|Hill)\s*Level\s*(\d+)/i);
+    r.caverne = cav ? ({ mountain: "Montagne", forest: "Forêt", hill: "Colline" })[cav[1].toLowerCase()] : "";
+    r.niveau = cav ? +cav[2] : null;
+    // troupes envoyées par l'attaquant : nombres de la ligne « Sent » avant le second « Sent » (défenseur)
+    const ls = lignes.find(x => /^Sent\b/i.test(x));
+    r.envoyes = ls ? (ls.split(/Sent/i)[1] || "").match(/\d+/g)?.map(Number) || [] : [];
+    r.nonTransporte = r.nonRamene ? sum(RES5.slice(1).map(k => r.nonRamene[k])) : 0;
     r.manquant = ["ramene", "depense", "profit"].filter(k => !r[k]);
     r.douteux = [...douteux]; r.fiable = !r.manquant.length && !r.douteux.length;
     return r;
