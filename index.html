@@ -180,7 +180,10 @@ body.wide .wrap{max-width:1880px}
 .fmsg:empty{display:none}
 .fmsg.ok{color:var(--ref)}.fmsg.ko{color:var(--off)}
 .plist{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-.plist span{font-size:12.5px;padding:3px 10px;border-radius:999px;background:var(--keep-soft)}
+.plist span{font-size:12.5px;padding:3px 10px;border-radius:999px;background:var(--keep-soft);display:inline-flex;align-items:center;gap:8px}
+.plist .pdel{font:inherit;font-size:11.5px;border:none;background:none;color:var(--muted);text-decoration:underline;cursor:pointer;padding:0}
+.plist .pdel:hover,.plist .pdel.confirm{color:var(--off)}
+.plist .pdel.confirm{font-weight:600;text-decoration:none}
 .castle{font-size:12px;color:var(--brass);font-weight:600}
 .empty{padding:28px 12px;text-align:center;color:var(--muted)}
 .note{font-size:12px;color:var(--muted);margin:8px 0 0}
@@ -1152,10 +1155,28 @@ $("ficheTabs").addEventListener("click", e => { const b = e.target.closest("[dat
   if (!viewAll) selectFiche(b.dataset.fiche); render(); renderTabs(); });
 let canWrite = null;
 function nfMsg(t, ok){ $("nf-msg").textContent = t; $("nf-msg").className = "fmsg " + (ok ? "ok" : "ko"); }
-function renderRO(){ $("roBanner").hidden = canWrite !== false; }
+function renderRO(){ $("roBanner").hidden = canWrite !== false; try { renderPlayers(); } catch {} }
 function renderPlayers(){
-  $("playerList").innerHTML = fiches.length ? fiches.map(f => `<span>${esc(f.nom)}${f.id===moi ? " (moi)" : ""} · ${(allCities[f.id]||[]).length} villes</span>`).join("") : "";
+  $("playerList").innerHTML = fiches.length ? fiches.map(f => `<span>${esc(f.nom)}${f.id===moi ? " (moi)" : ""} · ${(allCities[f.id]||[]).length} villes${canWrite !== false ? `<button type="button" class="pdel" data-fid="${esc(f.id)}" title="Supprimer la fiche, ses villes et ses envois">Supprimer</button>` : ""}</span>`).join("") : "";
 }
+$("playerList").addEventListener("click", e => {
+  const btn = e.target.closest(".pdel"); if (!btn || !db) return;
+  const fid = btn.dataset.fid, nom = ficheNom(fid);
+  armDelete(btn, async () => {
+    btn.disabled = true; btn.textContent = "Suppression…";
+    try {
+      const vs = await db.collection(`fiches/${fid}/villes`).get();
+      for (const d of vs.docs) await db.doc(`fiches/${fid}/villes/${d.id}`).delete();
+      for (const r of renforts.filter(r => r.fiche === fid)) await db.doc("renforts/" + r.id).delete();
+      for (const opId in opAll) for (const a of (opAll[opId].aff||[]).filter(a => a.fiche === fid)) await db.doc(`operations/${opId}/affectations/${a.id}`).delete();
+      await db.doc("fiches/" + fid).delete();
+      if (subsFiche[fid]){ try { subsFiche[fid](); } catch {} delete subsFiche[fid]; }
+      delete allCities[fid];
+      if (moi === fid){ moi = ""; try { localStorage.removeItem("moi"); } catch {} }
+      setStatus("Fiche supprimée : " + nom); nfMsg("Fiche « " + nom + " » supprimée avec ses villes et ses envois.", true);
+    } catch(err){ btn.disabled = false; btn.textContent = "Supprimer"; nfMsg("Suppression impossible : " + (err.message || err.code), false); }
+  });
+});
 $("newFiche").addEventListener("submit", async e => {
   e.preventDefault();
   if (!db){ nfMsg("La page n'a pas accès à l'enregistrement ici : ouvre-la depuis claude.ai en étant connecté à ton compte.", false); return; }
