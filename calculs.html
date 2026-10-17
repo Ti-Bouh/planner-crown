@@ -64,7 +64,14 @@ a{color:var(--brass)}
 .seg button[aria-selected="true"]{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
 .neg{color:var(--off);font-weight:600}
 #rvTable th{white-space:normal;vertical-align:bottom;line-height:1.25}
-#rvTable td{padding:5px 4px}
+.drop{border:2px dashed var(--line);border-radius:10px;padding:14px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;cursor:pointer;background:var(--bg);margin-bottom:12px}
+.drop:hover,.drop.over{border-color:var(--brass);background:var(--brass-soft)}
+.drop b{font-weight:600}
+.field input.verif{border-color:var(--off);box-shadow:0 0 0 1px var(--off)}
+.field input.lu{border-color:var(--ref)}
+#rvTable td{padding:5px 3px}
+#rvTable input[type=number]{-moz-appearance:textfield;appearance:textfield;text-align:right}
+#rvTable input[type=number]::-webkit-inner-spin-button,#rvTable input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 .field input.calc{background:transparent;border-style:dashed;color:var(--muted)}
 .field small{font-size:11px;color:var(--muted)}
 input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--brass);outline-offset:1px}
@@ -531,7 +538,8 @@ const rvPath = () => `fiches/${moi}/recrutement`;
 const curVille = () => rVilles.find(v => v.id === rVille) || null;
 const isLocal = id => !db || !moi || String(id || "").startsWith("local");
 const focusIn = sel => { const a = document.activeElement; return a && a.closest && a.closest(sel); };
-const RR_COLS = [["trajet","Trajet aller","text"],["fer","Fer","number"],["bois","Bois","number"],["pierre","Pierre","number"],["nourriture","Nourriture","number"],["or","Or","number"],["rPerdus","Rangers perdus","number"],["tPerdus","Triaires perdus","number"]];
+const RR_COLS = [["trajet","Trajet aller","text"],["fer","Fer","number"],["bois","Bois","number"],["pierre","Pierre","number"],["nourriture","Nourriture","number"],["or","Or","number"],["dFer","Pertes fer","number"],["dBois","Pertes bois","number"],["dOr","Pertes or","number"]];
+const rrVal = (x, k) => x[k] !== undefined && x[k] !== "" ? x[k] : k === "dFer" ? (+x.tPerdus || 0) * 140 : k === "dBois" ? (+x.rPerdus || 0) * 160 : k === "dOr" ? (+x.tPerdus || 0) * 40 : (x[k] ?? "");
 function renderRecrut(){
   $("rvTabs").innerHTML = rVilles.length ? rVilles.map(v => `<button type="button" role="tab" data-rv="${esc(v.id)}" aria-selected="${v.id === rVille}">${esc(v.nom || "Ville")}</button>`).join("")
                                           : `<span class="note" style="margin:0;padding:5px 8px">Aucune ville : ajoute la première.</span>`;
@@ -565,18 +573,18 @@ function renderRecrutRes(){
   const rf = r.raffinage, cell = x => `<b class="${x < -0.5 ? "neg" : ""}">${n0(x)}</b>`;
   host.innerHTML = `<div class="panel hl"><h2>Résultat</h2>
     <div class="kpis"><div><span class="lbl">Fer net par heure</span><b>${n0(H.ferNet)}</b></div>
-      <div><span class="lbl">Zerks financés par heure</span><b>${n1(r.zerksHeure)}</b></div>
+      <div><span class="lbl">Zerks gagnés par heure</span><b>${n1(r.zerksHeure)}</b></div>${r.remplacesHeure > 0 ? `<div><span class="lbl">Zerks re-recrutés (pertes)</span><b>${n1(r.remplacesHeure)} <small>/ heure</small></b></div>` : ""}
       <div><span class="lbl">Zerks par jour</span><b>${n0(Math.floor(r.zerksJour))}</b></div>
       <div><span class="lbl">Vitesse de recrutement à viser</span><b>${n0(vc * 100)} <small>% de la base</small></b></div>
-      <div><span class="lbl">Fer perdu (Triaires)</span><b>${n0(H.ferPertes)} <small>/ heure</small></b></div></div>
+      <div><span class="lbl">Fer perdu (pertes)</span><b>${n0(H.ferPertes)} <small>/ heure</small></b></div></div>
     <p style="margin:12px 0 0">${conseil}</p>
-    <p class="note">${r.n} armée${r.n > 1 ? "s" : ""} en boucle, débits additionnés${r.sansTrajet ? ` · <span class="warn">${r.sansTrajet} ligne${r.sansTrajet > 1 ? "s" : ""} sans trajet, non comptée${r.sansTrajet > 1 ? "s" : ""}</span>` : ""}. Aller-retour = 2 × trajet aller. Fer net = fer ramené − 140 par Triaire perdu ; ${sp} % du fer net gardés pour le raffinage.</p>
+    <p class="note">${r.n} armée${r.n > 1 ? "s" : ""} en boucle, débits additionnés${r.sansTrajet ? ` · <span class="warn">${r.sansTrajet} ligne${r.sansTrajet > 1 ? "s" : ""} sans trajet, non comptée${r.sansTrajet > 1 ? "s" : ""}</span>` : ""}. Aller-retour = 2 × trajet aller. Fer net = fer ramené − pertes en fer (« Expended ») ; ${sp} % du fer net gardés pour le raffinage.${r.remplacesHeure > 0 ? ` Armées de zerks : les ${n1(r.remplacesHeure)} zerks perdus par heure sont re-recrutés, la file traite donc ${n1(r.fileHeure)} zerks par heure.` : ""}</p>
     <h3>Vitesse selon le niveau des Arenas</h3><div class="scroll"><table class="t"><thead><tr><th>Niveau${r.arena10 ? " des autres Arenas" : ""}</th><th>Vitesse</th><th>Zerks / heure</th><th>Zerks / jour</th><th>Fer nécessaire / heure</th><th>Ton fer couvre</th><th class="l">Recrutement</th></tr></thead><tbody>
     ${r.autres > 0 ? r.niveaux.map(x => `<tr class="${r.choix && x.niveau === r.choix.niveau ? "best" : ""}"><td>${x.niveau}</td><td>${n0(x.vitesse * 100)} %</td><td>${n1(x.zerksHeure)}</td><td>${n0(x.zerksJour)}</td><td>${n0(x.ferHeure)}</td><td>${pc(Math.min(x.couverture, 9.99), 0)}</td><td class="l">${x.continu ? '<span class="ok">continu</span>' : '<span class="warn">file à sec</span>'}</td></tr>`).join("")
                    : `<tr><td colspan="7" class="l">Aucune Arena à régler (${r.arenas === 0 ? "pas d'Arena posée" : "la seule Arena est au niveau 10"}).</td></tr>`}</tbody></table></div></div>
     <div class="panel"><h2>À raffiner par jour</h2>
       <div class="kpis"><div><span class="lbl">Fer</span>${cell(rf.fer)}</div><div><span class="lbl">Bois</span>${cell(rf.bois)}</div><div><span class="lbl">Pierre</span>${cell(rf.pierre)}</div><div><span class="lbl">Nourriture</span>${cell(rf.nourriture)}</div><div><span class="lbl">Or</span>${cell(rf.or)}</div></div>
-      <p class="note">Fer : les ${sp} % gardés${r.excedentFer > 0.5 ? " + " + n0(r.excedentFer) + " que les Arenas ne peuvent pas consommer" : ""}. Bois : après remplacement des Rangers perdus (160 chacun). Or : après remplacement des Triaires perdus (40 chacun). En rouge : déficit, les pertes coûtent plus que ce que les raids rapportent.</p></div>`;
+      <p class="note">Fer : les ${sp} % gardés${r.excedentFer > 0.5 ? " + " + n0(r.excedentFer) + " que les Arenas ne peuvent pas consommer" : ""}. Bois, or, pierre, nourriture : après déduction des pertes (« Expended »). En rouge : déficit, les pertes coûtent plus que ce que les raids rapportent.</p></div>`;
   // colonnes calculées du tableau (mises à jour sans toucher aux cases en cours de saisie)
   r.lignes.forEach(l => { const tr = document.querySelector(`#rvTable tr[data-row="${CSS.escape(String(l.id))}"]`); if (!tr) return;
     tr.querySelector(".c-cycle").textContent = l.cycle ? hms(l.cycle) : "—"; tr.querySelector(".c-rj").textContent = l.cycle ? n1(l.raidsJour) : "—";
@@ -586,22 +594,28 @@ const hms = h => { const t = Math.round(h * 3600), x = n => String(n).padStart(2
 function renderRecrutRaids(){
   const v = curVille(); if (!v) return;
   $("rvRaids").innerHTML = `<h2>Raids en cours de ${esc(v.nom || "la ville")}</h2>
-    <p class="note" style="margin:0 0 10px">Une ligne = une armée qui raide en boucle : ressources ramenées par un raid, troupes perdues et trajet aller (h:mm:ss, comme dans le jeu). Quand tes troupes augmentent, modifie directement les chiffres dans le tableau.</p>
+    <p class="note" style="margin:0 0 10px">Une ligne = une armée qui raide en boucle : ressources ramenées par un raid (« Carried »), pertes (« Expended ») et trajet aller (h:mm:ss, comme dans le jeu). Quand tes troupes augmentent, modifie directement les chiffres dans le tableau, ou relis une nouvelle capture.</p>
+    <div class="drop" id="rrDrop" tabindex="0" role="button" aria-label="Lire une capture de rapport"><span style="font-size:22px" aria-hidden="true">📷</span><span><b>Lire une capture de rapport</b><br><span class="note" style="margin:0">Clique pour choisir l'image, glisse-la ici ou colle-la (Ctrl+V). La lecture se fait dans ton navigateur.</span></span><input type="file" id="rrFile" accept="image/*" hidden></div>
+    <p class="note" id="rrCapMsg" style="margin:-4px 0 10px" hidden></p>
     <form id="rrForm" class="form">
-      <label class="field"><span>Nom du raid (facultatif)</span><input name="date" placeholder="Forêt 6 nord"></label>
+      <label class="field"><span>Nom du raid (facultatif)</span><input name="date" placeholder="Mountain Level 8 (351:330)"></label>
+      <label class="field"><span>Armée</span><select name="armee"><option value="rt">Rangers / Triaires</option><option value="zerks">Zerks</option></select></label>
       <label class="field"><span>Trajet aller (h:mm:ss)</span><input name="trajet" placeholder="02:45:30" required pattern="\\d+(:\\d{1,2}){0,2}([.,]\\d+)?"></label>
       <label class="field"><span>Fer ramené</span><input name="fer" type="number" min="0" required></label>
       <label class="field"><span>Bois ramené</span><input name="bois" type="number" min="0"></label>
       <label class="field"><span>Pierre ramenée</span><input name="pierre" type="number" min="0"></label>
       <label class="field"><span>Nourriture ramenée</span><input name="nourriture" type="number" min="0"></label>
       <label class="field"><span>Or ramené</span><input name="or" type="number" min="0"></label>
-      <label class="field"><span>Rangers perdus</span><input name="rPerdus" type="number" min="0"></label>
-      <label class="field"><span>Triaires perdus</span><input name="tPerdus" type="number" min="0"></label>
-      <div class="field"><span>&nbsp;</span><button type="submit" class="primary">Ajouter le raid</button></div>
+      <label class="field"><span>Pertes en fer (Expended)</span><input name="dFer" type="number" min="0"></label>
+      <label class="field"><span>Pertes en bois (Expended)</span><input name="dBois" type="number" min="0"></label>
+      <label class="field"><span>Pertes en or (Expended)</span><input name="dOr" type="number" min="0"></label>
+      <input type="hidden" name="dPierre"><input type="hidden" name="dNourriture">
+      <div class="btns" style="grid-column:1/-1;margin-top:4px"><button type="submit" class="primary">Ajouter le raid</button><span id="rrMajBox" hidden><button type="button" id="rrMaj">Remplacer les chiffres</button></span></div>
     </form>
-    ${rRapports.length ? `<div class="scroll" style="margin-top:12px"><table class="t" id="rvTable"><thead><tr><th class="l">Raid</th>${RR_COLS.map(c => `<th>${c[1]}</th>`).join("")}<th>Aller-retour</th><th>Raids / jour</th><th>Fer net / h</th><th>Zerks par raid</th><th></th></tr></thead><tbody>
-      ${rRapports.map(x => `<tr data-row="${esc(x.id)}"><td class="l"><input data-rr-id="${esc(x.id)}" data-rr-k="date" value="${esc(x.date || "")}" style="width:104px;min-width:0"></td>
-        ${RR_COLS.map(([k, , t]) => `<td><input data-rr-id="${esc(x.id)}" data-rr-k="${k}" ${t === "number" ? 'type="number" min="0"' : 'placeholder="h:mm:ss"'} value="${esc(x[k] ?? "")}" style="width:${k === "trajet" ? 80 : 74}px;min-width:0"></td>`).join("")}
+    ${rRapports.length ? `<div class="scroll" style="margin-top:12px"><table class="t" id="rvTable"><thead><tr><th class="l">Raid</th><th class="l">Armée</th>${RR_COLS.map(c => `<th>${c[1]}</th>`).join("")}<th>Aller-retour</th><th>Raids / jour</th><th>Fer net / h</th><th>Zerks par raid</th><th></th></tr></thead><tbody>
+      ${rRapports.map(x => `<tr data-row="${esc(x.id)}"><td class="l"><input data-rr-id="${esc(x.id)}" data-rr-k="date" value="${esc(x.date || "")}" style="width:138px;min-width:0" title="${esc(x.date || "")}"></td>
+        <td class="l"><select data-rr-id="${esc(x.id)}" data-rr-k="armee" style="width:auto;min-width:0"><option value="rt" ${x.armee !== "zerks" ? "selected" : ""}>R / T</option><option value="zerks" ${x.armee === "zerks" ? "selected" : ""}>Zerks</option></select></td>
+        ${RR_COLS.map(([k, , t]) => `<td><input data-rr-id="${esc(x.id)}" data-rr-k="${k}" ${t === "number" ? 'type="number" min="0"' : 'placeholder="h:mm:ss"'} value="${esc(rrVal(x, k))}" style="width:${k === "trajet" ? 70 : 66}px;min-width:0"></td>`).join("")}
         <td class="c-cycle"></td><td class="c-rj"></td><td class="c-fh"></td><td class="c-z"></td><td><button type="button" class="link danger" data-rr-del="${esc(x.id)}">Supprimer</button></td></tr>`).join("")}
       </tbody></table></div>` : ""}`;
   renderRecrutRes();
@@ -625,7 +639,9 @@ document.addEventListener("click", async e => {
 document.addEventListener("input", e => {
   const c = e.target.closest("[data-rr-id]");
   if (c){ const x = rRapports.find(r => r.id === c.dataset.rrId); if (!x) return; const k = c.dataset.rrK;
-    const val = c.type === "number" ? (c.value === "" ? 0 : +c.value) : c.value.trim(); x[k] = val; renderRecrutRes();
+    const val = c.type === "number" ? (c.value === "" ? 0 : +c.value) : c.value.trim(); x[k] = val;
+    if (/^d(Fer|Bois|Or)$/.test(k)) ["dFer","dBois","dOr"].forEach(q => { if (x[q] === undefined || x[q] === "") x[q] = +rrVal(x, q) || 0; }); // passage aux pertes « Expended »
+    renderRecrutRes();
     if (isLocal(rVille)) return; clearTimeout(rRowT[x.id]);
     rRowT[x.id] = setTimeout(async () => { delete rRowT[x.id]; try { await db.doc(`${rvPath()}/${rVille}/rapports/${x.id}`).update({[k]: val, maj: new Date().toISOString()}); setStatus("Raid mis à jour"); }
       catch (err){ setStatus("Raid non enregistré : " + (err.message || err.code)); } }, 600); return; }
@@ -639,9 +655,68 @@ document.addEventListener("input", e => {
 document.addEventListener("submit", async e => { if (e.target.id !== "rrForm") return; e.preventDefault();
   const f = new FormData(e.target), r = {creeLe: new Date().toISOString()};
   for (const [k, val] of f.entries()) r[k] = (k === "date" || k === "trajet") ? String(val).trim() : (val === "" ? 0 : +val);
+  r.armee = String(f.get("armee") || "rt");
   if (E.heures(r.trajet) == null){ setStatus("Trajet illisible : écris-le en h:mm:ss, par exemple 02:45:30"); return; }
   if (isLocal(rVille)){ rRapports.push({id: "local" + Date.now(), ...r}); renderRecrutRaids(); setStatus("Raid ajouté (non enregistré : choisis ta fiche)"); return; }
   try { await db.collection(`${rvPath()}/${rVille}/rapports`).add(r); setStatus("Raid enregistré"); } catch (err){ setStatus("Raid non enregistré : " + (err.message || err.code)); } });
+
+/* ---------- lecture d'une capture de rapport (OCR dans le navigateur) ---------- */
+const TESS = Object.assign({ script: "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js", langPath: "https://cdn.jsdelivr.net/npm/@tesseract.js-data/eng@1.0.0/4.0.0_best_int" }, window.__TESS__ || {});
+let tessWorker = null, rrLu = null;
+function loadScript(src){ return new Promise((ok, ko) => { const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = () => ko(new Error("chargement de l'outil de lecture impossible")); document.head.appendChild(s); }); }
+async function getWorker(msg){
+  if (tessWorker) return tessWorker;
+  if (!window.Tesseract){ msg("Chargement de l'outil de lecture (une seule fois)…"); await loadScript(TESS.script); }
+  const o = { langPath: TESS.langPath }; if (TESS.workerPath) o.workerPath = TESS.workerPath; if (TESS.corePath) o.corePath = TESS.corePath;
+  tessWorker = await Tesseract.createWorker("eng", 1, o); return tessWorker;
+}
+function capMsg(html, cls){ const m = $("rrCapMsg"); if (!m) return; m.hidden = false; m.className = "note " + (cls || ""); m.innerHTML = html; }
+async function prepImage(file){
+  const url = URL.createObjectURL(file);
+  try { const img = await new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ko(new Error("image illisible")); i.src = url; });
+    const k = img.naturalWidth < 1600 ? 2 : 1, c = document.createElement("canvas"); c.width = img.naturalWidth * k; c.height = img.naturalHeight * k;
+    const g = c.getContext("2d"); g.imageSmoothingQuality = "high"; g.drawImage(img, 0, 0, c.width, c.height);
+    const d = g.getImageData(0, 0, c.width, c.height), p = d.data; for (let i = 0; i < p.length; i += 4){ const y = 0.299 * p[i] + 0.587 * p[i + 1] + 0.114 * p[i + 2]; p[i] = p[i + 1] = p[i + 2] = y; }
+    g.putImageData(d, 0, 0); return c; } finally { URL.revokeObjectURL(url); }
+}
+async function lireCapture(file){
+  if (!file || !/^image\//.test(file.type)){ capMsg("Ce fichier n'est pas une image.", "warn"); return; }
+  try {
+    const w = await getWorker(t => capMsg(t)); capMsg("Lecture de la capture…");
+    const { data } = await w.recognize(await prepImage(file)); const r = E.lireRapport(data.text);
+    if (r.manquant.length){ capMsg("Je n'ai pas trouvé les lignes " + r.manquant.map(k => ({ramene:"« Carried »", depense:"« Expended »", profit:"« Profit »"})[k]).join(", ") + " : vérifie que la capture montre tout le tableau « Resource Overview ».", "warn"); return; }
+    const f = $("rrForm"), set = (n, v) => { const el = f.querySelector(`[name="${n}"]`); if (el){ el.value = v; el.classList.remove("verif"); el.classList.add("lu"); } };
+    if (r.sujet) set("date", r.sujet);
+    ["fer","bois","pierre","nourriture","or"].forEach(k => set(k, r.ramene[k]));
+    set("dFer", r.depense.fer); set("dBois", r.depense.bois); set("dOr", r.depense.or); set("dPierre", r.depense.pierre); set("dNourriture", r.depense.nourriture);
+    const zerks = r.depense.fer > 0 && !r.depense.bois && !r.depense.or && r.depense.fer % 150 === 0;
+    f.querySelector('[name="armee"]').value = zerks ? "zerks" : "rt";
+    const NOMS = {or:"or", bois:"bois", pierre:"pierre", fer:"fer", nourriture:"nourriture", total:"totaux", pertes:"total des pertes"};
+    r.douteux.forEach(k => { [k, "d" + k[0].toUpperCase() + k.slice(1)].forEach(n => { const el = f.querySelector(`[name="${n}"]`); if (el){ el.classList.remove("lu"); el.classList.add("verif"); } }); });
+    rrLu = r; const ex = rRapports.find(x => (x.date || "").trim() && (x.date || "").trim() === r.sujet);
+    $("rrMajBox").hidden = !ex; if (ex){ $("rrMaj").textContent = "Remplacer les chiffres de « " + ex.date + " »"; $("rrMaj").dataset.id = ex.id; }
+    const armee = zerks ? "Armée de zerks (" + n0(r.depense.fer / 150) + " zerks perdus)" : "Armée Rangers / Triaires";
+    capMsg((r.fiable ? `<span class="ok">✓ Lecture vérifiée</span> : Carried − Expended = Profit sur les 5 colonnes, totaux cohérents. `
+                     : `<span class="warn">⚠ À vérifier</span> : ${r.douteux.map(k => NOMS[k] || k).join(", ")} (encadré en rouge) ne colle pas avec les totaux du rapport. `)
+      + `${esc(r.sujet || "Raid")} · ${armee} (modifiable). ` + (ex ? "Ce raid existe déjà : tu peux remplacer ses chiffres en gardant son trajet." : "Ajoute le <b>trajet aller</b> puis clique sur « Ajouter le raid »."), r.fiable ? "" : "warn");
+    const tr = f.querySelector('[name="trajet"]'); if (!ex && tr && !tr.value) tr.focus();
+  } catch (err){ capMsg("Lecture impossible : " + esc(err.message || err) + ". Tu peux saisir les chiffres à la main.", "warn"); }
+}
+document.addEventListener("click", e => { const d = e.target.closest("#rrDrop"); if (d) $("rrFile").click(); });
+document.addEventListener("keydown", e => { if (e.target.id === "rrDrop" && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); $("rrFile").click(); } });
+document.addEventListener("change", e => { if (e.target.id === "rrFile" && e.target.files[0]){ lireCapture(e.target.files[0]); e.target.value = ""; } });
+document.addEventListener("dragover", e => { const d = e.target.closest && e.target.closest("#rrDrop"); if (d){ e.preventDefault(); d.classList.add("over"); } });
+document.addEventListener("dragleave", e => { const d = e.target.closest && e.target.closest("#rrDrop"); if (d) d.classList.remove("over"); });
+document.addEventListener("drop", e => { const d = e.target.closest && e.target.closest("#rrDrop"); if (!d) return; e.preventDefault(); d.classList.remove("over"); const f = e.dataTransfer.files[0]; if (f) lireCapture(f); });
+document.addEventListener("paste", e => { if ($("view-recrut").hidden || !curVille()) return; const it = [...(e.clipboardData || {}).items || []].find(i => i.type && i.type.startsWith("image/")); if (!it) return; e.preventDefault(); lireCapture(it.getAsFile()); });
+document.addEventListener("click", async e => { if (e.target.id !== "rrMaj") return; const id = e.target.dataset.id, x = rRapports.find(r => r.id === id); if (!x || !rrLu) return;
+  const f = $("rrForm"), g = n => { const v = f.querySelector(`[name="${n}"]`).value; return v === "" ? 0 : +v; };
+  const upd = { fer: g("fer"), bois: g("bois"), pierre: g("pierre"), nourriture: g("nourriture"), or: g("or"), dFer: g("dFer"), dBois: g("dBois"), dOr: g("dOr"), dPierre: g("dPierre"), dNourriture: g("dNourriture"), armee: f.querySelector('[name="armee"]').value, maj: new Date().toISOString() };
+  Object.assign(x, upd); f.reset(); $("rrMajBox").hidden = true; rrLu = null;
+  if (isLocal(rVille)){ renderRecrutRaids(); capMsg("Chiffres remplacés.", "ok"); return; }
+  try { await db.doc(`${rvPath()}/${rVille}/rapports/${id}`).update(upd); capMsg(`<span class="ok">Chiffres de « ${esc(x.date)} » remplacés</span> (trajet conservé).`); setStatus("Raid mis à jour"); }
+  catch (err){ setStatus("Raid non enregistré : " + (err.message || err.code)); } });
+
 function subscribeVilles(){
   if (unsubRV) unsubRV(); unsubRV = null; if (!db || !moi){ rVilles = []; rRapports = []; renderRecrut(); return; }
   unsubRV = db.collection(rvPath()).orderBy("creeLe").onSnapshot(s => {

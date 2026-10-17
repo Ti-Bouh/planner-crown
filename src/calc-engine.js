@@ -250,6 +250,37 @@
   }
 
 
+
+  /* ================= LECTURE D'UN RAPPORT DE RAID (texte issu de la capture) ================= */
+  // Colonnes du rapport, dans l'ordre des icônes : or, bois, pierre, fer, nourriture
+  const RES5 = ["or", "bois", "pierre", "fer", "nourriture"];
+  function lireRapport(texte) {
+    const lignes = String(texte || "").split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    const num = t => t === "-" || t === "—" || t === "–" ? 0 : +t.replace(/[,.\s]/g, "");
+    const row = re => { const l = lignes.find(x => re.test(x)); if (!l) return null;
+      const reste = l.replace(re, ""), toks = reste.match(/-|—|–|\d{1,3}(?:[,.]\d{3})+|\d+/g) || [];
+      if (toks.length < 5) return null; const v = toks.slice(0, 5).map(num); return Object.fromEntries(RES5.map((k, i) => [k, v[i]])); };
+    const tot = re => { const l = lignes.find(x => re.test(x)); const m = l && l.replace(re, "").match(/\d{1,3}(?:[,.]\d{3})+|\d+/); return m ? num(m[0]) : null; };
+    const r = { dispo: row(/^Ava[il]{1,2}[a-z]*able\s*:?/i), depense: row(/^Expended\s*:?/i), ramene: row(/^Carried\s*:?/i),
+                nonRamene: row(/^Not\s*Carried\s*:?/i), profit: row(/^Profit\s*:?/i),
+                totalProfit: tot(/^Total\s*Res\s*Profit\s*:?/i), totalPerdu: tot(/^Res\s*Lost\s*:?/i) };
+    const sj = lignes.find(x => /^Subject\s*:/i.test(x)), dt = lignes.find(x => /^Date\s*:/i.test(x));
+    r.sujet = sj ? sj.replace(/^Subject\s*:\s*(Raid\s*:\s*)?/i, "").trim() : "";
+    r.date = dt ? dt.replace(/^Date\s*:\s*/i, "").trim() : "";
+    // contrôles croisés : chaque colonne doit vérifier Carried − Expended = Profit
+    const ctrl = [], douteux = new Set();
+    if (r.ramene && r.depense && r.profit) RES5.forEach(k => { const ok = r.ramene[k] - r.depense[k] === r.profit[k]; ctrl.push({k, ok}); if (!ok) douteux.add(k); });
+    if (r.dispo && r.ramene && r.nonRamene) RES5.slice(1).forEach(k => { if (r.dispo[k] - r.ramene[k] !== r.nonRamene[k]) douteux.add(k); });
+    // le jeu : Total Res Profit = ressources hors or ramenées − toutes les dépenses (or compris)
+    r.totalDispo = tot(/^Res\s*Available\s*:?/i);
+    if (r.ramene && r.depense && r.totalProfit != null && sum(RES5.slice(1).map(k => r.ramene[k])) - sum(RES5.map(k => r.depense[k])) !== r.totalProfit) douteux.add("total");
+    if (r.dispo && r.totalDispo != null && sum(RES5.slice(1).map(k => r.dispo[k])) !== r.totalDispo) douteux.add("total");
+    if (r.depense && r.totalPerdu != null && sum(RES5.map(k => r.depense[k])) !== r.totalPerdu) douteux.add("pertes");
+    r.manquant = ["ramene", "depense", "profit"].filter(k => !r[k]);
+    r.douteux = [...douteux]; r.fiable = !r.manquant.length && !r.douteux.length;
+    return r;
+  }
+
   /* ================= RECRUTEMENT (zerks financés par le fer des raids) ================= */
   // Durée saisie comme dans le jeu : "hh:mm:ss", "hh:mm" ou heures décimales ("2,5"). Renvoie des heures (null si illisible).
   function heures(t) {
@@ -266,39 +297,49 @@
     const s = Math.min(1, Math.max(0, +ville.surplus || 0));
     const lignes = raids.map(r => {
       const aller = heures(r.trajet), cycle = aller ? 2 * aller : null;
-      const fer = +r.fer || 0, ferPertes = (+r.tPerdus || 0) * Tr.fer, ferNet = Math.max(0, fer - ferPertes);
+      // dépenses (ligne « Expended » du rapport) ; à défaut, coût des Rangers / Triaires perdus
+      const lu = ["dFer", "dBois", "dOr", "dPierre", "dNourriture"].some(k => r[k] !== undefined && r[k] !== "");
+      const dep = lu ? { fer: +r.dFer || 0, bois: +r.dBois || 0, or: +r.dOr || 0, pierre: +r.dPierre || 0, nourriture: +r.dNourriture || 0 }
+                     : { fer: (+r.tPerdus || 0) * Tr.fer, bois: (+r.rPerdus || 0) * Rg.bois, or: (+r.tPerdus || 0) * Tr.or, pierre: 0, nourriture: 0 };
+      const zerks = r.armee === "zerks";
+      const fer = +r.fer || 0, ferPertes = dep.fer, ferNet = Math.max(0, fer - ferPertes);
       const h = v => cycle ? v / cycle : 0;
-      return { id: r.id, aller, cycle, raidsJour: cycle ? 24 / cycle : 0, ferNet, zerksRaid: ferNet * (1 - s) / C.vqIron,
-               heure: { ferBrut: h(fer), ferPertes: h(ferPertes), ferNet: h(ferNet), bois: h((+r.bois || 0) - (+r.rPerdus || 0) * Rg.bois),
-                        pierre: h(+r.pierre || 0), nourriture: h(+r.nourriture || 0), or: h((+r.or || 0) - (+r.tPerdus || 0) * Tr.or) } };
+      // armée de zerks : les zerks perdus sont re-recrutés, ils occupent la file en plus des nouveaux
+      const remplacement = zerks ? ferPertes : 0;
+      return { id: r.id, aller, cycle, raidsJour: cycle ? 24 / cycle : 0, ferNet, zerks, zerksRaid: ferNet * (1 - s) / C.vqIron, remplacesRaid: remplacement / C.vqIron,
+               heure: { ferBrut: h(fer), ferPertes: h(ferPertes), ferNet: h(ferNet), remplacement: h(remplacement), bois: h((+r.bois || 0) - dep.bois),
+                        pierre: h((+r.pierre || 0) - dep.pierre), nourriture: h((+r.nourriture || 0) - dep.nourriture), or: h((+r.or || 0) - dep.or) } };
     });
     const valides = lignes.filter(l => l.cycle);
     if (!valides.length) return { lignes, n: 0 };
     const tot = k => sum(valides.map(l => l.heure[k]));
-    const heure = { ferBrut: tot("ferBrut"), ferPertes: tot("ferPertes"), ferNet: tot("ferNet") };
+    const heure = { ferBrut: tot("ferBrut"), ferPertes: tot("ferPertes"), ferNet: tot("ferNet"), remplacement: tot("remplacement") };
     heure.reserve = heure.ferNet * s; heure.ferZerks = heure.ferNet * (1 - s);
-    const zerksHeure = heure.ferZerks / C.vqIron, zerksJour = zerksHeure * 24;
-    const vitesseCible = zerksHeure * C.vqTime / 3600;            // multiple de la vitesse de base (1 = 100 %)
+    heure.ferFile = heure.ferZerks + heure.remplacement;           // tout le fer qui passe dans la file de recrutement
+    const zerksHeure = heure.ferZerks / C.vqIron, zerksJour = zerksHeure * 24;   // gain net de zerks
+    const remplacesHeure = heure.remplacement / C.vqIron, fileHeure = zerksHeure + remplacesHeure;
+    const vitesseCible = fileHeure * C.vqTime / 3600;             // multiple de la vitesse de base (1 = 100 %)
     const N = Math.max(0, Math.floor(+ville.arenas || 0)), a10 = !!ville.arena10 && N > 0, autres = a10 ? N - 1 : N;
     const vitesse = L => 1 + (a10 ? C.AE[10] : 0) + autres * C.AE[L];
     const niveaux = [];
     for (let L = 1; L <= 10; L++) {
       const v = vitesse(L), zh = v * 3600 / C.vqTime, ferH = zh * C.vqIron;
-      niveaux.push({ niveau: L, vitesse: v, zerksHeure: zh, zerksJour: zh * 24, ferHeure: ferH, couverture: heure.ferZerks / ferH, continu: v <= vitesseCible + 1e-9 });
+      niveaux.push({ niveau: L, vitesse: v, zerksHeure: zh, zerksJour: zh * 24, ferHeure: ferH, couverture: heure.ferFile / ferH, continu: v <= vitesseCible + 1e-9 });
     }
     const ok = niveaux.filter(x => x.continu), choix = autres > 0 && ok.length ? ok[ok.length - 1] : null;
     const vAppliquee = autres > 0 ? (choix ? choix.vitesse : vitesse(1)) : vitesse(1);
     const ferBesoinMin = vitesse(1) * 3600 / C.vqTime * C.vqIron;  // fer / h pour la vitesse la plus basse possible
-    const zerksReelsH = Math.min(zerksHeure, vAppliquee * 3600 / C.vqTime);
-    const excedentFer = Math.max(0, heure.ferZerks - zerksReelsH * C.vqIron);
+    const fileReelleH = Math.min(fileHeure, vAppliquee * 3600 / C.vqTime);
+    const zerksReelsH = Math.max(0, fileReelleH - remplacesHeure);
+    const excedentFer = Math.max(0, heure.ferFile - fileReelleH * C.vqIron);
     const j = v => v * 24;
     const raffinage = { fer: j(heure.reserve + excedentFer), bois: j(tot("bois")), pierre: j(tot("pierre")), nourriture: j(tot("nourriture")), or: j(tot("or")) };
     return { lignes, n: valides.length, sansTrajet: lignes.length - valides.length, heure, jour: Object.fromEntries(Object.entries(heure).map(([k, v]) => [k, v * 24])),
              zerksHeure, zerksJour, vitesseCible, arenas: N, arena10: a10, autres, niveaux, choix, vitesseFixe: autres === 0 ? vitesse(1) : null,
              tropRapide: autres > 0 ? !ok.length : vitesse(1) > vitesseCible + 1e-9,
-             facteurManquant: heure.ferZerks ? ferBesoinMin / heure.ferZerks : Infinity, ferManquantHeure: Math.max(0, ferBesoinMin - heure.ferZerks),
+             facteurManquant: heure.ferFile ? ferBesoinMin / heure.ferFile : Infinity, ferManquantHeure: Math.max(0, ferBesoinMin - heure.ferFile), remplacesHeure, fileHeure,
              zerksReelsH, excedentFer: j(excedentFer), raffinage };
   }
 
-  root.CrownEngine = { castleCombo, castleGrid, castleSolve, castleLoss, cabOptimise, cabDemolition, cabParams, raidSim, journalRow, raidSynthese, recrutement, heures, unitStats, butinBase, defenseParPoint, TYPES };
+  root.CrownEngine = { castleCombo, castleGrid, castleSolve, castleLoss, cabOptimise, cabDemolition, cabParams, raidSim, journalRow, raidSynthese, recrutement, heures, lireRapport, unitStats, butinBase, defenseParPoint, TYPES };
 })(typeof window !== "undefined" ? window : globalThis);
