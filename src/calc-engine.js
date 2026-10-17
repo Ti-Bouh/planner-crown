@@ -249,5 +249,39 @@
     return out;
   }
 
-  root.CrownEngine = { castleCombo, castleGrid, castleSolve, castleLoss, cabOptimise, cabDemolition, cabParams, raidSim, journalRow, raidSynthese, unitStats, butinBase, defenseParPoint, TYPES };
+
+  /* ================= RECRUTEMENT (zerks financés par le fer des raids) ================= */
+  // ville : {arenas, arena10 (bool), raidsJour, surplus (fraction)} ; rapports : [{fer, bois, pierre, nourriture, or, rPerdus, tPerdus}]
+  function recrutement(ville, rapports) {
+    const n = rapports.length; if (!n) return null;
+    const R = D.unites.find(u => u.nom === "Ranger"), T = D.unites.find(u => u.nom === "Triaire");
+    const moy = k => sum(rapports.map(r => +r[k] || 0)) / n;
+    const parRaid = { fer: moy("fer"), bois: moy("bois"), pierre: moy("pierre"), nourriture: moy("nourriture"), or: moy("or"), rPerdus: moy("rPerdus"), tPerdus: moy("tPerdus") };
+    const rj = Math.max(0, +ville.raidsJour || 0), s = Math.min(1, Math.max(0, +ville.surplus || 0));
+    const ferPertes = parRaid.tPerdus * T.fer, ferNetRaid = Math.max(0, parRaid.fer - ferPertes);
+    const ferZerksRaid = ferNetRaid * (1 - s);
+    const jour = { ferBrut: parRaid.fer * rj, ferPertes: ferPertes * rj, ferNet: ferNetRaid * rj, reserve: ferNetRaid * s * rj, ferZerks: ferZerksRaid * rj };
+    const zerksJour = jour.ferZerks / C.vqIron;
+    const vitesseCible = zerksJour * C.vqTime / 86400;           // en multiple de la vitesse de base (1 = 100 %)
+    const N = Math.max(0, Math.floor(+ville.arenas || 0)), a10 = !!ville.arena10 && N > 0, autres = a10 ? N - 1 : N;
+    const vitesse = L => 1 + (a10 ? C.AE[10] : 0) + autres * C.AE[L];
+    const niveaux = [];
+    for (let L = 1; L <= 10; L++) {
+      const v = vitesse(L), zj = v * 86400 / C.vqTime, ferBesoin = zj * C.vqIron;
+      niveaux.push({ niveau: L, vitesse: v, zerksJour: zj, ferJour: ferBesoin, raidsNecessaires: ferZerksRaid ? ferBesoin / ferZerksRaid : Infinity, continu: v <= vitesseCible + 1e-9 });
+    }
+    const ok = niveaux.filter(x => x.continu), choix = autres > 0 ? (ok.length ? ok[ok.length - 1] : null) : null;
+    const vMin = vitesse(1), vChoisie = autres > 0 ? (choix ? choix.vitesse : vMin) : vitesse(1);
+    const zerksReels = Math.min(zerksJour, vChoisie * 86400 / C.vqTime);
+    const excedentFer = Math.max(0, jour.ferZerks - zerksReels * C.vqIron);
+    const raffinage = { fer: jour.reserve + excedentFer, bois: (parRaid.bois - parRaid.rPerdus * R.bois) * rj, pierre: parRaid.pierre * rj,
+                        nourriture: parRaid.nourriture * rj, or: (parRaid.or - parRaid.tPerdus * T.or) * rj };
+    return { n, parRaid, jour, zerksJour, zerksParRaid: ferZerksRaid / C.vqIron, vitesseCible, arenas: N, arena10: a10, autres, niveaux, choix,
+             vitesseFixe: autres === 0 ? vitesse(1) : null, // aucune Arena à régler : vitesse imposée
+             tropRapide: autres > 0 ? !ok.length : vitesse(1) > vitesseCible + 1e-9,
+             raidsPourContinu: ferZerksRaid ? (autres > 0 ? vMin : vitesse(1)) * 86400 / C.vqTime * C.vqIron / ferZerksRaid : Infinity,
+             zerksReels, excedentFer, raffinage };
+  }
+
+  root.CrownEngine = { castleCombo, castleGrid, castleSolve, castleLoss, cabOptimise, cabDemolition, cabParams, raidSim, journalRow, raidSynthese, recrutement, unitStats, butinBase, defenseParPoint, TYPES };
 })(typeof window !== "undefined" ? window : globalThis);
