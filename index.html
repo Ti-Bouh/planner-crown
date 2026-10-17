@@ -632,7 +632,7 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
     <div class="ctool" id="cBrushBar" hidden>
       <div class="brushes" id="cBrushes" role="group" aria-label="Terrain à peindre"></div>
       <label><span class="lbl">Pinceau</span><select id="cBrushSize"><option value="1">1 case</option><option value="3">3 × 3</option><option value="5">5 × 5</option><option value="rect">Rectangle (glisser)</option></select></label>
-      <label><span class="lbl">Zone de</span><input id="cFrom" placeholder="348:320" style="width:90px"></label><label><span class="lbl">à</span><input id="cTo" placeholder="355:330" style="width:90px"></label><button type="button" id="cFill">Appliquer à la zone</button><button type="button" id="cImpToggle">Importer une capture…</button><button type="button" id="cAutoMer" title="Marque comme maritimes les cases libres qui touchent une case Eau">Détecter les cases maritimes</button>
+      <label><span class="lbl">Zone de</span><input id="cFrom" placeholder="348:320" style="width:90px"></label><label><span class="lbl">à</span><input id="cTo" placeholder="355:330" style="width:90px"></label><button type="button" id="cFill">Appliquer à la zone</button><button type="button" id="cImpToggle">Importer une capture…</button><button type="button" id="cAutoMer" title="Marque comme maritimes les cases libres qui touchent une case Eau">Détecter les cases maritimes</button><button type="button" class="danger" id="cClear" title="Efface le fond, le terrain et les villes détectées de ce continent, pour réimporter une capture">Effacer la carte du continent</button>
       <span class="chint">Cliquez ou glissez pour peindre. En « Rectangle », glissez d'un coin à l'autre pour remplir toute la zone. Clic droit maintenu : se déplacer.</span>
     </div>
     <div class="clayout">
@@ -680,7 +680,7 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
       <label><span class="lbl">Sensibilité</span><input type="range" id="cImpSens" min="0.6" max="1.4" step="0.05" value="1" style="width:130px"></label>
       <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="cImpOver"><span class="chint" style="margin:0">Écraser le terrain déjà dessiné</span></label>
       <button type="button" id="cImpRun">Analyser</button>
-      <button type="button" class="primary" id="cImpApply" disabled>Appliquer à la carte</button><button type="button" id="cFondDel">Supprimer le fond du continent</button>
+      <button type="button" class="primary" id="cImpApply" disabled>Appliquer à la carte</button><button type="button" class="danger" id="cFondDel">Effacer la carte du continent</button>
     </div>
     <label style="display:flex;gap:6px;align-items:center;margin:4px 0"><input type="checkbox" id="cImpHide"><span class="chint" style="margin:0">Masquer l'analyse pour comparer avec la capture</span></label>
     <p class="chint" id="cImpMsg">Aucune capture chargée.</p>
@@ -2509,10 +2509,34 @@ async function impApply(){
     if (a === "x-") imp.offX--; if (a === "x+") imp.offX++; if (a === "y-") imp.offY--; if (a === "y+") imp.offY++; if (a === "s-") imp.k *= 0.995; if (a === "s+") imp.k *= 1.005; imp.res = null; impDraw(); });
   $("cImpRun").onclick = impClassify; $("cImpApply").onclick = impApply;
   $("cImpHide").addEventListener("change", impDraw);
-  $("cFondDel").onclick = async () => { if (carteCont == null || !confirm(`Supprimer l'image de fond du continent C${carteCont} ?`)) return;
-    if (!db){ fondImg = null; fondTiles = {}; renderCarte(); setStatus("Fond supprimé (sur cette page)."); return; }
-    try { const t = await db.collection(`carte/fond_C${carteCont}/tuiles`).get(); for (const d of t.docs) await db.doc(`carte/fond_C${carteCont}/tuiles/${d.id}`).delete(); } catch {}
-    try { await db.doc(`carte/fond_C${carteCont}`).delete(); setStatus("Fond supprimé."); } catch(err){ setStatus("Suppression impossible : " + (err.message || err.code)); } };
+  const clearCarte = async btn => {
+    if (carteCont == null || canWrite === false) return;
+    const c = carteCont, lbl = "C" + String(c).padStart(2, "0");
+    armDelete(btn, async () => {
+      btn.disabled = true; btn.textContent = "Effacement…";
+      let nt = 0, nv = 0;
+      try {
+        if (db){
+          const t = await db.collection(`carte/fond_C${c}/tuiles`).get();
+          for (const d of t.docs){ await db.doc(`carte/fond_C${c}/tuiles/${d.id}`).delete(); nt++; }
+          try { await db.doc(`carte/fond_C${c}`).delete(); } catch {}
+          await db.doc(`carte/terrain_C${c}`).set({cells:{}});
+          const ad = await db.doc(`carte/autres_C${c}`).get(), all = (ad.exists && ad.data().list) || [];
+          const keep = all.filter(a => a.name !== "détectée"); nv = all.length - keep.length;
+          if (nv) await db.doc(`carte/autres_C${c}`).set({list:keep});
+        }
+        fondImg = null; fondTiles = {}; terrain = {}; pendingTerr = {}; terrExists = !!db;
+        if (!db) autres = autres.filter(a => a.name !== "détectée");
+        imp.res = null; imp.villes = null; $("cImpApply").disabled = true; if (imp.img) impDraw();
+        renderCarte();
+        const msg = `Carte ${lbl} effacée : fond, terrain${nv ? ` et ${nv} villes détectées` : ""}. Les réservations et les villes saisies à la main sont gardées. Tu peux réimporter une capture.`;
+        setStatus(msg); $("cImpMsg").textContent = msg;
+      } catch(err){ setStatus("Effacement incomplet : " + (err.message || err.code)); }
+      btn.disabled = false; btn.textContent = "Effacer la carte du continent";
+    });
+  };
+  $("cFondDel").onclick = e => clearCarte(e.currentTarget);
+  $("cClear").onclick = e => clearCarte(e.currentTarget);
   $("cImpCsv").addEventListener("change", async e => { let n = 0;
     for (const f of e.target.files){ const txt = await f.text(); for (const m of txt.matchAll(/\((\d{1,3}):(\d{1,3})\)/g)){ imp.own.add(ck(+m[1], +m[2])); n++; } }
     imp.res = null; $("cImpApply").disabled = true; impDraw();
