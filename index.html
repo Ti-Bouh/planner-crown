@@ -284,6 +284,37 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
 .rftab tr.mine td:first-child{box-shadow:inset 3px 0 var(--brass)}
 .mactions{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 @media (prefers-reduced-motion:no-preference){.bar span{transition:width .3s ease}}
+/* ---------- carte des réservations ---------- */
+.ctool{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:10px}
+.ctool label{display:grid;gap:3px}
+.cmodes{display:flex;gap:4px;background:var(--keep-soft);padding:4px;border-radius:9px}
+.cmodes button{border:none;background:transparent;padding:6px 12px;border-radius:6px;font-weight:600;color:var(--muted)}
+.cmodes button[aria-pressed="true"]{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.brushes{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.brushes button{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+.brushes button[aria-pressed="true"]{border-color:var(--brass);box-shadow:inset 0 0 0 1px var(--brass)}
+.csw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px}
+.clayout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
+@media (max-width:960px){.clayout{grid-template-columns:1fr}}
+.cmapwrap{overflow:auto;max-height:76vh;border:1px solid var(--line);border-radius:8px;background:var(--keep-soft)}
+#cMap{display:block;cursor:crosshair;touch-action:none}
+.cmapbox{position:relative}
+.crul{position:absolute;left:1px;top:1px;pointer-events:none}
+.chover{font-family:var(--f-mono);font-size:12px;color:var(--muted);margin-top:6px;min-height:1.3em}
+.clegend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font-size:12.5px;color:var(--muted)}
+.cside{display:grid;gap:16px}
+.cinfo{background:var(--keep-soft);border-radius:8px;padding:10px;display:grid;gap:4px}
+.cinfo b{font-family:var(--f-mono);font-size:1.1rem}
+.clist{list-style:none;margin:0;padding:0;max-height:300px;overflow:auto}
+.clist li{display:flex;justify-content:space-between;gap:8px;padding:6px 4px;border-bottom:1px solid var(--line);cursor:pointer;font-size:13px}
+.clist li:hover{background:var(--keep-soft)}
+.cform{display:grid;gap:8px;margin-top:8px}
+.cform label{display:grid;gap:3px}
+.crow{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.chint{color:var(--muted);font-size:12.5px;margin:4px 0}
+.czoom{display:grid;gap:3px}.czbtns{display:flex;gap:4px;align-items:center}.czbtns button{width:32px;padding:4px 0;font-weight:700;font-size:16px;line-height:1}
+#cMap.panning{cursor:grabbing}
+.ctool select,.ctool input:not([type=checkbox]):not([type=range]):not([type=file]),.cform select,.cform input,#cAutres{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
 </style>
 
 <div class="wrap">
@@ -317,6 +348,7 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
       <button type="button" class="vbtn" role="tab" data-view="attaques" aria-selected="false">Attaques</button>
       <button type="button" class="vbtn" role="tab" data-view="defense" aria-selected="false">Défense</button>
       <button type="button" class="vbtn" role="tab" data-view="barons" aria-selected="false">Barons</button>
+      <button type="button" class="vbtn" role="tab" data-view="carte" aria-selected="false">Carte</button>
     </div>
     <div class="vgrp"><button type="button" class="vbtn" role="tab" data-view="outils" aria-selected="false">⚙ Réglages</button></div>
   </div>
@@ -577,6 +609,76 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
     </details>
     <div class="scroll" style="margin-top:14px"><table class="env" id="bnTable"></table></div>
     <p class="note">Clique le statut pour le faire avancer : en route → réussi → raté. Un spot visé deux fois est signalé.</p>
+  </section>
+  </div>
+
+  <div class="view" id="view-carte" hidden>
+  <section class="panel" aria-label="Carte des réservations">
+    <h2>Carte des réservations</h2>
+    <div class="ctool">
+      <label><span class="lbl">Continent</span><select id="cCont"></select></label>
+      <div class="czoom"><span class="lbl">Zoom</span><div class="czbtns"><button type="button" id="cZoomOut" aria-label="Dézoomer">−</button><select id="cZoom" aria-label="Niveau de zoom"><option value="4">40 %</option><option value="6">60 %</option><option value="9" selected>100 %</option><option value="12">130 %</option><option value="16">180 %</option><option value="22">250 %</option><option value="30">330 %</option><option value="40">450 %</option></select><button type="button" id="cZoomIn" aria-label="Zoomer">+</button></div></div>
+      <label><span class="lbl">Aller à (X:Y)</span><input id="cGoto" placeholder="348:326" style="width:110px"></label>
+      <div class="cmodes" role="group" aria-label="Mode">
+        <button type="button" id="cModeResa" aria-pressed="true">Réserver</button>
+        <button type="button" id="cModeTerr" aria-pressed="false">Bloquer le terrain</button>
+      </div>
+    </div>
+    <div class="ctool" id="cBrushBar" hidden>
+      <div class="brushes" id="cBrushes" role="group" aria-label="Terrain à peindre"></div>
+      <label><span class="lbl">Pinceau</span><select id="cBrushSize"><option value="1">1 case</option><option value="3">3 × 3</option><option value="5">5 × 5</option><option value="rect">Rectangle (glisser)</option></select></label>
+      <label><span class="lbl">Zone de</span><input id="cFrom" placeholder="348:320" style="width:90px"></label><label><span class="lbl">à</span><input id="cTo" placeholder="355:330" style="width:90px"></label><button type="button" id="cFill">Appliquer à la zone</button><button type="button" id="cImpToggle">Importer une capture…</button><button type="button" id="cAutoMer" title="Marque comme maritimes les cases libres qui touchent une case Eau">Détecter les cases maritimes</button>
+      <span class="chint">Cliquez ou glissez pour peindre. En « Rectangle », glissez d'un coin à l'autre pour remplir toute la zone. Clic droit maintenu : se déplacer.</span>
+    </div>
+    <div class="clayout">
+      <div>
+        <div class="cmapbox"><div class="cmapwrap" id="cWrap"><canvas id="cMap" tabindex="0" aria-label="Carte du continent : cliquez sur une case"></canvas></div><canvas id="cRulX" class="crul" aria-hidden="true"></canvas><canvas id="cRulY" class="crul" aria-hidden="true"></canvas></div>
+        <div class="chover" id="cHover">Survolez la carte pour voir les coordonnées.</div>
+        <p class="chint">Molette : zoomer sur le curseur · glisser : se déplacer · sur mobile, pincer pour zoomer.</p>
+        <div class="clegend" id="cLegend"></div>
+      </div>
+      <div class="cside">
+        <section aria-label="Case sélectionnée"><h2>Case sélectionnée</h2><div id="cCell"><p class="chint">Aucune case sélectionnée.</p></div></section>
+        <section aria-label="Réservations du continent"><h2>Réservations du continent</h2><ul class="clist" id="cList"></ul></section>
+        <section aria-label="Autres villes">
+          <h2>Autres villes</h2>
+          <p class="chint">Villes des autres joueurs sur ce continent, une par ligne : « 350:328 LordDoritos ».</p>
+          <textarea id="cAutres" rows="5" style="width:100%"></textarea>
+          <div class="crow"><button type="button" id="cAutresSave">Enregistrer</button></div>
+        </section>
+      </div>
+    </div>
+  </section>
+  <section class="panel" id="cImpPanel" hidden aria-label="Importer une capture">
+    <h2>Dessiner le terrain à partir d'une capture</h2>
+    <ol class="chint" style="margin:0 0 8px;padding-left:18px">
+      <li>Choisissez une capture de la carte du jeu.</li>
+      <li>Cliquez au centre d'une ville dont vous connaissez les coordonnées (repère A), puis d'une deuxième (repère B), le plus loin possible de la première. Tapez leurs coordonnées.</li>
+      <li>Vérifiez que la grille tombe bien sur les cases (ajustez si besoin), délimitez la zone de carte si la capture contient des menus, puis cliquez sur « Analyser ».</li>
+      <li>Contrôlez l'aperçu (cadre rouge = ville d'un autre joueur, bleu clair = case maritime au bord d'un cours d'eau ou de la mer), puis « Appliquer à la carte ». Corrigez ensuite au pinceau si nécessaire.</li>
+    </ol>
+    <div class="ctool">
+      <label><span class="lbl">Capture</span><input type="file" id="cImpFile" accept="image/*"></label>
+      <label><span class="lbl">Nos villes (CSV CotG_Dashboard, facultatif)</span><input type="file" id="cImpCsv" accept=".csv,text/csv" multiple></label>
+      <div class="cmodes" role="group" aria-label="Clic sur l'image">
+        <button type="button" id="cImpRefA" aria-pressed="true">Repère A</button>
+        <button type="button" id="cImpRefB" aria-pressed="false">Repère B</button>
+        <button type="button" id="cImpZone" aria-pressed="false">Délimiter la zone</button>
+      </div>
+      <label><span class="lbl">Coordonnées A</span><input id="cImpA" placeholder="361:322" style="width:90px"></label>
+      <label><span class="lbl">Coordonnées B</span><input id="cImpB" placeholder="355:327" style="width:90px"></label>
+    </div>
+    <div class="ctool">
+      <span class="lbl">Ajuster la grille</span>
+      <div class="czbtns"><button type="button" data-adj="x-">←</button><button type="button" data-adj="x+">→</button><button type="button" data-adj="y-">↑</button><button type="button" data-adj="y+">↓</button><button type="button" data-adj="s-" title="Cases plus petites">−</button><button type="button" data-adj="s+" title="Cases plus grandes">+</button></div>
+      <label><span class="lbl">Sensibilité</span><input type="range" id="cImpSens" min="0.6" max="1.4" step="0.05" value="1" style="width:130px"></label>
+      <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="cImpOver"><span class="chint" style="margin:0">Écraser le terrain déjà dessiné</span></label>
+      <button type="button" id="cImpRun">Analyser</button>
+      <button type="button" class="primary" id="cImpApply" disabled>Appliquer à la carte</button>
+    </div>
+    <label style="display:flex;gap:6px;align-items:center;margin:4px 0"><input type="checkbox" id="cImpHide"><span class="chint" style="margin:0">Masquer l'analyse pour comparer avec la capture</span></label>
+    <p class="chint" id="cImpMsg">Aucune capture chargée.</p>
+    <div class="cmapwrap" style="max-height:70vh"><canvas id="cImpCv" style="display:block;cursor:crosshair"></canvas></div>
   </section>
   </div>
 
@@ -1166,7 +1268,7 @@ $("impApply").addEventListener("click", async () => {
 
 /* ---------- fiches ---------- */
 let fiches = [], currentFiche = null, unsubVilles = null, curView = "fiche", countTxt = "";
-const COMMON_VIEWS = ["maintenant","binome","attaques","defense","barons","outils"];
+const COMMON_VIEWS = ["maintenant","binome","attaques","defense","barons","carte","outils"];
 const countStatus = () => COMMON_VIEWS.includes(curView) ? "Enregistré automatiquement" : (countTxt || "Enregistré automatiquement");
 const col = () => db.collection(`fiches/${currentFiche}/villes`);
 function renderTabs(){
@@ -1174,12 +1276,13 @@ function renderTabs(){
     || `<span class="note">Aucune fiche : crée la tienne dans Réglages.</span>`;
   const f = fiches.find(x => x.id === currentFiche);
   const common = COMMON_VIEWS.includes(curView);
-  document.querySelector("h1").textContent = common ? ({maintenant:"Maintenant", binome:"Binôme", attaques:"Attaques", defense:"Défense", barons:"Barons", outils:"Réglages"})[curView] : isAll() ? "Nos villes" : (f ? (f.id === moi ? "Mes villes" : "Villes de " + f.nom) : "Mes villes");
+  document.querySelector("h1").textContent = common ? ({maintenant:"Maintenant", binome:"Binôme", attaques:"Attaques", defense:"Défense", barons:"Barons", carte:"Carte", outils:"Réglages"})[curView] : isAll() ? "Nos villes" : (f ? (f.id === moi ? "Mes villes" : "Villes de " + f.nom) : "Mes villes");
   $("subTitle").textContent = curView === "maintenant" ? (moi ? "Ce que tu as à faire, en un coup d'œil." : "Choisis qui tu es en haut à droite pour voir tes ordres.")
     : curView === "binome" ? "Vue commune : équilibre off / def et troupes de tous les joueurs."
     : curView === "attaques" ? "Vue commune : opérations, plan de frappe et envois de chaque joueur."
     : curView === "defense" ? "Vue commune : villes menacées, renforts engagés et ce que chacun doit envoyer."
     : curView === "barons" ? "Vue commune : les spots où chacun a envoyé un baron."
+    : curView === "carte" ? "Vue commune : terrain du continent, cases réservées et villes des autres joueurs."
     : curView === "outils" ? "Joueurs, import des exports du jeu, ajout de villes et poids TS."
     : "Coordonnées, troupes, rôle off/def et destination des ressources, ville par ville.";
   $("ficheNav").hidden = common;
@@ -1333,7 +1436,7 @@ let objTimer = null;
 }));
 function syncFicheSubs(){
   fiches.forEach(f => { if (subsFiche[f.id]) return;
-    subsFiche[f.id] = db.collection(`fiches/${f.id}/villes`).onSnapshot(snap => { allCities[f.id] = snap.docs.map(d => ({id:d.id, ...d.data()})); renderBinome(); renderAttaques(); renderDefense(); renderWelcome(); if (isAll()) render(); }, () => {}); });
+    subsFiche[f.id] = db.collection(`fiches/${f.id}/villes`).onSnapshot(snap => { allCities[f.id] = snap.docs.map(d => ({id:d.id, ...d.data()})); renderBinome(); renderAttaques(); renderDefense(); renderWelcome(); if (isAll()) render(); renderCarte(); }, () => {}); });
   renderBinome();
 }
 
@@ -1967,17 +2070,18 @@ $("nowOrders").addEventListener("click", async e => {
 
 /* ---------- vues ---------- */
 function showView(v){
-  if (!["maintenant","fiche","binome","attaques","defense","barons","outils"].includes(v)) v = "maintenant";
+  if (!["maintenant","fiche","binome","attaques","defense","barons","carte","outils"].includes(v)) v = "maintenant";
   if (v === "outils" && moi && !editingId && currentFiche !== moi && fiches.some(f => f.id === moi)) selectFiche(moi);
   const st = $("status").textContent; const wasCount = !st || st === countTxt || st === "Enregistré automatiquement";
-  curView = v; renderTabs(); document.body.classList.toggle("wide", v === "attaques"); if (wasCount && countTxt) setStatus(countStatus()); renderWelcome();
+  curView = v; renderTabs(); document.body.classList.toggle("wide", v === "attaques" || v === "carte"); if (wasCount && countTxt) setStatus(countStatus()); renderWelcome();
   document.querySelectorAll(".vbtn").forEach(b => b.setAttribute("aria-selected", String(b.dataset.view === v)));
-  ["maintenant","fiche","binome","attaques","defense","barons","outils"].forEach(k => $("view-"+k).hidden = k !== v);
+  ["maintenant","fiche","binome","attaques","defense","barons","carte","outils"].forEach(k => $("view-"+k).hidden = k !== v);
   try { localStorage.setItem("vueActive", v); } catch {}
   if (v === "binome") renderBinome();
   if (v === "attaques") renderAttaques();
   if (v === "defense") renderDefense();
   if (v === "barons") renderBarons();
+  if (v === "carte") renderCarte();
   if (v === "maintenant") renderNow();
 }
 document.querySelector(".views").addEventListener("click", e => { const b = e.target.closest("[data-view]"); if (b) showView(b.dataset.view); });
@@ -1989,6 +2093,356 @@ $("quickImport").addEventListener("click", () => {
   showView("outils"); $("csvInput").click();
 });
 
+/* ---------- vue carte : réservations et terrain ---------- */
+const TERR = {foret:{n:"Forêt",c:"#3f6b35"}, montagne:{n:"Montagne",c:"#8c8c8c"}, colline:{n:"Colline",c:"#b39a5a"}, eau:{n:"Eau",c:"#3a7db8"}, mer:{n:"Maritime",c:"#9fd0ef",ok:true}};
+const RTYPES = ["Off","Def","Hub","Mixte","Maritime"];
+let resa = {}, terrain = {}, terrExists = false, autres = [], carteSel = null, carteMode = "resa", brush = "foret";
+let carteCont = null, carteSubs = [], painting = false, pendingTerr = {}, cCell = 9, rectSel = null;
+const ck = (x, y) => x + "_" + y;
+const contOf = (x, y) => Math.floor(y / 100) * 10 + Math.floor(x / 100);
+const cvar = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const pVar = (fid, soft) => cvar(`--p${pIdx(fid)}${soft ? "-soft" : ""}`);
+function cityMap(){ const m = {}; for (const fid in allCities) (allCities[fid] || []).forEach(c => { if (c.x != null && c.y != null && c.x !== "" && c.y !== "") m[ck(+c.x, +c.y)] = {fid, name:c.name}; }); return m; }
+function resaStatut(r, cm){ return cm[ck(r.x, r.y)] ? "fondee" : (r.statut || "reservee"); }
+(function initCarteUI(){
+  for (let c = 0; c <= 55; c++){ if (c % 10 > 5) continue; const o = document.createElement("option"); o.value = c; o.textContent = "C" + String(c).padStart(2, "0"); $("cCont").appendChild(o); }
+  try { const z = localStorage.getItem("carteZoom"); if (z) $("cZoom").value = z; } catch {} if ($("cZoom").selectedIndex < 0) $("cZoom").value = "9";
+  $("cBrushes").innerHTML = Object.entries(TERR).map(([k, t]) => `<button type="button" data-brush="${k}" aria-pressed="${k === brush}"><i class="csw" style="background:${t.c}"></i>${t.n}</button>`).join("") + `<button type="button" data-brush="" aria-pressed="false"><i class="csw" style="background:var(--keep-soft);border:1px solid var(--line)"></i>Effacer</button>`;
+  $("cBrushes").addEventListener("click", e => { const b = e.target.closest("[data-brush]"); if (!b) return; brush = b.dataset.brush; $("cBrushes").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); });
+  const setMode = m => { carteMode = m; $("cModeResa").setAttribute("aria-pressed", String(m === "resa")); $("cModeTerr").setAttribute("aria-pressed", String(m === "terr")); $("cBrushBar").hidden = m !== "terr"; };
+  $("cModeResa").onclick = () => setMode("resa"); $("cModeTerr").onclick = () => setMode("terr");
+  $("cCont").addEventListener("change", () => { setCarteCont(+$("cCont").value); });
+  $("cZoom").addEventListener("change", () => { const w = $("cWrap"), lab = 24, mx = w.clientWidth / 2, my = w.clientHeight / 2, fx = (w.scrollLeft + mx - lab) / cCell, fy = (w.scrollTop + my - lab) / cCell;
+    try { localStorage.setItem("carteZoom", $("cZoom").value); } catch {} drawCarte(); w.scrollLeft = fx * cCell + lab - mx; w.scrollTop = fy * cCell + lab - my; });
+  $("cGoto").addEventListener("change", () => { const m = $("cGoto").value.match(/(\d{1,3})\D+(\d{1,3})/); if (m && +m[1] < 600 && +m[2] < 600) carteSelect(+m[1], +m[2]); });
+  const cv = $("cMap");
+  const at = ev => { const r = cv.getBoundingClientRect(), lab = 24; const cx = Math.floor((ev.clientX - r.left - lab) / cCell), cy = Math.floor((ev.clientY - r.top - lab) / cCell);
+    if (cx < 0 || cy < 0 || cx > 99 || cy > 99 || carteCont == null) return null; return {x:(carteCont % 10) * 100 + cx, y:Math.floor(carteCont / 10) * 100 + cy}; };
+  cv.addEventListener("pointermove", ev => { const c = at(ev); if (!c){ $("cHover").textContent = "Survolez la carte pour voir les coordonnées."; return; }
+    const k = ck(c.x, c.y), r = resa[k], t = terrain[k], ci = cityMap()[k], au = autres.find(a => a.x === c.x && a.y === c.y);
+    $("cHover").textContent = `${c.x}:${c.y}` + (t ? ` · ${TERR[t].n}` : "") + (ci ? ` · ville de ${ficheNom(ci.fid)} (${ci.name || ""})` : "") + (au ? ` · ${au.name || "autre ville"}` : "") + (r ? ` · réservée par ${ficheNom(r.fiche)} (${r.type})` : "");
+    if (painting && carteMode === "terr") paint(c); });
+  const wrap = $("cWrap"), pts = new Map(); let drag = null, pinch = null;
+  cv.addEventListener("contextmenu", ev => ev.preventDefault());
+  cv.addEventListener("pointerdown", ev => { cv.setPointerCapture(ev.pointerId); pts.set(ev.pointerId, {x:ev.clientX, y:ev.clientY});
+    if (pts.size === 2){ const [a, b] = [...pts.values()]; pinch = {d:Math.hypot(a.x - b.x, a.y - b.y)}; drag = null; painting = false; return; }
+    const pan = ev.button === 1 || ev.button === 2 || carteMode === "resa" || ev.pointerType === "touch" && carteMode !== "terr";
+    drag = {x:ev.clientX, y:ev.clientY, sl:wrap.scrollLeft, st:wrap.scrollTop, moved:false, pan, cell:at(ev)};
+    if (!pan && carteMode === "terr" && canWrite !== false && drag.cell){ if ($("cBrushSize").value === "rect"){ rectSel = {a:drag.cell, b:drag.cell}; drawCarte(); } else { painting = true; paint(drag.cell); } } });
+  cv.addEventListener("pointermove", ev => { if (pts.has(ev.pointerId)) pts.set(ev.pointerId, {x:ev.clientX, y:ev.clientY});
+    if (pinch && pts.size === 2){ const [a, b] = [...pts.values()], d = Math.hypot(a.x - b.x, a.y - b.y), r = d / pinch.d;
+      if (r > 1.25 || r < 0.8){ const rc = wrap.getBoundingClientRect(); zoomStep(r > 1 ? 1 : -1, (a.x + b.x) / 2 - rc.left, (a.y + b.y) / 2 - rc.top); pinch.d = d; } return; }
+    if (drag && drag.pan){ const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y; if (!drag.moved && Math.hypot(dx, dy) > 5){ drag.moved = true; cv.classList.add("panning"); }
+      if (drag.moved){ wrap.scrollLeft = drag.sl - dx; wrap.scrollTop = drag.st - dy; } }
+    if (rectSel && drag && !drag.pan){ const c = at(ev); if (c && (c.x !== rectSel.b.x || c.y !== rectSel.b.y)){ rectSel.b = c; drawCarte(); } } });
+  const stop = ev => { pts.delete(ev.pointerId); if (pts.size < 2) pinch = null;
+    if (drag && drag.pan && !drag.moved && carteMode === "resa" && drag.cell && ev.type === "pointerup") carteSelect(drag.cell.x, drag.cell.y, false);
+    if (rectSel){ const r = rectSel; rectSel = null; if (ev.type === "pointerup") fillArea(r.a, r.b); else drawCarte(); }
+    drag = null; cv.classList.remove("panning"); if (painting){ painting = false; flushTerrain(); } };
+  cv.addEventListener("pointerup", stop); cv.addEventListener("pointercancel", stop);
+  wrap.addEventListener("wheel", ev => { ev.preventDefault(); const rc = wrap.getBoundingClientRect(); zoomStep(ev.deltaY < 0 ? 1 : -1, ev.clientX - rc.left, ev.clientY - rc.top); }, {passive:false});
+  wrap.addEventListener("scroll", () => requestAnimationFrame(drawRulers), {passive:true}); window.addEventListener("resize", () => drawRulers());
+  $("cZoomIn").onclick = () => zoomStep(1); $("cZoomOut").onclick = () => zoomStep(-1);
+  $("cAutoMer").onclick = () => { if (canWrite === false || carteCont == null) return;
+    const x0 = (carteCont % 10) * 100, y0 = Math.floor(carteCont / 10) * 100, cm = cityMap(); let n = 0;
+    for (let x = x0; x < x0 + 100; x++) for (let y = y0; y < y0 + 100; y++){ const k = ck(x, y); if (terrain[k]) continue;
+      let wet = false; for (let dx = -1; dx <= 1 && !wet; dx++) for (let dy = -1; dy <= 1; dy++) if ((dx || dy) && terrain[ck(x + dx, y + dy)] === "eau"){ wet = true; break; }
+      if (wet){ terrain[k] = "mer"; pendingTerr[k] = "mer"; n++; } }
+    drawCarte(); flushTerrain(); renderCarte(); setStatus(n ? `${n} cases marquées maritimes.` : "Aucune nouvelle case maritime : peignez d'abord l'eau."); };
+  $("cFill").onclick = () => { const pa = $("cFrom").value.match(/(\d{1,3})\D+(\d{1,3})/), pb = $("cTo").value.match(/(\d{1,3})\D+(\d{1,3})/);
+    if (!pa || !pb){ setStatus("Indiquez deux coordonnées, par exemple 348:320 et 355:330."); return; }
+    const a = {x:+pa[1], y:+pa[2]}, b = {x:+pb[1], y:+pb[2]}; if (contOf(a.x, a.y) !== carteCont) setCarteCont(contOf(a.x, a.y)); fillArea(a, b); };
+  $("cAutresSave").onclick = async () => { if (!db || carteCont == null) return;
+    const list = []; $("cAutres").value.split(/\n/).forEach(l => { const m = l.match(/(\d{1,3})\s*[:;,\s]\s*(\d{1,3})\s*(.*)/); if (m && +m[1] < 600 && +m[2] < 600) list.push({x:+m[1], y:+m[2], name:m[3].trim()}); });
+    try { await db.doc(`carte/autres_C${carteCont}`).set({list}); setStatus(`${list.length} autres villes enregistrées.`); } catch(err){ setStatus("Non enregistré : " + (err.message || err.code)); } };
+})();
+function zoomStep(dir, mx, my){
+  const sel = $("cZoom"), i = sel.selectedIndex + dir; if (i < 0 || i >= sel.options.length) return;
+  const wrap = $("cWrap"), lab = 24, old = cCell; if (mx == null){ mx = wrap.clientWidth / 2; my = wrap.clientHeight / 2; }
+  const fx = (wrap.scrollLeft + mx - lab) / old, fy = (wrap.scrollTop + my - lab) / old;
+  sel.selectedIndex = i; try { localStorage.setItem("carteZoom", sel.value); } catch {}
+  drawCarte(); wrap.scrollLeft = fx * cCell + lab - mx; wrap.scrollTop = fy * cCell + lab - my; drawRulers();
+}
+function fillArea(a, b){
+  if (canWrite === false || carteCont == null) return;
+  const x0 = (carteCont % 10) * 100, y0 = Math.floor(carteCont / 10) * 100;
+  const xa = Math.max(x0, Math.min(a.x, b.x)), xb = Math.min(x0 + 99, Math.max(a.x, b.x)), ya = Math.max(y0, Math.min(a.y, b.y)), yb = Math.min(y0 + 99, Math.max(a.y, b.y));
+  let n = 0;
+  for (let x = xa; x <= xb; x++) for (let y = ya; y <= yb; y++){ const k = ck(x, y), v = brush || null; if ((terrain[k] || null) === v) continue; if (v) terrain[k] = v; else delete terrain[k]; pendingTerr[k] = v; n++; }
+  drawCarte(); flushTerrain();
+  setStatus(`${(xb - xa + 1) * (yb - ya + 1)} cases (${xa}:${ya} à ${xb}:${yb}) : ${brush ? TERR[brush].n.toLowerCase() : "effacées"}.`);
+}
+function paint(c){
+  const s = +$("cBrushSize").value, h = Math.floor(s / 2), x0 = (carteCont % 10) * 100, y0 = Math.floor(carteCont / 10) * 100;
+  for (let dx = -h; dx <= h; dx++) for (let dy = -h; dy <= h; dy++){ const x = c.x + dx, y = c.y + dy; if (x < x0 || x >= x0 + 100 || y < y0 || y >= y0 + 100) continue;
+    const k = ck(x, y), v = brush || null; if ((terrain[k] || null) === v) continue; if (v) terrain[k] = v; else delete terrain[k]; pendingTerr[k] = v; }
+  drawCarte();
+}
+async function flushTerrain(){
+  const p = pendingTerr; pendingTerr = {}; if (!db || !Object.keys(p).length) return;
+  const ref = db.doc(`carte/terrain_C${carteCont}`);
+  try { if (terrExists) await ref.update({cells:p}); else { const all = {}; for (const k in terrain) all[k] = terrain[k]; await ref.set({cells:all}); terrExists = true; } }
+  catch(err){ setStatus("Terrain non enregistré : " + (err.message || err.code)); }
+}
+function setCarteCont(c){
+  if (c === carteCont) return; carteCont = c; $("cCont").value = c; try { localStorage.setItem("carteCont", c); } catch {}
+  carteSubs.forEach(u => { try { u(); } catch {} }); carteSubs = []; terrain = {}; terrExists = false; autres = []; pendingTerr = {};
+  if (db){
+    carteSubs.push(db.doc(`carte/terrain_C${c}`).onSnapshot(d => { terrExists = d.exists; const cells = (d.exists && d.data().cells) || {}; terrain = {}; for (const k in cells) if (cells[k] && TERR[cells[k]]) terrain[k] = cells[k]; for (const k in pendingTerr){ if (pendingTerr[k]) terrain[k] = pendingTerr[k]; else delete terrain[k]; } renderCarte(); }, () => {}));
+    carteSubs.push(db.doc(`carte/autres_C${c}`).onSnapshot(d => { autres = ((d.exists && d.data().list) || []).filter(a => typeof a.x === "number"); if (document.activeElement?.id !== "cAutres") $("cAutres").value = autres.map(a => `${a.x}:${a.y}${a.name ? " " + a.name : ""}`).join("\n"); renderCarte(); }, () => {}));
+  }
+  renderCarte();
+}
+function carteSelect(x, y, scroll = true){
+  const c = contOf(x, y); if (c !== carteCont) setCarteCont(c); carteSel = {x, y}; renderCarte();
+  if (scroll){ const w = $("cWrap"); w.scrollLeft = 24 + (x % 100) * cCell - w.clientWidth / 2; w.scrollTop = 24 + (y % 100) * cCell - w.clientHeight / 2; }
+}
+function drawRulers(){
+  const wrap = $("cWrap"), rx = $("cRulX"), ry = $("cRulY"); if (!rx || carteCont == null) return;
+  const W = wrap.clientWidth, H = wrap.clientHeight, lab = 24, dpr = window.devicePixelRatio || 1;
+  const x0 = (carteCont % 10) * 100, y0 = Math.floor(carteCont / 10) * 100, sl = wrap.scrollLeft, st = wrap.scrollTop;
+  const step = cCell < 9 ? 10 : cCell < 16 ? 5 : cCell < 30 ? 2 : 1;
+  const hx = carteSel ? carteSel.x - x0 : -1, hy = carteSel ? carteSel.y - y0 : -1;
+  const setup = (cv, w, h) => { cv.width = w * dpr; cv.height = h * dpr; cv.style.width = w + "px"; cv.style.height = h + "px"; const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.fillStyle = cvar("--panel"); g.fillRect(0, 0, w, h); g.font = `${cCell >= 30 ? 12 : 11}px "IBM Plex Mono", monospace`; g.textAlign = "center"; g.textBaseline = "middle"; return g; };
+  const gx = setup(rx, W, lab);
+  for (let i = 0; i < 100; i++){ const c = lab + i * cCell + cCell / 2 - sl; if (c < lab - cCell || c > W + cCell) continue;
+    if (i === hx){ gx.fillStyle = cvar("--brass-soft"); gx.fillRect(c - cCell / 2, 0, cCell, lab); }
+    if ((i % step === 0 || i === hx) && c > lab + 22){ gx.fillStyle = i === hx ? cvar("--brass") : cvar("--muted"); gx.fillText(x0 + i, c, lab / 2); } }
+  gx.fillStyle = cvar("--line"); gx.fillRect(0, lab - 1, W, 1);
+  const gy = setup(ry, lab + 8, H);
+  for (let i = 0; i < 100; i++){ const c = lab + i * cCell + cCell / 2 - st; if (c < lab - cCell || c > H + cCell) continue;
+    if (i === hy){ gy.fillStyle = cvar("--brass-soft"); gy.fillRect(0, c - cCell / 2, lab + 8, cCell); }
+    if (i % step === 0 || i === hy){ gy.fillStyle = i === hy ? cvar("--brass") : cvar("--muted"); gy.fillText(y0 + i, (lab + 8) / 2, c); } }
+  gy.fillStyle = cvar("--line"); gy.fillRect(lab + 7, 0, 1, H);
+  gy.fillStyle = cvar("--panel"); gy.fillRect(0, 0, lab + 8, lab); gy.fillStyle = cvar("--line"); gy.fillRect(0, lab - 1, lab + 8, 1);
+}
+function drawCarte(){
+  const cv = $("cMap"); if (carteCont == null) return; cCell = +$("cZoom").value;
+  const N = 100, lab = 24, dpr = window.devicePixelRatio || 1, W = lab + N * cCell;
+  cv.width = W * dpr; cv.height = W * dpr; cv.style.width = W + "px"; cv.style.height = W + "px";
+  const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const x0 = (carteCont % 10) * 100, y0 = Math.floor(carteCont / 10) * 100, cm = cityMap();
+  const px = x => lab + (x - x0) * cCell, py = y => lab + (y - y0) * cCell, inC = (x, y) => x >= x0 && x < x0 + N && y >= y0 && y < y0 + N;
+  g.fillStyle = cvar("--panel"); g.fillRect(0, 0, W, W);
+  g.fillStyle = cvar("--muted"); g.font = '11px "IBM Plex Mono", monospace'; g.textAlign = "center"; g.textBaseline = "middle";
+  for (let i = 0; i < N; i += 10){ g.fillText(x0 + i, lab + i * cCell + cCell / 2, lab / 2); g.fillText(y0 + i, lab / 2, lab + i * cCell + cCell / 2); }
+  for (const k in terrain){ const [x, y] = k.split("_").map(Number); if (!inC(x, y)) continue; g.fillStyle = TERR[terrain[k]].c; g.fillRect(px(x), py(y), cCell, cCell); }
+  g.fillStyle = cvar("--keep");
+  autres.forEach(a => { if (inC(a.x, a.y)) g.fillRect(px(a.x), py(a.y), cCell, cCell); });
+  for (const k in resa){ const r = resa[k]; if (!inC(r.x, r.y)) continue; const fond = resaStatut(r, cm) === "fondee";
+    g.fillStyle = pVar(r.fiche, !fond); g.fillRect(px(r.x), py(r.y), cCell, cCell);
+    g.strokeStyle = pVar(r.fiche); g.lineWidth = 2; g.strokeRect(px(r.x) + 1, py(r.y) + 1, cCell - 2, cCell - 2);
+    if (cCell >= 14){ g.fillStyle = fond ? "#fff" : pVar(r.fiche); g.font = `600 ${Math.floor(cCell * .55)}px "IBM Plex Sans", sans-serif`; g.fillText((r.type || "?")[0], px(r.x) + cCell / 2, py(r.y) + cCell / 2 + 1); } }
+  for (const k in cm){ if (resa[k]) continue; const [x, y] = k.split("_").map(Number); if (!inC(x, y)) continue; g.fillStyle = pVar(cm[k].fid); g.fillRect(px(x), py(y), cCell, cCell); }
+  g.strokeStyle = cvar("--line");
+  for (let i = 0; i <= N; i++){ const w = i % 10 === 0 ? 1.4 : (cCell >= 9 ? .5 : 0); if (!w) continue; g.lineWidth = w;
+    g.beginPath(); g.moveTo(lab + i * cCell + .5, lab); g.lineTo(lab + i * cCell + .5, W); g.stroke();
+    g.beginPath(); g.moveTo(lab, lab + i * cCell + .5); g.lineTo(W, lab + i * cCell + .5); g.stroke(); }
+  if (rectSel){ const xa = Math.min(rectSel.a.x, rectSel.b.x), xb = Math.max(rectSel.a.x, rectSel.b.x), ya = Math.min(rectSel.a.y, rectSel.b.y), yb = Math.max(rectSel.a.y, rectSel.b.y);
+    g.fillStyle = brush ? TERR[brush].c + "88" : "rgba(127,127,127,.35)"; g.fillRect(px(xa), py(ya), (xb - xa + 1) * cCell, (yb - ya + 1) * cCell);
+    g.strokeStyle = cvar("--brass"); g.lineWidth = 2; g.setLineDash([5, 3]); g.strokeRect(px(xa), py(ya), (xb - xa + 1) * cCell, (yb - ya + 1) * cCell); g.setLineDash([]);
+    $("cHover").textContent = `Zone ${xa}:${ya} à ${xb}:${yb} (${(xb - xa + 1) * (yb - ya + 1)} cases)`; }
+  if (carteSel && inC(carteSel.x, carteSel.y)){ g.strokeStyle = cvar("--brass"); g.lineWidth = 3; g.strokeRect(px(carteSel.x) - 1, py(carteSel.y) - 1, cCell + 2, cCell + 2); }
+  drawRulers();
+}
+function renderCarte(){
+  if ($("view-carte").hidden) return;
+  if (carteCont == null){ let c = 33; try { const s = localStorage.getItem("carteCont"); if (s !== null) c = +s; else { const v = (allCities[moi] || Object.values(allCities).flat())[0]; if (v && v.x !== "" && v.x != null) c = contOf(+v.x, +v.y); } } catch {} setCarteCont(c); return; }
+  drawCarte();
+  const cm = cityMap(), x0 = (carteCont % 10) * 100, y0 = Math.floor(carteCont / 10) * 100;
+  $("cLegend").innerHTML = fiches.map(f => `<span><i class="csw" style="background:${pCol(f.id)}"></i>${esc(f.nom)} : ville</span><span><i class="csw" style="background:${pSoft(f.id)};border:2px solid ${pCol(f.id)}"></i>${esc(f.nom)} : réservée</span>`).join("")
+    + Object.values(TERR).map(t => `<span><i class="csw" style="background:${t.c}"></i>${t.n}${t.ok ? " (constructible)" : ""}</span>`).join("") + `<span><i class="csw" style="background:var(--keep)"></i>Autre joueur</span>`
+    + `<span>Cases maritimes sur ce continent : ${Object.keys(terrain).filter(k => terrain[k] === "mer").length}</span>`;
+  const rs = Object.values(resa).filter(r => r.x >= x0 && r.x < x0 + 100 && r.y >= y0 && r.y < y0 + 100).sort((a, b) => ficheNom(a.fiche).localeCompare(ficheNom(b.fiche)) || a.x - b.x || a.y - b.y);
+  $("cList").innerHTML = rs.length ? rs.map(r => `<li data-x="${r.x}" data-y="${r.y}"><span><i class="csw" style="background:${pCol(r.fiche)}"></i> ${r.x}:${r.y} · ${esc(r.type)}${terrain[ck(r.x, r.y)] === "mer" ? " · maritime" : ""}</span><span class="lbl">${esc(ficheNom(r.fiche))}${resaStatut(r, cm) === "fondee" ? " · fondée" : ""}</span></li>`).join("") : `<li class="chint" style="cursor:default">Aucune réservation sur ce continent.</li>`;
+  $("cList").querySelectorAll("li[data-x]").forEach(li => li.onclick = () => carteSelect(+li.dataset.x, +li.dataset.y));
+  renderCarteCell(cm);
+}
+function renderCarteCell(cm){
+  const box = $("cCell"); if (!carteSel){ box.innerHTML = `<p class="chint">Aucune case sélectionnée.</p>`; return; }
+  const {x, y} = carteSel, k = ck(x, y), r = resa[k], t = terrain[k], ci = cm[k], au = autres.find(a => a.x === x && a.y === y);
+  let h = `<div class="cinfo"><b>${x}:${y}</b><span class="lbl">Continent C${String(contOf(x, y)).padStart(2, "0")}</span>`;
+  if (t) h += TERR[t].ok ? `<span><i class="csw" style="background:${TERR[t].c}"></i> Case maritime : constructible, port possible</span>` : `<span><i class="csw" style="background:${TERR[t].c}"></i> ${TERR[t].n} : case non constructible</span>`;
+  else if (!ci && !au) h += `<span class="chint">Case terrestre</span>`;
+  if (ci) h += `<span>Ville de ${pName(ci.fid)} : ${esc(ci.name || "")}${t === "mer" ? " · maritime" : ""}</span>`;
+  if (au) h += `<span>Autre joueur : ${esc(au.name || "ville")}</span>`;
+  if (r) h += `<span>${resaStatut(r, cm) === "fondee" ? "Fondée" : "Réservée"} par ${pName(r.fiche)} · ${esc(r.type)}</span>` + (r.note ? `<span class="lbl">${esc(r.note)}</span>` : "") + (r.date ? `<span class="lbl">le ${new Date(r.date).toLocaleDateString("fr-FR")}</span>` : "");
+  h += `</div>`;
+  const ro = !db || canWrite === false;
+  if (ro){ box.innerHTML = h + `<p class="chint">Lecture seule.</p>`; return; }
+  h += `<label class="cform" style="margin-top:8px"><span class="lbl">Type de case</span><select id="cTerr">
+    <option value=""${!t ? " selected" : ""}>Terrestre (constructible)</option>
+    <option value="mer"${t === "mer" ? " selected" : ""}>Maritime (constructible, port possible)</option>
+    ${["foret","montagne","colline","eau"].map(v => `<option value="${v}"${t === v ? " selected" : ""}>${TERR[v].n} (non constructible)</option>`).join("")}
+  </select></label>`;
+  if (r){ h += `<div class="crow">${r.statut === "fondee" ? `<button type="button" id="cUnfound">Remettre en réservée</button>` : `<button type="button" id="cFound">Marquer fondée</button>`}<button type="button" id="cFree">Libérer la case</button></div>`; }
+  else if (!ci && !au){
+    if (!moi) h += `<p class="chint">Choisissez d'abord votre fiche dans « Je suis », en haut.</p>`;
+    else h += `<div class="cform">${t && !TERR[t].ok ? `<p class="chint">Attention : cette case est marquée ${TERR[t].n.toLowerCase()}.</p>` : ""}<label><span class="lbl">Type de ville</span><select id="cType">${RTYPES.map(o => `<option${t === "mer" && o === "Maritime" ? " selected" : ""}>${o}</option>`).join("")}</select></label>
+      <label><span class="lbl">Note (facultatif)</span><input id="cNote" maxlength="120" placeholder="près du donjon niv. 8"></label>
+      <div class="crow"><button type="button" class="primary" id="cReserve">Réserver pour ${esc(ficheNom(moi))}</button></div></div>`;
+  }
+  box.innerHTML = h;
+  if ($("cTerr")) $("cTerr").onchange = () => { const v = $("cTerr").value || null; if (contOf(x, y) !== carteCont) return;
+    if (v) terrain[k] = v; else delete terrain[k]; pendingTerr[k] = v; flushTerrain(); renderCarte();
+    setStatus(`Case ${x}:${y} : ${v ? TERR[v].n.toLowerCase() : "terrestre"}.`); };
+  const ref = db.doc("reservations/" + k);
+  const act = async (fn, ok) => { try { await fn(); setStatus(ok); } catch(err){ setStatus("Non enregistré : " + (err.message || err.code)); } };
+  if ($("cReserve")) $("cReserve").onclick = () => act(() => ref.set({x, y, fiche:moi, type:$("cType").value, note:$("cNote").value.trim(), statut:"reservee", date:new Date().toISOString()}), `Case ${x}:${y} réservée.`);
+  if ($("cFree")) $("cFree").onclick = () => { if (r.fiche !== moi && !confirm(`Cette case est réservée par ${ficheNom(r.fiche)}. La libérer quand même ?`)) return; act(() => ref.delete(), `Case ${x}:${y} libérée.`); };
+  if ($("cFound")) $("cFound").onclick = () => act(() => ref.update({statut:"fondee"}), "Marquée fondée.");
+  if ($("cUnfound")) $("cUnfound").onclick = () => act(() => ref.update({statut:"reservee"}), "Remise en réservée.");
+}
+function startCarte(){
+  db.collection("reservations").onSnapshot(s => { resa = {}; s.docs.forEach(d => { const v = d.data(); if (v && typeof v.x === "number") resa[d.id] = v; }); renderCarte(); }, err => setStatus("Réservations indisponibles (" + (err.code || "erreur") + ")."));
+  if (carteCont != null){ const c = carteCont; carteCont = null; setCarteCont(c); }
+}
+
+/* ---------- carte : analyse d'une capture ---------- */
+const imp = {img:null, data:null, A:null, B:null, zone:null, mode:"A", offX:0, offY:0, k:1, res:null, villes:null, zdrag:null, own:new Set()};
+const ownCities = () => { const s = new Set(imp.own); for (const k in cityMap()) s.add(k); return s; };
+function impCal(){
+  const pa = $("cImpA").value.match(/(\d{1,3})\D+(\d{1,3})/), pb = $("cImpB").value.match(/(\d{1,3})\D+(\d{1,3})/);
+  if (!imp.A || !imp.B || !pa || !pb) return null;
+  const A = {x:+pa[1], y:+pa[2]}, B = {x:+pb[1], y:+pb[2]};
+  let sx = A.x !== B.x ? (imp.B.px - imp.A.px) / (B.x - A.x) : null, sy = A.y !== B.y ? (imp.B.py - imp.A.py) / (B.y - A.y) : null;
+  if (sx == null && sy == null) return null; if (sx == null) sx = sy; if (sy == null) sy = sx;
+  sx *= imp.k; sy *= imp.k; if (Math.abs(sx) < 4 || Math.abs(sy) < 4) return null;
+  const toPx = (X, Y) => ({x:imp.A.px + imp.offX + (X - A.x) * sx, y:imp.A.py + imp.offY + (Y - A.y) * sy});
+  const toCell = (px, py) => ({x:Math.round(A.x + (px - imp.A.px - imp.offX) / sx), y:Math.round(A.y + (py - imp.A.py - imp.offY) / sy)});
+  return {A, B, sx, sy, toPx, toCell};
+}
+function impDraw(){
+  const cv = $("cImpCv"); if (!imp.img) return;
+  const W = imp.img.width, H = imp.img.height; if (cv.width !== W){ cv.width = W; cv.height = H; }
+  const g = cv.getContext("2d"); g.drawImage(imp.img, 0, 0);
+  const cal = impCal();
+  if (cal){
+    const c0 = cal.toCell(0, 0), c1 = cal.toCell(W, H), xa = Math.min(c0.x, c1.x) - 1, xb = Math.max(c0.x, c1.x) + 1, ya = Math.min(c0.y, c1.y) - 1, yb = Math.max(c0.y, c1.y) + 1;
+    const show = !$("cImpHide").checked;
+    if (show && imp.res) for (const k in imp.res){ const [x, y] = k.split("_").map(Number), p = cal.toPx(x, y), c = TERR[imp.res[k]].c; g.fillStyle = c + "55"; g.fillRect(p.x - cal.sx / 2, p.y - cal.sy / 2, cal.sx, cal.sy); g.strokeStyle = c; g.lineWidth = 2; g.strokeRect(p.x - cal.sx / 2 + 1.5, p.y - cal.sy / 2 + 1.5, cal.sx - 3, cal.sy - 3); }
+    if (show && imp.villes) imp.villes.forEach(v => { const p = cal.toPx(v.x, v.y); g.strokeStyle = "#ff3b3b"; g.lineWidth = 3; g.strokeRect(p.x - cal.sx / 2 + 2, p.y - cal.sy / 2 + 2, cal.sx - 4, cal.sy - 4); });
+    if (show) ownCities().forEach(k => { const [x, y] = k.split("_").map(Number), p = cal.toPx(x, y); if (p.x < 0 || p.y < 0 || p.x > W || p.y > H) return; g.strokeStyle = "#2ee66b"; g.lineWidth = 3; g.strokeRect(p.x - cal.sx / 2 + 2, p.y - cal.sy / 2 + 2, cal.sx - 4, cal.sy - 4); });
+    g.strokeStyle = "rgba(255,255,255,.45)"; g.lineWidth = 1;
+    for (let x = xa; x <= xb; x++){ const p = cal.toPx(x - .5, 0).x; g.beginPath(); g.moveTo(p, 0); g.lineTo(p, H); g.stroke(); }
+    for (let y = ya; y <= yb; y++){ const p = cal.toPx(0, y - .5).y; g.beginPath(); g.moveTo(0, p); g.lineTo(W, p); g.stroke(); }
+    g.fillStyle = "#fff"; g.font = "bold 12px monospace"; g.textAlign = "center";
+    for (let x = xa; x <= xb; x++) if (x % 5 === 0){ const p = cal.toPx(x, 0).x; g.fillText(x, p, 14); }
+    g.textAlign = "left"; for (let y = ya; y <= yb; y++) if (y % 5 === 0){ const p = cal.toPx(0, y).y; g.fillText(y, 4, p + 4); }
+  }
+  [["A", imp.A, "#ffcc00"], ["B", imp.B, "#ff5ad1"]].forEach(([n, p, c]) => { if (!p) return; g.strokeStyle = c; g.lineWidth = 3; g.beginPath(); g.arc(p.px, p.py, 9, 0, 7); g.stroke(); g.fillStyle = c; g.font = "bold 15px sans-serif"; g.fillText(n, p.px + 12, p.py - 10); });
+  const z = imp.zdrag || imp.zone; if (z){ g.strokeStyle = "#ffcc00"; g.lineWidth = 2; g.setLineDash([8, 5]); g.strokeRect(Math.min(z.x1, z.x2), Math.min(z.y1, z.y2), Math.abs(z.x2 - z.x1), Math.abs(z.y2 - z.y1)); g.setLineDash([]); }
+}
+function impClassify(){
+  const cal = impCal(); if (!cal || !imp.data){ $("cImpMsg").textContent = "Placez d'abord les deux repères et tapez leurs coordonnées."; return; }
+  const W = imp.img.width, H = imp.img.height, d = imp.data.data, sens = +$("cImpSens").value;
+  const z = imp.zone ? {x1:Math.min(imp.zone.x1, imp.zone.x2), x2:Math.max(imp.zone.x1, imp.zone.x2), y1:Math.min(imp.zone.y1, imp.zone.y2), y2:Math.max(imp.zone.y1, imp.zone.y2)} : {x1:0, y1:0, x2:W, y2:H};
+  const c0 = cal.toCell(z.x1, z.y1), c1 = cal.toCell(z.x2, z.y2), own = ownCities(), au = new Set(autres.map(a => ck(a.x, a.y)));
+  const res = {}, villes = [], fr = {}, cnt = {foret:0, montagne:0, colline:0, eau:0, mer:0, ville:0, libre:0};
+  const px = (xx, yy) => { const i = (Math.round(yy) * W + Math.round(xx)) * 4; return [d[i], d[i + 1], d[i + 2]]; };
+  const brs = []; for (let yy = Math.round(z.y1); yy < z.y2; yy += 7) for (let xx = Math.round(z.x1); xx < z.x2; xx += 7){ const [r, gg, b] = px(xx, yy); if (gg >= r * .9 && gg > b) brs.push(Math.max(r, gg, b)); }
+  brs.sort((a, b) => a - b); const grassBr = brs.length ? brs[brs.length >> 1] : 110;
+  const navy = (r, gg, b) => b > 55 && b > r + 25 && b > gg + 20 && Math.max(r, gg, b) < 140;
+  const blue = (r, gg, b) => b > 120 && b > r + 40 && b > gg + 5;
+  const hw = Math.abs(cal.sx) * .35, hh = Math.abs(cal.sy) * .35, st = Math.max(1, Math.floor(Math.abs(cal.sx) / 12));
+  for (let x = Math.min(c0.x, c1.x); x <= Math.max(c0.x, c1.x); x++) for (let y = Math.min(c0.y, c1.y); y <= Math.max(c0.y, c1.y); y++){
+    if (x < 0 || y < 0 || x > 599 || y > 599) continue;
+    const p = cal.toPx(x, y); if (p.x - hw < z.x1 || p.x + hw > z.x2 || p.y - hh < z.y1 || p.y + hh > z.y2) continue;
+    const k = ck(x, y); if (own.has(k) || au.has(k)) continue;
+    // ville d'un autre joueur : cadre bleu foncé du nom juste sous l'icône
+    const sx = Math.abs(cal.sx), sy = Math.abs(cal.sy); let isCity = false;
+    let rowMax = 0, rowMin = 1;
+    for (let dy = Math.round(sy * .25); dy <= Math.round(sy * .65); dy++){ const yy = p.y + dy; if (yy < 0 || yy >= H) continue; let c = 0, t = 0;
+      for (let dx = -Math.round(sx * .44); dx <= Math.round(sx * .44); dx++){ const xx = p.x + dx; if (xx < 0 || xx >= W) continue; t++; if (navy(...px(xx, yy))) c++; }
+      if (t){ rowMax = Math.max(rowMax, c / t); rowMin = Math.min(rowMin, c / t); } }
+    const sea = (r, gg, b) => b > 120 && gg < 160 && b > r + 60;
+    const seaCorners = [[-.35, -.35], [.35, -.35], [-.35, .35], [.35, .35]].filter(([fx, fy]) => { const xx = p.x + fx * sx, yy = p.y + fy * sy; return xx >= 0 && yy >= 0 && xx < W && yy < H && sea(...px(xx, yy)); }).length;
+    isCity = rowMax > .45 && rowMin < .3 && seaCorners < 3; // une fine bordure bleu foncé (le cadre du nom), pas une zone de mer
+    if (isCity){ villes.push({x, y}); cnt.ville++; continue; }
+    let n = 0, w = 0, m = 0, f = 0, hi = 0; const cb = [];
+    for (let yy = Math.round(p.y - hh); yy <= p.y + hh; yy += st) for (let xx = Math.round(p.x - hw); xx <= p.x + hw; xx += st){ const i = (yy * W + xx) * 4; cb.push(Math.max(d[i], d[i + 1], d[i + 2])); }
+    const forestThr = grassBr * .8; cb.sort((a, b) => a - b); const hillThr = Math.max(grassBr * 1.22, (cb[cb.length >> 1] || 0) * 1.18);
+    for (let yy = Math.round(p.y - hh); yy <= p.y + hh; yy += st) for (let xx = Math.round(p.x - hw); xx <= p.x + hw; xx += st){
+      const i = (yy * W + xx) * 4, r = d[i], gg = d[i + 1], b = d[i + 2], mx = Math.max(r, gg, b), mn = Math.min(r, gg, b), sat = mx ? (mx - mn) / mx : 0; n++;
+      if (b > 110 && b > r + 30 && b > gg + 5) w++;
+      else if (sat < 0.2 && mx > 70) m++;
+      else if (mx > hillThr && b < gg * 0.5 && gg >= r * 0.88) hi++;
+      else if (gg >= r * .95 && gg > b && mx < forestThr) f++;
+    }
+    if (!n) continue;
+    fr[k] = {m:m / n, f:f / n, hi:hi / n};
+    const t = w / n > .45 * sens ? "eau" : m / n > .25 * sens ? "montagne" : hi / n > .08 * sens ? "colline" : f / n > .25 * sens ? "foret" : null;
+    let tt = t;
+    if (!tt){ // cours d'eau ou côte : des pixels bleus dans la case (bords compris) = case maritime
+      let bn = 0, bt = 0; const s2 = Math.max(1, Math.floor(Math.abs(cal.sx) / 16));
+      for (let yy = Math.round(p.y - sy / 2); yy < p.y + sy / 2; yy += s2) for (let xx = Math.round(p.x - sx / 2); xx < p.x + sx / 2; xx += s2){ if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue; bt++; if (blue(...px(xx, yy))) bn++; }
+      if (bt && bn / bt > .02 * sens) tt = "mer"; }
+    if (tt){ res[k] = tt; cnt[tt]++; } else cnt.libre++;
+  }
+  // lisser les bords : une case partiellement couverte, entourée d'au moins 3 cases du même terrain, le prend aussi
+  for (const [t, key, min] of [["foret", "f", .12], ["montagne", "m", .1]]){
+    const add = [];
+    for (const k in fr){ if (res[k] && res[k] !== "mer") continue; if (fr[k][key] < min * sens) continue; const [x, y] = k.split("_").map(Number); let nb = 0;
+      for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) if ((dx || dy) && res[ck(x + dx, y + dy)] === t) nb++;
+      if (nb >= 3) add.push(k); }
+    add.forEach(k => { if (res[k] === "mer") cnt.mer--; else cnt.libre--; res[k] = t; cnt[t]++; });
+  }
+  imp.res = res; imp.villes = villes; $("cImpApply").disabled = !Object.keys(res).length && !villes.length;
+  $("cImpMsg").textContent = `Analyse : ${cnt.ville} villes d'autres joueurs, ${cnt.foret} forêt, ${cnt.montagne} montagne, ${cnt.colline} colline, ${cnt.eau} eau, ${cnt.mer} maritimes (cours d'eau ou côte), ${cnt.libre} cases libres. Vérifiez l'aperçu, puis appliquez.`;
+  impDraw();
+}
+async function impApply(){
+  if (!imp.res || canWrite === false || !db) { if (!db) $("cImpMsg").textContent = "Registre indisponible ici : l'application se fait sur le site."; return; }
+  const over = $("cImpOver").checked, byC = {};
+  for (const k in imp.res){ const [x, y] = k.split("_").map(Number); (byC[contOf(x, y)] ||= {})[k] = imp.res[k]; }
+  let n = 0;
+  for (const c in byC){
+    const cells = byC[c];
+    if (+c === carteCont){ for (const k in cells){ if (!over && terrain[k]) continue; terrain[k] = cells[k]; pendingTerr[k] = cells[k]; n++; } await flushTerrain(); }
+    else { try { const ref = db.doc(`carte/terrain_C${c}`), d = await ref.get(), ex = (d.exists && d.data().cells) || {}, put = {};
+      for (const k in cells){ if (!over && ex[k]) continue; put[k] = cells[k]; n++; }
+      if (Object.keys(put).length){ if (d.exists) await ref.update({cells:put}); else await ref.set({cells:put}); } } catch(err){ setStatus("Terrain non enregistré : " + (err.message || err.code)); } }
+  }
+  let nv = 0; const vByC = {};
+  (imp.villes || []).forEach(v => { (vByC[contOf(v.x, v.y)] ||= []).push(v); });
+  for (const c in vByC){ try { const ref = db.doc(`carte/autres_C${c}`), d = await ref.get(), list = ((d.exists && d.data().list) || []).slice(), have = new Set(list.map(a => ck(a.x, a.y)));
+      vByC[c].forEach(v => { if (!have.has(ck(v.x, v.y))){ list.push({x:v.x, y:v.y, name:"détectée"}); nv++; } }); await ref.set({list}); } catch(err){ setStatus("Villes non enregistrées : " + (err.message || err.code)); } }
+  renderCarte(); $("cImpMsg").textContent = `${n} cases de terrain et ${nv} villes d'autres joueurs appliquées à la carte.`; setStatus(`${n} cases de terrain et ${nv} villes importées depuis la capture.`);
+}
+(function initImport(){
+  const setM = m => { imp.mode = m; $("cImpRefA").setAttribute("aria-pressed", String(m === "A")); $("cImpRefB").setAttribute("aria-pressed", String(m === "B")); $("cImpZone").setAttribute("aria-pressed", String(m === "zone")); };
+  $("cImpRefA").onclick = () => setM("A"); $("cImpRefB").onclick = () => setM("B"); $("cImpZone").onclick = () => setM("zone");
+  $("cImpToggle").onclick = () => { $("cImpPanel").hidden = !$("cImpPanel").hidden; if (!$("cImpPanel").hidden) $("cImpPanel").scrollIntoView({behavior:"smooth", block:"start"}); };
+  $("cImpFile").addEventListener("change", async e => { const f = e.target.files[0]; if (!f) return;
+    $("cImpMsg").textContent = "Chargement de la capture…";
+    const ready = img => { imp.img = img; const c = document.createElement("canvas"); c.width = img.width; c.height = img.height; const g = c.getContext("2d"); g.drawImage(img, 0, 0);
+      imp.data = g.getImageData(0, 0, c.width, c.height); imp.A = imp.B = imp.zone = imp.res = null; imp.offX = imp.offY = 0; imp.k = 1; setM("A"); $("cImpApply").disabled = true;
+      $("cImpMsg").textContent = "La capture est affichée ci-dessous : cliquez au centre du repère A."; impDraw(); $("cImpCv").parentElement.scrollIntoView({behavior:"smooth", block:"start"}); };
+    try { if (window.createImageBitmap){ ready(await createImageBitmap(f)); return; } } catch {}
+    const rd = new FileReader();
+    rd.onload = () => { const img = new Image(); img.onload = () => ready(img); img.onerror = () => { $("cImpMsg").textContent = "Impossible de lire cette image. Essayez une capture .png ou .jpg."; }; img.src = rd.result; };
+    rd.onerror = () => { $("cImpMsg").textContent = "Impossible de lire ce fichier."; };
+    rd.readAsDataURL(f); });
+  const cv = $("cImpCv"), pos = ev => { const r = cv.getBoundingClientRect(); return {x:(ev.clientX - r.left) * cv.width / r.width, y:(ev.clientY - r.top) * cv.height / r.height}; };
+  cv.addEventListener("pointerdown", ev => { if (!imp.img) return; const p = pos(ev);
+    if (imp.mode === "zone"){ imp.zdrag = {x1:p.x, y1:p.y, x2:p.x, y2:p.y}; cv.setPointerCapture(ev.pointerId); return; }
+    imp[imp.mode] = {px:p.x, py:p.y}; imp.res = null; $("cImpApply").disabled = true;
+    if (imp.mode === "A"){ setM("B"); $("cImpMsg").textContent = "Tapez les coordonnées de A, puis cliquez au centre du repère B."; } else $("cImpMsg").textContent = "Tapez les coordonnées de B. La grille apparaît dès que les deux repères sont placés.";
+    impDraw(); });
+  cv.addEventListener("pointermove", ev => { if (imp.zdrag){ const p = pos(ev); imp.zdrag.x2 = p.x; imp.zdrag.y2 = p.y; impDraw(); } });
+  cv.addEventListener("pointerup", () => { if (imp.zdrag){ const z = imp.zdrag; imp.zdrag = null; if (Math.abs(z.x2 - z.x1) > 20 && Math.abs(z.y2 - z.y1) > 20) imp.zone = z; imp.res = null; impDraw(); } });
+  ["cImpA","cImpB"].forEach(id => $(id).addEventListener("input", () => { imp.res = null; impDraw(); }));
+  document.querySelectorAll("[data-adj]").forEach(b => b.onclick = () => { const a = b.dataset.adj;
+    if (a === "x-") imp.offX--; if (a === "x+") imp.offX++; if (a === "y-") imp.offY--; if (a === "y+") imp.offY++; if (a === "s-") imp.k *= 0.995; if (a === "s+") imp.k *= 1.005; imp.res = null; impDraw(); });
+  $("cImpRun").onclick = impClassify; $("cImpApply").onclick = impApply;
+  $("cImpHide").addEventListener("change", impDraw);
+  $("cImpCsv").addEventListener("change", async e => { let n = 0;
+    for (const f of e.target.files){ const txt = await f.text(); for (const m of txt.matchAll(/\((\d{1,3}):(\d{1,3})\)/g)){ imp.own.add(ck(+m[1], +m[2])); n++; } }
+    imp.res = null; $("cImpApply").disabled = true; impDraw();
+    $("cImpMsg").textContent = n ? `${imp.own.size} de vos villes chargées depuis le CSV (cadre vert) : elles seront ignorées par l'analyse.` : "Aucune coordonnée trouvée dans ce CSV : utilisez l'export CotG_Dashboard."; });
+})();
+
 /* ---------- boot ---------- */
 buildForm(); buildTsGrid(); resetForm(); fillUnitSelect(""); render(); renderTabs(); renderBinome(); renderAttaques(); renderDefense(); renderNow();
 (async () => {
@@ -1998,7 +2452,7 @@ buildForm(); buildTsGrid(); resetForm(); fillUnitSelect(""); render(); renderTab
   db.doc("reglages/poidsTs").onSnapshot(d => { tsW = {...TS_DEFAULT, ...((d.exists && d.data().poids) || {})}; buildTsGrid(); render(); renderBinome(); renderDefense(); }, () => {});
   db.doc("reglages/objectif").onSnapshot(d => { if (d.exists){ objectif = {pct:+d.data().pct||50, ts:+d.data().ts||null};
     if (document.activeElement?.id !== "obj-pct") $("obj-pct").value = objectif.pct; if (document.activeElement?.id !== "obj-ts") $("obj-ts").value = objectif.ts || ""; renderBinome(); } }, () => {});
-  startAttaques(); startDefense(); startBarons();
+  startAttaques(); startDefense(); startBarons(); startCarte();
   db.collection("fiches").orderBy("creeLe").onSnapshot(snap => {
     fiches = snap.docs.map(d => ({id:d.id, nom:d.data().nom || d.id}));
     let want = currentFiche; if (!want){ try { want = moi || localStorage.getItem("ficheActive"); } catch {} }
