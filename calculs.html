@@ -50,10 +50,13 @@ a{color:var(--brass)}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
 .panel.hl{border-color:var(--brass);box-shadow:inset 3px 0 var(--brass)}
-.form{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px 14px}
-.field{display:grid;gap:4px;min-width:0;align-content:start}
-.field span{font-size:12px;color:var(--muted)}
-.field input,.field select{font:inherit;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);width:100%;min-width:0}
+.form{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));column-gap:14px;row-gap:4px}
+.form > .field{margin-bottom:6px}
+.field{display:grid;grid-template-rows:subgrid;grid-row:span 3;row-gap:4px;min-width:0}
+.field > span:first-child{font-size:12px;color:var(--muted);align-self:end}
+.field input,.field select,.field button{font:inherit;height:36px;padding:0 9px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);width:100%;min-width:0}
+.field button.primary{background:var(--brass);border-color:var(--brass);color:var(--panel);font-weight:600;width:auto;padding:0 14px;justify-self:start}
+.pair{display:flex;gap:6px;min-width:0}
 .field input.calc{background:transparent;border-style:dashed;color:var(--muted)}
 .field small{font-size:11px;color:var(--muted)}
 input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--brass);outline-offset:1px}
@@ -165,7 +168,7 @@ svg.chart text{font-family:var(--f-body);font-size:11px;fill:var(--muted)}
         <label class="field"><span>par pas de</span><input data-k="solvNaPas" type="number" min="1" step="1"></label>
         <label class="field"><span>Cabines par pas de</span><input data-k="solvCabPas" type="number" min="1" step="1"></label>
         <label class="field"><span>Niveaux de Cabines</span><select data-k="solvNiv"><option value="4-10">4 à 10</option><option value="1-10">1 à 10</option><option value="6-10">6 à 10</option></select></label>
-        <label class="field"><span>Arenas</span><select data-k="solvFixe"><option value="libre">Libres (chercher le meilleur)</option><option value="plan">Fixées au plan</option></select></label>
+        <label class="field"><span>Arenas</span><select data-k="solvFixe"><option value="libre">Libres (le meilleur)</option><option value="plan">Fixées au plan</option></select></label>
       </div>
       <div class="btns" style="margin-top:12px"><button type="button" class="primary" id="solveBtn">Calculer</button><span class="status" id="solveInfo"></span></div>
       <div class="progress" id="solveProg" hidden><span></span></div>
@@ -227,15 +230,15 @@ svg.chart text{font-family:var(--f-body);font-size:11px;fill:var(--muted)}
         <label class="field"><span>Caverne</span><select name="type"><option>Forêt</option><option>Montagne</option><option>Colline</option></select></label>
         <label class="field"><span>Niveau</span><input name="niveau" type="number" min="1" max="10" required></label>
         <label class="field"><span>Configuration</span><input name="config" placeholder="R pur, 2:1, 3:1…" required></label>
-        <label class="field"><span>Rangers envoyés / perdus</span><span style="display:flex;gap:6px"><input name="rEnv" type="number" min="0"><input name="rPerdus" type="number" min="0"></span></label>
-        <label class="field"><span>Triaires envoyés / perdus</span><span style="display:flex;gap:6px"><input name="tEnv" type="number" min="0"><input name="tPerdus" type="number" min="0"></span></label>
+        <label class="field"><span>Rangers envoyés / perdus</span><span class="pair"><input name="rEnv" type="number" min="0"><input name="rPerdus" type="number" min="0"></span></label>
+        <label class="field"><span>Triaires envoyés / perdus</span><span class="pair"><input name="tEnv" type="number" min="0"><input name="tPerdus" type="number" min="0"></span></label>
         <label class="field"><span>Or ramené</span><input name="or" type="number" min="0"></label>
-        <label class="field"><span>Bois / pierre ramenés</span><span style="display:flex;gap:6px"><input name="bois" type="number" min="0"><input name="pierre" type="number" min="0"></span></label>
-        <label class="field"><span>Fer / nourriture ramenés</span><span style="display:flex;gap:6px"><input name="fer" type="number" min="0"><input name="nourriture" type="number" min="0"></span></label>
+        <label class="field"><span>Bois / pierre ramenés</span><span class="pair"><input name="bois" type="number" min="0"><input name="pierre" type="number" min="0"></span></label>
+        <label class="field"><span>Fer / nourriture ramenés</span><span class="pair"><input name="fer" type="number" min="0"><input name="nourriture" type="number" min="0"></span></label>
         <label class="field"><span>Non transporté</span><input name="nonTransporte" type="number" min="0"></label>
         <label class="field"><span>Durée aller-retour (h, facultatif)</span><input name="duree" type="number" min="0" step="0.1"></label>
         <label class="field"><span>% du donjon avant le raid (facultatif)</span><input name="pct" type="number" min="0" max="100" step="1"></label>
-        <div class="btns" style="align-self:end"><button type="submit" class="primary">Ajouter le raid</button></div>
+        <div class="field"><span>&nbsp;</span><button type="submit" class="primary">Ajouter le raid</button></div>
       </form>
       <div id="journalOut" style="margin-top:12px"></div>
     </div>
