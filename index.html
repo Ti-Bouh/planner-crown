@@ -1,0 +1,1875 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Planner des villes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: salle de guerre — bandeau synthèse (off/def, ressources), formulaire repliable, registre des villes en tableau */
+:root{
+  --bg:#eef0f3; --panel:#ffffff; --ink:#1c2230; --muted:#5d6577; --line:#d6dae3;
+  --brass:#9a6b12; --brass-soft:#f4e8cf;
+  --off:#b23a3a; --off-soft:#f6dddd; --def:#2b5fa8; --def-soft:#dbe6f6; --mix:#7a4fa0; --mix-soft:#ebe0f4;
+  --ref:#2f7d55; --ref-soft:#d8efe2; --hub:#9a6b12; --hub-soft:#f4e8cf; --keep:#6b7385; --keep-soft:#e7e9ee; --c-off:#b23a3a; --c-def:#2b5fa8;
+  --f-display:"Cormorant SC",Georgia,serif; --f-body:"IBM Plex Sans",system-ui,sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141821; --panel:#1c212d; --ink:#e6e8ee; --muted:#9aa2b4; --line:#2e3545;
+  --brass:#d9a64a; --brass-soft:#3a2f19;
+  --off:#e07070; --off-soft:#3d2224; --def:#6f9ee6; --def-soft:#1e2c44; --mix:#b593d6; --mix-soft:#2f2540;
+  --ref:#5fbf8a; --ref-soft:#1c3529; --hub:#d9a64a; --hub-soft:#3a2f19; --keep:#9aa2b4; --keep-soft:#2a3040; --c-off:#d65f5f; --c-def:#5b8ad6; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141821; --panel:#1c212d; --ink:#e6e8ee; --muted:#9aa2b4; --line:#2e3545;
+  --brass:#d9a64a; --brass-soft:#3a2f19;
+  --off:#e07070; --off-soft:#3d2224; --def:#6f9ee6; --def-soft:#1e2c44; --mix:#b593d6; --mix-soft:#2f2540;
+  --ref:#5fbf8a; --ref-soft:#1c3529; --hub:#d9a64a; --hub-soft:#3a2f19; --keep:#9aa2b4; --keep-soft:#2a3040; --c-off:#d65f5f; --c-def:#5b8ad6; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
+.wrap{max-width:1280px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:20px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 16px}
+h1{font-family:var(--f-display);font-size:2rem;margin:0;letter-spacing:.02em;text-wrap:balance}
+h2{font-family:var(--f-display);font-size:1.25rem;margin:0 0 10px;letter-spacing:.03em}
+.sub{color:var(--muted);margin:0}
+.status{font-size:12px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.big{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:10px}
+.big div{display:grid}
+.big b{font-size:1.6rem;font-variant-numeric:tabular-nums;line-height:1.1}
+.lbl{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.bar{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--keep-soft)}
+.bar span{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--muted);margin-top:8px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:0}
+.restab{width:100%;border-collapse:collapse;font-size:13px}
+.restab th,.restab td{padding:5px 6px;text-align:right;font-variant-numeric:tabular-nums;border-bottom:1px solid var(--line)}
+.restab th:first-child,.restab td:first-child{text-align:left}
+/* form */
+details.panel summary{cursor:pointer;font-family:var(--f-display);font-size:1.25rem;letter-spacing:.03em;list-style:none}
+details.panel summary::-webkit-details-marker{display:none}
+details.panel summary::before{content:"+ ";color:var(--brass)}
+details[open].panel summary::before{content:"– "}
+form{display:grid;gap:14px;margin-top:14px}
+.row{display:flex;flex-wrap:wrap;gap:12px}
+.field{display:grid;gap:4px;min-width:0}
+.field input,.field select{font:inherit;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+.field input:focus-visible,.field select:focus-visible,button:focus-visible{outline:2px solid var(--brass);outline-offset:1px}
+.w-name{flex:2 1 180px}.w-num{flex:0 1 90px}.w-sel{flex:1 1 140px}
+fieldset{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:0;min-width:0}
+legend{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:0 4px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{position:relative}
+.chip input{position:absolute;opacity:0;pointer-events:none}
+.chip span{display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid var(--line);font-size:12.5px;cursor:pointer;user-select:none}
+.chip.off input:checked+span{background:var(--off-soft);border-color:var(--off);color:var(--off)}
+.chip.def input:checked+span{background:var(--def-soft);border-color:var(--def);color:var(--def)}
+.chip.neu input:checked+span{background:var(--keep-soft);border-color:var(--keep);color:var(--ink)}
+.chip input:focus-visible+span{outline:2px solid var(--brass)}
+.groups{display:grid;gap:8px}
+.ghead{font-size:12px;color:var(--muted);margin-bottom:2px}
+.resrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+button{font:inherit;cursor:pointer;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:7px 14px}
+button.primary{background:var(--brass);border-color:var(--brass);color:var(--panel);font-weight:600}
+button.link{border:none;background:none;padding:2px 6px;color:var(--muted);font-size:12px}
+button.link:hover{color:var(--ink)}
+button.danger{color:var(--off)}
+/* table */
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+.scroll{overflow-x:auto}
+table.reg{border-collapse:collapse;width:100%;min-width:980px;font-size:13px}
+.reg th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:500;text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.reg td{padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.reg tr.c-off td:first-child{box-shadow:inset 3px 0 var(--off)}
+.reg tr.c-def td:first-child{box-shadow:inset 3px 0 var(--def)}
+.reg tr.c-mixte td:first-child{box-shadow:inset 3px 0 var(--mix)}
+.reg tr.c-hub td:first-child{box-shadow:inset 3px 0 var(--brass)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cont{display:inline-block;font-family:var(--f-mono);font-size:11.5px;padding:1px 6px;border-radius:4px;background:var(--keep-soft);margin-right:6px}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+.p-off{background:var(--off-soft);color:var(--off)}.p-def{background:var(--def-soft);color:var(--def)}
+.p-mixte{background:var(--mix-soft);color:var(--mix)}.p-hub{background:var(--hub-soft);color:var(--hub)}.p-none{background:var(--keep-soft);color:var(--muted)}
+.troops{display:flex;flex-wrap:wrap;gap:4px;max-width:240px}
+.t{font-size:11.5px;padding:1px 7px;border-radius:4px;white-space:nowrap}
+.t.off{background:var(--off-soft);color:var(--off)}.t.def{background:var(--def-soft);color:var(--def)}.t.neu{background:var(--keep-soft);color:var(--muted)}
+.rbtn{font-size:12px;padding:3px 8px;border-radius:5px;min-width:76px;font-weight:600}
+.r-raffiner{background:var(--ref-soft);border-color:var(--ref);color:var(--ref)}
+.r-hub{background:var(--hub-soft);border-color:var(--hub);color:var(--hub)}
+.r-afaire{background:transparent;border-style:dashed;border-color:var(--line);color:var(--muted)}
+.r-garder{background:var(--keep-soft);border-color:var(--line);color:var(--muted)}
+.refnote{font-size:11.5px;color:var(--muted);white-space:nowrap}
+.wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-top:12px}
+.wgrid input{width:100%}
+.drop{display:block;border:1.5px dashed var(--line);border-radius:8px;padding:18px 14px;text-align:center;cursor:pointer;color:var(--muted);margin-top:10px}
+.drop b{color:var(--ink)}
+.drop.over,.drop:focus-within{border-color:var(--brass);background:var(--brass-soft)}
+.drop input{position:absolute;opacity:0;width:1px;height:1px}
+.implist{margin:12px 0;padding-left:18px;display:grid;gap:4px}
+.implist .warn{color:var(--off)}
+.fiches{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:end;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:12px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tab{font-family:var(--f-display);font-size:1.1rem;letter-spacing:.03em;padding:6px 16px;border-radius:8px 8px 0 0;border:1px solid var(--line);border-bottom:none;background:var(--bg);color:var(--muted)}
+.tab[aria-selected="true"]{background:var(--panel);color:var(--ink);box-shadow:inset 0 -3px var(--brass)}
+.newfiche{display:flex;gap:8px;align-items:end}
+.newfiche .field input{width:170px}
+.namecell{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.milieu{font-size:11.5px;padding:2px 8px;border-radius:999px;font-weight:600;white-space:nowrap}
+.m-terre{background:var(--ref-soft);border-color:var(--ref);color:var(--ref)}
+.m-mer{background:var(--def-soft);border-color:var(--def);color:var(--def)}
+.chartwrap{position:relative;margin-top:6px}
+#bChart{display:block;overflow:visible;max-width:100%}
+#bChart text{fill:var(--ink);font-family:var(--f-body);font-size:13px}
+#bChart text.muted{fill:var(--muted);font-size:12px}
+#bChart text.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+#bChart .hit{fill:transparent;cursor:default}
+.tick{display:inline-block;width:0;height:12px;border-left:2px dashed var(--ink);margin-right:6px;vertical-align:-2px}
+.tip{position:absolute;pointer-events:none;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 9px;font-size:12.5px;box-shadow:0 4px 14px rgba(0,0,0,.12);white-space:nowrap;z-index:2}
+.advice{display:grid;gap:6px;margin-top:12px}
+.advice p{margin:0;padding:8px 12px;border-radius:6px;background:var(--bg)}
+.advice b{font-variant-numeric:tabular-nums}
+.btab tr.team td{font-weight:600;border-top:2px solid var(--line)}
+.h3{font-family:var(--f-display);font-size:1.1rem;letter-spacing:.03em;margin:18px 0 6px}
+.ttab{border-collapse:collapse;width:100%;min-width:420px;font-size:13px}
+.ttab th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:500;text-align:left;padding:5px 8px;border-bottom:1px solid var(--line)}
+.ttab td{padding:5px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.ttab tr.grp td{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding-top:12px;border-bottom:none}
+.ttab .cell{display:flex;align-items:center;gap:8px;min-width:130px}
+.ttab .mb{height:10px;border-radius:0 4px 4px 0;min-width:2px}
+.ttab .v{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:12px;white-space:nowrap}
+.ttab .zero{color:var(--muted)}
+.views{display:flex;gap:8px;flex-wrap:wrap;max-width:100%}
+.vgrp{display:flex;align-items:center;gap:4px;background:var(--keep-soft);padding:4px;border-radius:10px;flex-wrap:wrap}
+.vlab{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:0 6px 0 8px}
+.adds .field{grid-template-columns:minmax(0,1fr)}
+.adds .field input,.adds .field select{width:100%;min-width:0;box-sizing:border-box}
+.vbtn{border:none;background:transparent;padding:7px 18px;border-radius:7px;font-weight:600;color:var(--muted)}
+.vbtn[aria-selected="true"]{background:var(--panel);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.view{display:grid;gap:20px}
+[hidden]{display:none!important}
+.ficheNote{margin:0;font-size:13px}
+.alerts{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
+.ab{font-size:11px;padding:1px 7px;border-radius:999px;white-space:nowrap;font-weight:600}
+.ab.def{background:var(--off-soft);color:var(--off)}
+.ab.stock{background:var(--hub-soft);color:var(--hub)}
+.hright{display:grid;justify-items:end;gap:4px}
+.me{display:flex;align-items:center;gap:8px}
+.me select{font:inherit;padding:4px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)}
+.cellbtn.mine{box-shadow:inset 0 0 0 2px var(--brass)}
+.cellbtn.mine.dup{box-shadow:inset 3px 0 var(--off),inset 0 0 0 2px var(--brass)}
+.unk{display:inline-block;font-size:10px;font-weight:600;padding:0 5px;border-radius:4px;background:var(--off-soft);color:var(--off);margin-left:4px}
+body.wide .wrap{max-width:1880px}
+.planscroll{max-height:72vh;overflow:auto;border-bottom:1px solid var(--line)}
+.plan thead th{position:sticky;top:0;z-index:2}
+.plan thead th.tgt{z-index:3}
+.filt{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center}
+.welcome{display:grid;gap:8px;border:1px solid var(--brass);background:var(--brass-soft);border-radius:10px;padding:14px 16px}
+.welcome h2{margin:0}
+.welcome ol{margin:0;padding-left:20px;display:grid;gap:4px}
+.welcome .btns{justify-content:flex-start}
+.regh{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
+.seg{display:flex;gap:2px;background:var(--keep-soft);padding:3px;border-radius:8px;flex-wrap:wrap}
+.seg button{border:none;background:transparent;padding:5px 12px;border-radius:6px;font-weight:600;font-size:13px;color:var(--muted)}
+.seg button[aria-selected="true"]{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.seg button small{font-weight:500;color:var(--muted);margin-left:4px;font-variant-numeric:tabular-nums}
+.owner{font-size:11.5px;font-weight:600;padding:1px 7px;border-radius:4px;background:var(--brass-soft);color:var(--brass);white-space:nowrap}
+.robanner{border:1px solid var(--off);background:var(--off-soft);color:var(--ink);border-radius:10px;padding:12px 16px;font-size:13.5px;line-height:1.5}
+.robanner b{color:var(--off)}
+.fmsg{margin:10px 0 0;font-size:13px;font-weight:600}
+.fmsg:empty{display:none}
+.fmsg.ok{color:var(--ref)}.fmsg.ko{color:var(--off)}
+.plist{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.plist span{font-size:12.5px;padding:3px 10px;border-radius:999px;background:var(--keep-soft)}
+.castle{font-size:12px;color:var(--brass);font-weight:600}
+.empty{padding:28px 12px;text-align:center;color:var(--muted)}
+.note{font-size:12px;color:var(--muted);margin:8px 0 0}
+/* ---------- vue attaques ---------- */
+.opbar{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:end;justify-content:space-between}
+.opbar form,.opbar .row{align-items:end}
+.kpis{display:flex;flex-wrap:wrap;gap:10px 26px;margin-top:16px}
+.kpis div{display:grid}
+.kpis b{font-size:1.4rem;font-variant-numeric:tabular-nums;line-height:1.15}
+.kpis b small{font-size:.8rem;color:var(--muted);font-weight:500}
+.rulewarn{margin:10px 0 0;padding:8px 12px;border-radius:6px;background:var(--off-soft);color:var(--off);font-size:13px}
+.ruleok{margin:10px 0 0;font-size:12.5px;color:var(--muted)}
+table.plan{border-collapse:separate;border-spacing:0;font-size:13px}
+.plan th,.plan td{border-bottom:1px solid var(--line);padding:6px;text-align:left;vertical-align:top}
+.plan thead th{background:var(--panel);font-weight:500;min-width:104px}
+.plan .tgt{position:sticky;left:0;background:var(--panel);min-width:150px;z-index:1;box-shadow:inset -1px 0 var(--line)}
+.wh{display:grid;gap:2px}
+.wh .wtime{font-family:var(--f-mono);font-size:12.5px;font-variant-numeric:tabular-nums}
+.wh .wu{font-weight:600;color:var(--ink)}
+.plan thead th.prio{box-shadow:inset 0 3px var(--ref)}
+.vt{display:inline-block;width:fit-content;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;padding:1px 6px;border-radius:4px;font-weight:600}
+.vt-cata{background:var(--hub-soft);color:var(--hub)}.vt-siege{background:var(--mix-soft);color:var(--mix)}.vt-assaut{background:var(--off-soft);color:var(--off)}
+.mini{display:flex;gap:2px;flex-wrap:wrap;margin-top:2px}
+.tgtname{font-weight:600}
+.tgtsub{font-size:12px;color:var(--muted)}
+.cellbtn{width:100%;min-width:96px;text-align:left;padding:5px 7px;border-radius:6px;font-size:12px;min-height:44px;display:grid;gap:1px;align-content:start}
+.cellbtn .who{font-weight:600}
+.cellbtn .from{color:var(--muted);font-size:11.5px}
+.cellbtn .tm{font-family:var(--f-mono);font-size:11px}
+.cellbtn.vide{border-style:dashed;color:var(--muted);align-content:center}
+.cellbtn.vide.prio{border-color:var(--ref);background:var(--ref-soft);color:var(--ref)}
+.cellbtn.st-envoye{border-color:var(--brass);background:var(--brass-soft)}
+.cellbtn.st-arrive{border-color:var(--ref);background:var(--ref-soft)}
+.cellbtn.st-annule{opacity:.6;text-decoration:line-through}
+.cellbtn.dup{box-shadow:inset 3px 0 var(--off)}
+.cellbtn[aria-expanded="true"]{outline:2px solid var(--brass);outline-offset:1px}
+.editor{margin-top:14px;border:1px solid var(--brass);border-radius:8px;padding:14px;display:grid;gap:12px;background:var(--bg)}
+.editor h3{margin:0;font-family:var(--f-display);font-size:1.15rem;letter-spacing:.03em}
+.editor .warn{margin:0;color:var(--off);font-size:12.5px}
+.adds{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-top:16px}
+.adds details{border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-width:0}
+.adds summary{cursor:pointer;font-weight:600}
+.adds form{margin-top:10px}
+.chk{display:flex;gap:6px;align-items:center;font-size:13px}
+.stbtn{font-size:12px;padding:3px 9px;border-radius:999px;font-weight:600;min-width:72px}
+.s-prevu{background:var(--keep-soft);color:var(--muted)}
+.s-envoye{background:var(--brass-soft);border-color:var(--brass);color:var(--brass)}
+.s-arrive{background:var(--ref-soft);border-color:var(--ref);color:var(--ref)}
+.s-annule{background:transparent;color:var(--muted);text-decoration:line-through}
+table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
+.env th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:500;text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+.env td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.confirm{color:var(--off)!important;font-weight:600}
+.fake{display:inline-block;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;padding:0 5px;border-radius:4px;background:var(--keep-soft);color:var(--muted);font-weight:600}
+.shares{display:grid;gap:12px;margin-top:16px}
+.share{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:grid;gap:8px;min-width:0}
+.share .sh{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;justify-content:space-between}
+.share code{display:block;font-family:var(--f-mono);font-size:12px;background:var(--bg);border-radius:6px;padding:8px 10px;overflow-x:auto;white-space:pre;user-select:all}
+.share .warn{margin:0;color:var(--off);font-size:12.5px}
+/* ---------- vue maintenant ---------- */
+.nowgrid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(300px,1fr);gap:16px;align-items:start}
+@media (max-width:960px){.nowgrid{grid-template-columns:1fr}}
+.nowside{display:grid;gap:16px;min-width:0}
+.nlist{display:grid;gap:8px}
+.nitem{display:grid;gap:4px;padding:8px 10px;border-radius:6px;background:var(--bg);min-width:0}
+.nitem .nh{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;justify-content:space-between}
+.nitem .bar{height:8px}
+.kind{display:inline-block;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;padding:1px 6px;border-radius:4px;font-weight:600}
+.k-att{background:var(--off-soft);color:var(--off)}.k-def{background:var(--def-soft);color:var(--def)}
+.nempty{color:var(--muted);font-size:13px;margin:0}
+#quickImport{padding:4px 12px;font-size:13px}
+/* ---------- vue défense ---------- */
+.mform{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-top:14px}
+.mform summary{cursor:pointer;font-weight:600}
+.mcards{display:grid;gap:12px}
+.mcard{border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:grid;gap:10px;min-width:0}
+.mcard.done{opacity:.65}
+.mhead{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;justify-content:space-between}
+.mtitle{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline}
+.mtitle b{font-size:15px}
+.mimpact{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:13px}
+.msub{font-size:12.5px;color:var(--muted)}
+.cov{display:grid;gap:4px;max-width:560px}
+.cov .covtxt{font-size:12.5px;font-variant-numeric:tabular-nums}
+.cov .bar{height:10px}
+.p-ok{background:var(--ref-soft);color:var(--ref)}.p-ko{background:var(--off-soft);color:var(--off)}.p-done{background:var(--keep-soft);color:var(--muted)}
+.rftab{border-collapse:collapse;width:100%;min-width:620px;font-size:13px}
+.rftab th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:500;text-align:left;padding:5px 8px;border-bottom:1px solid var(--line)}
+.rftab td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.rftab tr.mine td:first-child{box-shadow:inset 3px 0 var(--brass)}
+.mactions{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+@media (prefers-reduced-motion:no-preference){.bar span{transition:width .3s ease}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Planner des villes</h1>
+      <p class="sub" id="subTitle">Coordonnées, troupes, rôle off/def et destination des ressources, ville par ville.</p>
+    </div>
+    <div class="hright">
+      <div class="me"><label class="me"><span class="lbl">Je suis</span><select id="meSel"><option value="">— choisir —</option></select></label><button type="button" class="primary" id="quickImport">Importer mes CSV</button></div>
+      <span class="status" id="status">Connexion au registre…</span>
+    </div>
+  </header>
+
+  <section class="robanner" id="roBanner" hidden role="status">
+    <b>Lecture seule.</b> Tu vois tout en direct, mais ton accès ne permet pas d'enregistrer : la personne qui gère la page met les données à jour pour vous deux.
+    Pour mettre à jour tes villes, envoie-lui tes deux exports du jeu (CotG_Dashboard et CotG_Troop_export) ; pour une attaque ou un renfort, dis-lui quelle case tu prends.
+  </section>
+
+  <section class="welcome" id="welcome" hidden aria-label="Bienvenue">
+    <h2>Bienvenue sur le planner</h2>
+    <ol id="welcomeSteps"></ol>
+    <div class="btns"><button type="button" id="welcomeClose">J'ai compris, masquer</button></div>
+  </section>
+
+  <div class="views" role="tablist" aria-label="Vues">
+    <div class="vgrp">
+      <button type="button" class="vbtn" role="tab" data-view="maintenant" aria-selected="true">Maintenant</button>
+      <button type="button" class="vbtn" role="tab" data-view="fiche" aria-selected="false">Mes villes</button>
+      <button type="button" class="vbtn" role="tab" data-view="binome" aria-selected="false">Binôme</button>
+      <button type="button" class="vbtn" role="tab" data-view="attaques" aria-selected="false">Attaques</button>
+      <button type="button" class="vbtn" role="tab" data-view="defense" aria-selected="false">Défense</button>
+    </div>
+    <div class="vgrp"><button type="button" class="vbtn" role="tab" data-view="outils" aria-selected="false">⚙ Réglages</button></div>
+  </div>
+
+  <nav class="fiches" id="ficheNav" aria-label="Fiches joueurs">
+    <div class="tabs"><span class="lbl" style="align-self:center;margin-right:4px">Voir la fiche de</span><span class="tabs" id="ficheTabs" role="tablist"></span></div>
+  </nav>
+
+
+  <div class="view" id="view-maintenant" hidden>
+    <div class="nowgrid">
+      <section class="panel" aria-label="Mes ordres">
+        <div class="toolbar"><h2 style="margin:0">Mes ordres</h2><span class="note" id="nowInfo" style="margin:0"></span></div>
+        <div class="scroll"><table class="env" id="nowOrders"></table></div>
+        <p class="note">Attaques et renforts qui te sont attribués, du plus proche au plus lointain. Dans le jeu, règle l'heure d'arrivée indiquée. Clique le statut pour le faire avancer.</p>
+      </section>
+      <div class="nowside">
+        <section class="panel" aria-label="Menaces ouvertes">
+          <div class="toolbar"><h2 style="margin:0">Menaces ouvertes</h2><button type="button" class="link" data-goto="defense">Défense →</button></div>
+          <div id="nowThreats"></div>
+        </section>
+        <section class="panel" aria-label="Alertes de mes villes">
+          <div class="toolbar"><h2 style="margin:0">Alertes de mes villes</h2><button type="button" class="link" data-goto="fiche">Mes villes →</button></div>
+          <div id="nowAlerts"></div>
+        </section>
+        <section class="panel" aria-label="Binôme">
+          <div class="toolbar"><h2 style="margin:0">Binôme</h2><button type="button" class="link" data-goto="binome">Détail →</button></div>
+          <div id="nowTeam"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <div class="view" id="view-fiche" hidden>
+  <section class="grid" aria-label="Synthèse">
+    <div class="panel">
+      <h2>Répartition off / def</h2>
+      <div class="big">
+        <div><span class="lbl">Off</span><b id="nOff" style="color:var(--off)">0</b></div>
+        <div><span class="lbl">Def</span><b id="nDef" style="color:var(--def)">0</b></div>
+        <div><span class="lbl">Mixte</span><b id="nMix" style="color:var(--mix)">0</b></div>
+        <div><span class="lbl">Hub</span><b id="nHub" style="color:var(--brass)">0</b></div>
+        <div><span class="lbl">Terre / Mer</span><b id="nMil" class="mono" style="font-size:1.3rem">0 / 0</b></div>
+      </div>
+      <div class="lbl" style="margin-bottom:4px">En nombre de villes</div>
+      <div class="bar" id="barCities"></div>
+      <div class="lbl" style="margin:12px 0 4px">En TS, par type de troupe <span id="tsTotal" class="mono"></span></div>
+      <div class="bar" id="barTs"></div>
+      <div class="legend" id="legendTs"></div>
+    </div>
+    <div class="panel">
+      <h2>Ressources</h2>
+      <table class="restab">
+        <thead><tr><th>Ressource</th><th style="color:var(--ref)">Raffiner</th><th style="color:var(--hub)">Hub</th><th>Garder</th><th>À définir</th></tr></thead>
+        <tbody id="resSummary"></tbody>
+      </table>
+      <p class="note">Clique sur une case Bois / Pierre / Fer / Nourriture du registre pour la faire tourner : Raffiner → Hub → Garder.</p>
+    </div>
+  </section>
+
+  <section class="panel" aria-label="Registre des villes">
+    <div class="toolbar">
+      <div class="regh"><h2 style="margin:0">Registre</h2><div class="seg" id="roleTabs" role="tablist" aria-label="Filtrer par rôle"></div></div>
+      <div class="row">
+        <label class="field w-sel"><span class="lbl">Type</span>
+          <select id="fl-milieu"><option value="">Tous</option><option value="terre">Terrestre</option><option value="mer">Maritime</option></select></label>
+        <label class="field w-sel"><span class="lbl">Continent</span><select id="fl-cont"><option value="">Tous</option></select></label>
+        <label class="field w-sel"><span class="lbl">Trier par</span>
+          <select id="fl-sort"><option value="cont">Continent</option><option value="name">Nom</option><option value="ts">TS</option><option value="joueur">Joueur</option></select></label>
+      </div>
+    </div>
+    <div class="scroll">
+      <table class="reg">
+        <thead><tr>
+          <th>Ville</th><th>Coordonnées</th><th>Rôle</th><th>Troupes</th><th>TS</th>
+          <th>Bois</th><th>Pierre</th><th>Fer</th><th>Nourriture</th><th>Hub</th><th></th>
+        </tr></thead>
+        <tbody id="regBody"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="emptyState">Aucune ville pour l'instant. Va dans Outils pour importer tes CSV du jeu ou ajouter une ville.</div>
+  </section>
+  </div>
+
+  <div class="view" id="view-binome" hidden>
+  <section class="panel" id="binome" aria-label="Équilibre off / def du binôme">
+    <div class="toolbar" style="align-items:flex-start">
+      <h2 style="margin:0">Binôme : équilibre off / def</h2>
+      <div class="row">
+        <label class="field w-num" style="flex-basis:120px"><span class="lbl">Objectif off (%)</span><input id="obj-pct" type="number" min="0" max="100" step="5" value="50"></label>
+        <label class="field w-num" style="flex-basis:170px"><span class="lbl">TS d'une nouvelle ville</span><input id="obj-ts" type="number" min="0" step="1000" placeholder="auto"></label>
+      </div>
+    </div>
+    <div class="chartwrap" id="chartWrap">
+      <svg id="bChart" role="img" aria-labelledby="bChartTitle" preserveAspectRatio="xMinYMin meet"><title id="bChartTitle">TS off et def par joueur et pour le binôme</title></svg>
+      <div class="tip" id="bTip" hidden></div>
+    </div>
+    <div class="legend" style="margin-top:4px">
+      <span><i class="dot" style="background:var(--c-off)"></i>TS off</span>
+      <span><i class="dot" style="background:var(--c-def)"></i>TS def</span>
+      <span><i class="tick"></i>Objectif</span>
+      <span>Longueur de barre = TS total ; TS des troupes, villes mixtes réparties selon leurs troupes.</span>
+    </div>
+    <div class="advice" id="bAdvice"></div>
+    <h3 class="h3">Par type de troupe</h3>
+    <div class="scroll"><table class="ttab" id="tTable"></table></div>
+    <p class="note">TS au total (en ville + dehors). Barre rouge = troupe off, bleue = def, grise = utilitaire ; même échelle pour toutes les cases. Survole une case pour le nombre d'unités.</p>
+    <h3 class="h3">Résumé par joueur</h3>
+    <div class="scroll">
+      <table class="restab btab">
+        <thead><tr><th>Joueur</th><th>Off</th><th>Def</th><th>Mixte</th><th>Hub</th><th>Terre / Mer</th><th>TS off</th><th>TS def</th><th>% off</th></tr></thead>
+        <tbody id="bTable"></tbody>
+      </table>
+    </div>
+  </section>
+  </div>
+
+  <div class="view" id="view-attaques" hidden>
+  <section class="panel" aria-label="Opération">
+    <div class="opbar">
+      <div class="row">
+        <label class="field w-sel" style="flex-basis:240px"><span class="lbl">Opération</span><select id="op-sel"></select></label>
+        <label class="field w-sel" style="flex-basis:150px"><span class="lbl">Date</span><input id="op-date" type="date"></label>
+        <label class="field w-sel" style="flex-basis:170px"><span class="lbl">Date dans le sharestring</span><select id="op-dfmt"><option value="mdy">MM/JJ/AAAA</option><option value="dmy">JJ/MM/AAAA</option></select></label>
+        <button type="button" class="link danger" id="op-del" hidden>Supprimer l'opération</button>
+      </div>
+      <form class="row" id="op-new" autocomplete="off">
+        <label class="field w-name"><span class="lbl">Nouvelle opération</span><input id="op-nom" maxlength="40" placeholder="ex. Opé C20" required></label>
+        <button type="submit">Créer</button>
+      </form>
+    </div>
+    <div class="kpis" id="op-kpis"></div>
+    <div id="op-rule"></div>
+  </section>
+
+  <section class="panel" id="planPanel" aria-label="Plan de frappe">
+    <div class="toolbar">
+      <h2 style="margin:0">Plan de frappe</h2>
+      <div class="filt">
+        <label class="chk"><input type="checkbox" id="pf-prio"> Vagues prioritaires seulement</label>
+        <label class="chk"><input type="checkbox" id="pf-mine"> Mes cases seulement</label>
+        <span class="note" id="pf-info" style="margin:0"></span>
+      </div>
+    </div>
+    <p class="note" style="margin:0 0 8px">Une ligne par cible, une colonne par vague. Les cases vertes sont prioritaires. Clique une case pour l'attribuer.</p>
+    <div class="planscroll"><table class="plan" id="planTable"></table></div>
+    <div class="editor" id="cellEditor" hidden></div>
+    <div class="adds">
+      <details id="tgtPanel">
+        <summary id="tgtTitle">Ajouter une cible</summary>
+        <form class="row" id="tgtForm" autocomplete="off">
+          <label class="field w-name"><span class="lbl">Joueur ciblé</span><input id="t-joueur" maxlength="30" required></label>
+          <label class="field w-num"><span class="lbl">X</span><input id="t-x" type="number" min="0" max="999" required></label>
+          <label class="field w-num"><span class="lbl">Y</span><input id="t-y" type="number" min="0" max="999" required></label>
+          <label class="field w-sel"><span class="lbl">Défense repérée</span><input id="t-def" maxlength="40" placeholder="ex. Baliste"></label>
+          <label class="field w-name"><span class="lbl">Note</span><input id="t-note" maxlength="80"></label>
+          <div class="btns"><button type="submit" class="primary" id="t-save">Ajouter la cible</button><button type="button" id="t-cancel" hidden>Annuler</button></div>
+        </form>
+      </details>
+      <details id="wavPanel">
+        <summary id="wavTitle">Ajouter une vague</summary>
+        <form class="row" id="wavForm" autocomplete="off">
+          <label class="field w-sel"><span class="lbl">Type</span><select id="w-type"><option value="cata">Cata</option><option value="siege">Siège</option><option value="assaut">Assaut</option></select></label>
+          <label class="field w-sel"><span class="lbl">Unité</span><select id="w-unite"></select></label>
+          <label class="field w-sel"><span class="lbl">Arrivée</span><input id="w-heure" type="time" step="1" required></label>
+          <label class="chk"><input type="checkbox" id="w-prio"> Prioritaire</label>
+          <div class="btns"><button type="submit" class="primary" id="w-save">Ajouter la vague</button><button type="button" id="w-cancel" hidden>Annuler</button></div>
+        </form>
+      </details>
+    </div>
+  </section>
+
+  <section class="panel" aria-label="Envois par joueur">
+    <div class="toolbar">
+      <h2 style="margin:0">Envois par joueur</h2>
+      <div class="row">
+        <label class="field w-sel"><span class="lbl">Joueur</span><select id="env-fiche"></select></label>
+        <button type="button" id="env-copy" style="align-self:end">Copier la liste</button>
+      </div>
+    </div>
+    <div class="scroll"><table class="env" id="envTable"></table></div>
+    <p class="note">Ce qu'il faut saisir en jeu : la cible et l'heure d'arrivée. Le jeu calcule lui-même l'heure de départ. Clique le statut pour le faire avancer : prévu → envoyé → arrivé.</p>
+    <h3 class="h3">Sharestrings à importer</h3>
+    <p class="note" style="margin-top:0">Un code par ville de départ et par heure d'arrivée, au format de ta Feuille 7 : coordonnées des cibles, 1 = réelle / 0 = fake, heure et date d'arrivée.</p>
+    <div class="shares" id="shareList"></div>
+  </section>
+  </div>
+
+  <div class="view" id="view-defense" hidden>
+  <section class="panel" aria-label="Menaces">
+    <div class="toolbar">
+      <h2 style="margin:0">Menaces</h2>
+      <label class="chk"><input type="checkbox" id="df-done"> Afficher les menaces terminées</label>
+    </div>
+    <div class="kpis" id="df-kpis" style="margin-top:0"></div>
+    <details id="menPanel" class="mform">
+      <summary id="menTitle">Signaler une menace</summary>
+      <form id="menForm" autocomplete="off">
+        <div class="row">
+          <label class="field w-name" style="flex-basis:300px"><span class="lbl">Ville menacée</span><select id="m-ville" required></select></label>
+          <label class="field w-sel" style="flex-basis:150px"><span class="lbl">Date d'impact</span><input id="m-date" type="date" required></label>
+          <label class="field w-sel" style="flex-basis:130px"><span class="lbl">Heure d'impact</span><input id="m-heure" type="time" step="1" required></label>
+          <label class="field w-sel" style="flex-basis:130px"><span class="lbl">Attaque</span><select id="m-type"><option value="terre">Terrestre</option><option value="mer">Maritime</option></select></label>
+        </div>
+        <div class="row" id="m-autre" hidden>
+          <label class="field w-name"><span class="lbl">Ville alliée (nom ou joueur)</span><input id="m-nom" maxlength="40"></label>
+          <label class="field w-num"><span class="lbl">X</span><input id="m-x" type="number" min="0" max="999"></label>
+          <label class="field w-num"><span class="lbl">Y</span><input id="m-y" type="number" min="0" max="999"></label>
+        </div>
+        <div class="row">
+          <label class="field w-name"><span class="lbl">Attaque repérée</span><input id="m-att" maxlength="60" placeholder="ex. ~40 000 Vanquisher + siège"></label>
+          <label class="field w-sel" style="flex-basis:170px"><span class="lbl">TS de def voulu</span><input id="m-ts" type="number" min="0" step="1000" placeholder="facultatif"></label>
+          <label class="field w-name"><span class="lbl">Note</span><input id="m-note" maxlength="80"></label>
+        </div>
+        <div class="btns"><button type="submit" class="primary" id="m-save">Signaler la menace</button><button type="button" id="m-cancel" hidden>Annuler</button></div>
+      </form>
+    </details>
+  </section>
+
+  <section class="panel" aria-label="Défense des villes menacées">
+    <h2>Défense à organiser</h2>
+    <div class="mcards" id="menList"></div>
+    <div class="editor" id="rfEditor" hidden></div>
+  </section>
+
+  <section class="panel" aria-label="Mes renforts">
+    <div class="toolbar">
+      <h2 style="margin:0" id="myRfTitle">Mes renforts en cours</h2>
+      <button type="button" id="rf-copy">Copier la liste</button>
+    </div>
+    <div class="scroll"><table class="env" id="myRfTable"></table></div>
+    <p class="note">Dans le jeu, règle l'heure d'arrivée sur celle indiquée : le jeu calcule le départ. Clique le statut pour le faire avancer : prévu → envoyé → arrivé.</p>
+  </section>
+  </div>
+
+  <div class="view" id="view-outils" hidden>
+    <p class="note ficheNote" id="outilsFiche"></p>
+  <section class="panel" aria-label="Joueurs">
+    <h2>Joueurs</h2>
+    <form class="newfiche" id="newFiche" autocomplete="off" style="margin-top:0">
+      <label class="field"><span class="lbl">Nouvelle fiche</span><input id="nf-name" maxlength="30" placeholder="Pseudo du joueur" required></label>
+      <button type="submit">Créer la fiche</button>
+    </form>
+    <p class="fmsg" id="nf-msg" role="status"></p>
+    <div class="plist" id="playerList"></div>
+    <p class="note">Une fiche par joueur. Une fois créée, choisis-la dans « Je suis » en haut à droite : imports et ordres iront à ton nom.</p>
+  </section>
+  <section class="panel imp" aria-label="Import des exports du jeu">
+    <h2>Mettre à jour depuis le jeu</h2>
+    <p class="note" style="margin-top:0">Dépose l'export des villes (CotG_Dashboard) et/ou l'export des troupes (CotG_Troop_export). Les villes sont reconnues par leurs coordonnées. Tes choix (rôle, château, raffinage, hub) sont conservés.</p>
+    <div class="row" style="margin-top:10px"><label class="field w-sel" style="flex:0 1 260px"><span class="lbl">Importer dans la fiche de</span><select id="impFor"></select></label></div>
+    <label class="drop" id="drop" for="csvInput">
+      <input type="file" id="csvInput" accept=".csv,text/csv" multiple>
+      <span><b>Choisir un ou deux fichiers CSV</b> ou les glisser ici</span>
+    </label>
+    <div id="impPreview" hidden>
+      <ul class="implist" id="impList"></ul>
+      <div class="btns"><button type="button" class="primary" id="impApply">Appliquer la mise à jour</button><button type="button" id="impCancel">Annuler</button></div>
+    </div>
+  </section>
+
+  <details class="panel" id="formPanel">
+    <summary id="formTitle">Ajouter une ville</summary>
+    <form id="cityForm" autocomplete="off">
+      <div class="row">
+        <label class="field w-name"><span class="lbl">Nom</span><input id="f-name" required maxlength="40" placeholder="ex. Fort Nord"></label>
+        <label class="field w-num"><span class="lbl">X</span><input id="f-x" type="number" min="0" max="999" required></label>
+        <label class="field w-num"><span class="lbl">Y</span><input id="f-y" type="number" min="0" max="999" required></label>
+        <label class="field w-num"><span class="lbl">TS</span><input id="f-ts" type="number" min="0" step="1" placeholder="0"></label>
+        <label class="field w-sel"><span class="lbl">Type</span>
+          <select id="f-milieu"><option value="terre">Terrestre</option><option value="mer">Maritime</option></select></label>
+        <label class="field w-sel"><span class="lbl">Château</span>
+          <select id="f-castle"><option value="1">Oui</option><option value="0">Non</option></select></label>
+        <label class="field w-sel"><span class="lbl">Rôle</span>
+          <select id="f-role">
+            <option value="auto">Auto (d'après les troupes)</option>
+            <option value="off">Off</option><option value="def">Def</option>
+            <option value="mixte">Mixte</option><option value="hub">Hub</option>
+          </select></label>
+      </div>
+      <fieldset><legend>Troupes</legend><div class="groups" id="troopChips"></div></fieldset>
+      <fieldset><legend>Ressources</legend>
+        <div class="resrow" id="resSelects"></div>
+        <div class="row" style="margin-top:10px">
+          <label class="field w-sel"><span class="lbl">Hub de destination</span><select id="f-hub"></select></label>
+        </div>
+      </fieldset>
+      <div class="btns">
+        <button type="submit" class="primary" id="saveBtn">Enregistrer la ville</button>
+        <button type="button" id="cancelBtn" hidden>Annuler la modification</button>
+      </div>
+    </form>
+  </details>
+
+  <details class="panel" id="tsPanel">
+    <summary>Poids TS par unité</summary>
+    <p class="note">Le TS de chaque ville est calculé à partir des effectifs importés multipliés par ces poids. Corrige une valeur si elle ne correspond pas au jeu : tout est recalculé.</p>
+    <div class="wgrid" id="tsGrid"></div>
+    <div class="btns" style="margin-top:12px"><button type="button" class="primary" id="tsSave">Enregistrer les poids</button><button type="button" id="tsReset">Revenir aux valeurs par défaut</button></div>
+  </details>
+  </div>
+</div>
+
+<script>
+/* Planner Crown — couche Firebase pour la version hébergée hors de Claude.
+   Elle recrée l'interface window.claude.use("db" | "user") utilisée par la page,
+   au-dessus de Cloud Firestore et de la connexion Google (Firebase Auth). */
+(function(){
+  const FB_VERSION = "10.12.2";
+  const FB_BASE = window.__FB_BASE__ || `https://www.gstatic.com/firebasejs/${FB_VERSION}`;
+  const firebaseConfig = {
+    apiKey: "AIzaSyBsN1rV_N9h-G2G-blu2q43b-iPG1YGTZ8",
+    authDomain: "planner-crown.firebaseapp.com",
+    projectId: "planner-crown",
+    storageBucket: "planner-crown.firebasestorage.app",
+    messagingSenderId: "978521794830",
+    appId: "1:978521794830:web:095b92c86ed017b7f04f5f"
+  };
+
+  let ready = null, canWrite = null, currentUser = null;
+
+  /* ---------- écran de connexion ---------- */
+  function styles(){
+    if (document.getElementById("fbCss")) return;
+    const css = document.createElement("style"); css.id = "fbCss";
+    css.textContent = `
+      #fbGate{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:var(--bg,#eef0f3);padding:16px}
+      #fbGate .box{max-width:440px;width:100%;background:var(--panel,#fff);color:var(--ink,#1c2230);border:1px solid var(--line,#d6dae3);border-radius:12px;padding:24px;display:grid;gap:14px}
+      #fbGate h2{margin:0;font-family:var(--f-display,Georgia,serif);font-size:1.6rem}
+      #fbGate p{margin:0;color:var(--muted,#5d6577);font-size:14px;line-height:1.5}
+      #fbGate .err{color:var(--off,#b23a3a);font-weight:600}
+      #fbGate button{font:inherit;font-weight:600;padding:10px 16px;border-radius:8px;border:1px solid var(--brass,#9a6b12);background:var(--brass,#9a6b12);color:var(--panel,#fff);cursor:pointer;justify-self:start}
+      #fbUser{font-size:12px;color:var(--muted,#5d6577);display:flex;gap:8px;align-items:center}
+      #fbUser button{font:inherit;box-shadow:none;min-height:0;font-size:12px;border:none;background:none;color:var(--muted,#5d6577);text-decoration:underline;cursor:pointer;padding:0}`;
+    document.head.appendChild(css);
+  }
+  function gate(){
+    let el = document.getElementById("fbGate");
+    if (el) return el;
+    styles();
+    el = document.createElement("div"); el.id = "fbGate";
+    el.innerHTML = `<div class="box"><h2>Planner Crown</h2><p id="fbGateMsg">Connecte-toi avec ton compte Google pour ouvrir le planner.</p><button type="button" id="fbGateBtn">Se connecter avec Google</button></div>`;
+    document.body.appendChild(el);
+    return el;
+  }
+  function showUserBadge(auth, signOut){
+    const host = document.querySelector(".hright"); if (!host || document.getElementById("fbUser")) return;
+    styles();
+    const d = document.createElement("div"); d.id = "fbUser";
+    d.innerHTML = `<span></span><button type="button">Se déconnecter</button>`;
+    d.querySelector("span").textContent = currentUser?.email || "";
+    d.querySelector("button").addEventListener("click", async () => { await signOut(auth); location.reload(); });
+    host.appendChild(d);
+  }
+
+  /* ---------- adaptateur Firestore ---------- */
+  function isPlain(v){ return v && typeof v === "object" && !Array.isArray(v) && Object.getPrototypeOf(v) === Object.prototype; }
+  // la base Claude fusionne les objets imbriqués lors d'un update ; Firestore les remplace.
+  // On aplatit donc en chemins de champs pour garder le même comportement.
+  function flatten(obj, prefix, out){
+    out = out || [];
+    for (const k in obj){ const v = obj[k], p = prefix.concat(k);
+      if (v === undefined) continue;
+      if (isPlain(v) && Object.keys(v).length) flatten(v, p, out); else out.push([p, v]); }
+    return out;
+  }
+  function mapErr(e){
+    const code = e && e.code === "permission-denied" ? "invalid_argument"
+      : e && e.code === "not-found" ? "invalid_argument"
+      : e && e.code === "unavailable" ? "unavailable" : (e && e.code) || "unavailable";
+    const err = new Error(e && e.message || String(e)); err.code = code; return err;
+  }
+
+  async function build(){
+    const [{initializeApp}, F, A] = await Promise.all([
+      import(`${FB_BASE}/firebase-app.js`),
+      import(`${FB_BASE}/firebase-firestore.js`),
+      import(`${FB_BASE}/firebase-auth.js`)
+    ]);
+    const app = initializeApp(firebaseConfig);
+    const fdb = F.initializeFirestore(app, { ignoreUndefinedProperties: true });
+    const auth = A.getAuth(app);
+
+    // attendre la session Google (persistée) ou la demander
+    currentUser = await new Promise(res => { const off = A.onAuthStateChanged(auth, u => { off(); res(u); }); });
+    if (!currentUser){
+      const g = gate();
+      currentUser = await new Promise(res => {
+        g.querySelector("#fbGateBtn").addEventListener("click", async () => {
+          try { const r = await A.signInWithPopup(auth, new A.GoogleAuthProvider()); res(r.user); }
+          catch(e){ g.querySelector("#fbGateMsg").innerHTML = `<span class="err">Connexion impossible (${e.code || e.message}).</span> Réessaie, et autorise les fenêtres pop-up pour cette page.`; }
+        });
+      });
+    }
+
+    const wrapDoc = s => ({ id: s.id, exists: s.exists(), data: () => s.exists() ? s.data() : undefined, metadata: { fromCache: s.metadata.fromCache, hasPendingWrites: s.metadata.hasPendingWrites } });
+    const wrapQuery = s => ({ docs: s.docs.map(wrapDoc), size: s.size, empty: s.empty, docChanges: () => [], metadata: { fromCache: s.metadata.fromCache, hasPendingWrites: s.metadata.hasPendingWrites } });
+
+    function docRef(path){
+      const r = F.doc(fdb, path);
+      return {
+        id: r.id, path,
+        get: async () => { try { return wrapDoc(await F.getDoc(r)); } catch(e){ throw mapErr(e); } },
+        set: async d => { try { await F.setDoc(r, d); } catch(e){ throw mapErr(e); } },
+        update: async d => { try {
+          const pairs = flatten(d, []); if (!pairs.length) return;
+          const args = []; pairs.forEach(([p, v]) => args.push(new F.FieldPath(...p), v));
+          await F.updateDoc(r, ...args);
+        } catch(e){ throw mapErr(e); } },
+        delete: async () => { try { await F.deleteDoc(r); } catch(e){ throw mapErr(e); } },
+        onSnapshot: (next, err) => F.onSnapshot(r, s => next(wrapDoc(s)), e => err && err(mapErr(e))),
+        collection: sub => colRef(path + "/" + sub)
+      };
+    }
+    function colRef(path, orderField){
+      const c = F.collection(fdb, path);
+      const q = () => orderField ? F.query(c, F.orderBy(orderField)) : c;
+      return {
+        path,
+        doc: id => docRef(id ? path + "/" + id : F.doc(c).path),
+        add: async d => { try { const r = await F.addDoc(c, d); return docRef(r.path); } catch(e){ throw mapErr(e); } },
+        orderBy: f => colRef(path, f),
+        get: async () => { try { return wrapQuery(await F.getDocs(q())); } catch(e){ throw mapErr(e); } },
+        onSnapshot: (next, err) => F.onSnapshot(q(), s => next(wrapQuery(s)), e => err && err(mapErr(e)))
+      };
+    }
+    const dbApi = { doc: docRef, collection: p => colRef(p) };
+
+    // vérifier que ce compte a accès
+    try { await F.getDoc(F.doc(fdb, "reglages/acces")); canWrite = true; }
+    catch(e){
+      if (e && e.code === "permission-denied"){
+        const g = gate();
+        g.querySelector("#fbGateMsg").innerHTML = `<span class="err">Le compte ${currentUser.email} n'a pas accès à ce planner.</span> Demande à Emeline d'ajouter cette adresse, ou connecte-toi avec un autre compte.`;
+        const b = g.querySelector("#fbGateBtn"); b.textContent = "Changer de compte";
+        b.replaceWith(b.cloneNode(true)); g.querySelector("#fbGateBtn").addEventListener("click", async () => { await A.signOut(auth); location.reload(); });
+        return new Promise(() => {}); // reste bloqué sur l'écran
+      }
+      canWrite = null;
+    }
+    const g = document.getElementById("fbGate"); if (g) g.remove();
+    showUserBadge(auth, A.signOut);
+    window.__fbImport = async docs => { // import unique d'une sauvegarde { "chemin/doc": {...} }
+      const paths = Object.keys(docs); let n = 0;
+      for (let i = 0; i < paths.length; i += 400){
+        const b = F.writeBatch(fdb);
+        paths.slice(i, i + 400).forEach(p => b.set(F.doc(fdb, p), docs[p]));
+        await b.commit(); n += Math.min(400, paths.length - i);
+      }
+      return n;
+    };
+    // base vide : proposer l'import unique de la sauvegarde
+    try {
+      const fs = await F.getDocs(F.collection(fdb, "fiches"));
+      if (fs.empty) importBanner();
+    } catch {}
+    return dbApi;
+  }
+
+  function importBanner(){
+    const b = document.createElement("div"); b.id = "fbImport";
+    b.style.cssText = "position:fixed;left:16px;right:16px;bottom:16px;z-index:40;max-width:560px;margin:0 auto;background:var(--panel,#fff);color:var(--ink,#1c2230);border:2px solid var(--brass,#9a6b12);border-radius:10px;padding:14px 16px;display:grid;gap:8px;font-size:14px;box-shadow:0 6px 24px rgba(0,0,0,.15)";
+    b.innerHTML = `<strong>Le planner est vide.</strong><span>Si tu as le fichier de sauvegarde (planner-crown-sauvegarde.json), importe-le une seule fois pour récupérer les villes, opérations et menaces.</span><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input type="file" accept=".json,application/json"><button type="button" style="font:inherit;border:none;background:none;text-decoration:underline;cursor:pointer;color:inherit">Ignorer</button></div><span class="msg"></span>`;
+    const msg = b.querySelector(".msg");
+    b.querySelector("button").addEventListener("click", () => b.remove());
+    b.querySelector("input").addEventListener("change", async e => {
+      const f = e.target.files[0]; if (!f) return;
+      try {
+        const data = JSON.parse(await f.text());
+        const docs = data && data.docs ? data.docs : data;
+        msg.textContent = "Import en cours…";
+        const n = await window.__fbImport(docs);
+        msg.textContent = n + " éléments importés. Rechargement…";
+        setTimeout(() => location.reload(), 900);
+      } catch(err){ msg.textContent = "Import impossible : " + (err.message || err); }
+    });
+    document.body.appendChild(b);
+  }
+
+  const userApi = {
+    can: async name => name === "data.write" ? canWrite : null,
+    isOwner: async () => false, canEdit: async () => !!canWrite
+  };
+  window.claude = {
+    use: async name => {
+      if (name === "db"){ if (!ready) ready = build().catch(e => { console.error(e); return null; }); return ready; }
+      if (name === "user"){ if (ready) await ready; return userApi; }
+      return null;
+    }
+  };
+})();
+
+</script>
+<script>
+const TROOPS = {
+  off: ["Vanquisher","Sorcerer","Horseman","Druid","Ram","Scorpion","Warship"],
+  def: ["Guard","Ranger","Triari","Priestess","Arbalist","Praetor","Ballista","Stinger"],
+  neu: ["Scout","Galley","Senator"]
+};
+const TROOP_CLASS = {}; for (const k in TROOPS) TROOPS[k].forEach(t => TROOP_CLASS[t] = k);
+const RES = [["bois","Bois"],["pierre","Pierre"],["fer","Fer"],["nourriture","Nourriture"]];
+const MODES = ["raffiner","hub","garder"];
+const MODE_LABEL = {raffiner:"Raffiner",hub:"Hub",garder:"Garder",afaire:"À définir"};
+const ROLE_LABEL = {off:"Off",def:"Def",mixte:"Mixte",hub:"Hub",none:"—"};
+
+let db = null, cities = [], editingId = null;
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function continentOf(x, y){ x = +x; y = +y; if (!Number.isFinite(x) || !Number.isFinite(y)) return null; return Math.floor(y/100)*10 + Math.floor(x/100); }
+const TS_DEFAULT = {Guard:1,Ballista:10,Ranger:1,Triari:1,Priestess:1,Vanquisher:1,Sorcerer:1,Scout:2,Arbalist:2,Praetor:2,Horseman:2,Druid:2,Ram:10,Scorpion:10,Galley:100,Stinger:100,Warship:400,Senator:1};
+let tsW = {...TS_DEFAULT};
+function classTs(c, key="total"){
+  const o = {off:0,def:0,neu:0};
+  if (c.units){ for (const t in c.units) o[TROOP_CLASS[t]||"neu"] += (+c.units[t][key]||0) * (+tsW[t]||0); }
+  return o;
+}
+function cityTs(c){ if (!c.units) return +c.ts||0; const o = classTs(c); return o.off+o.def+o.neu; }
+const NAVAL = ["Galley","Stinger","Warship"];
+function milieuOf(c){ if (c.milieu === "terre" || c.milieu === "mer") return c.milieu;
+  return c.units && NAVAL.some(t => +(c.units[t]||{}).total > 0) ? "mer" : "terre"; }
+function alertsOf(c){
+  const out = [];
+  if (c.wall === 0) out.push(["def","mur 0"]);
+  if (c.units && ["def","mixte"].includes(effRole(c))){ let h = 0, t = 0; for (const k in c.units) if (TROOP_CLASS[k] === "def"){ h += +c.units[k].home||0; t += +c.units[k].total||0; }
+    if (t > 0 && h/t < 0.10) out.push(["def", Math.round(h/t*100) + " % def en ville"]); }
+  const lab = {bois:"bois", pierre:"pierre", fer:"fer", nourriture:"nourr."};
+  for (const k in (c.stats||{})){ const st = c.stats[k]; if (st.stockage > 0 && st.total/st.stockage >= 0.75) out.push(["stock", `${lab[k]||k} ${Math.round(st.total/st.stockage*100)} %`]); }
+  return out;
+}
+function effRole(c){
+  if (c.role && c.role !== "auto") return c.role;
+  if (c.units){ const o = classTs(c); const t = o.off+o.def; if (!t) return "none"; const r = o.off/t; return r>=0.8 ? "off" : r<=0.2 ? "def" : "mixte"; }
+  const t = c.troops || []; const o = t.some(x => TROOP_CLASS[x]==="off"), d = t.some(x => TROOP_CLASS[x]==="def");
+  return o && d ? "mixte" : o ? "off" : d ? "def" : "none";
+}
+
+/* ---------- form building ---------- */
+function buildForm(){
+  const tc = $("troopChips"); const names = {off:"Offensives",def:"Défensives",neu:"Utilitaires"};
+  tc.innerHTML = Object.keys(TROOPS).map(k => `<div><div class="ghead">${names[k]}</div><div class="chips">${
+    TROOPS[k].map(t => `<label class="chip ${k}"><input type="checkbox" id="tr-${t}" value="${t}"><span>${t}</span></label>`).join("")}</div></div>`).join("");
+  $("resSelects").innerHTML = RES.map(([k,l]) => `<label class="field"><span class="lbl">${l}</span><select id="f-res-${k}">${
+    ["afaire",...MODES].map(m => `<option value="${m}">${MODE_LABEL[m]}</option>`).join("")}</select></label>`).join("");
+}
+const colOf = fid => db.collection(`fiches/${fid}/villes`);
+const isAll = () => viewAll && fiches.length > 1;
+function regList(){
+  return isAll() ? fiches.flatMap(f => (allCities[f.id]||[]).map(c => ({...c, _fid:f.id}))) : cities.map(c => ({...c, _fid:currentFiche}));
+}
+const ROLE_TABS = [["","Toutes",r => true],["off","Off",r => r==="off"||r==="mixte"],["def","Def",r => r==="def"||r==="mixte"],["hub","Hub",r => r==="hub"]];
+function fillHubSelect(selected){
+  const hubs = (allCities[currentFiche] || cities).filter(c => effRole(c)==="hub" && c.id !== editingId);
+  $("f-hub").innerHTML = `<option value="">— aucun —</option>` + hubs.map(h => `<option value="${esc(h.id)}">${esc(h.name)} (${h.x}:${h.y})</option>`).join("");
+  $("f-hub").value = selected || "";
+}
+function resetForm(){
+  editingId = null; $("cityForm").reset();
+  RES.forEach(([k]) => $("f-res-"+k).value = "afaire");
+  $("formTitle").textContent = "Ajouter une ville"; $("saveBtn").textContent = "Enregistrer la ville"; $("cancelBtn").hidden = true;
+  fillHubSelect("");
+}
+function startEdit(id, fid){
+  fid = fid || currentFiche;
+  const c = (allCities[fid] || cities).find(x => x.id === id); if (!c) return;
+  if (fid !== currentFiche){ viewAll = false; try { localStorage.setItem("villesTous", "0"); } catch {} selectFiche(fid); }
+  editingId = id;
+  $("f-name").value = c.name; $("f-x").value = c.x; $("f-y").value = c.y; $("f-ts").value = c.ts || "";
+  $("f-castle").value = c.castle ? "1" : "0"; $("f-milieu").value = milieuOf(c); $("f-role").value = c.role || "auto";
+  document.querySelectorAll("#troopChips input").forEach(i => i.checked = (c.troops||[]).includes(i.value));
+  RES.forEach(([k]) => $("f-res-"+k).value = (c.res||{})[k] || "afaire");
+  fillHubSelect(c.hubId);
+  $("formTitle").textContent = "Modifier : " + c.name; $("saveBtn").textContent = "Enregistrer les modifications"; $("cancelBtn").hidden = false;
+  showView("outils"); $("formPanel").open = true; $("formPanel").scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+/* ---------- render ---------- */
+function bar(el, parts){
+  const total = parts.reduce((s,p) => s+p.v, 0);
+  el.innerHTML = total ? parts.filter(p=>p.v).map(p => `<span title="${p.l} : ${p.v}" style="width:${p.v/total*100}%;background:var(${p.c})"></span>`).join("") : "";
+}
+function render(){
+  const roles = {off:0,def:0,mixte:0,hub:0,none:0}, ts = {off:0,def:0,mixte:0,hub:0,none:0};
+  const cls = {off:0,def:0,neu:0}; let unitsHome = 0, unitsTot = 0;
+  const L = regList();
+  L.forEach(c => { const r = effRole(c); roles[r]++;
+    if (c.units){ const o = classTs(c); cls.off+=o.off; cls.def+=o.def; cls.neu+=o.neu;
+      for (const t in c.units){ unitsHome += +c.units[t].home||0; unitsTot += +c.units[t].total||0; } }
+    else { const v = +c.ts||0; if (r==="off") cls.off+=v; else if (r==="def") cls.def+=v; else cls.neu+=v; } });
+  $("nOff").textContent = roles.off; $("nDef").textContent = roles.def; $("nMix").textContent = roles.mixte; $("nHub").textContent = roles.hub; $("nMil").textContent = L.filter(c => milieuOf(c)==="terre").length + " / " + L.filter(c => milieuOf(c)==="mer").length;
+  const parts = k => [{l:"Off",v:k.off,c:"--off"},{l:"Def",v:k.def,c:"--def"},{l:"Mixte",v:k.mixte,c:"--mix"},{l:"Hub",v:k.hub,c:"--brass"}];
+  bar($("barCities"), parts(roles)); bar($("barTs"), [{l:"Off",v:cls.off,c:"--off"},{l:"Def",v:cls.def,c:"--def"},{l:"Utilitaire",v:cls.neu,c:"--keep"}]);
+  const tsTot = cls.off+cls.def+cls.neu;
+  $("tsTotal").textContent = tsTot ? "· total " + tsTot.toLocaleString("fr-FR") : "";
+  const pct = v => tsTot ? Math.round(v/tsTot*100) + " %" : "0 %";
+  $("legendTs").innerHTML = [["Off","--off",cls.off],["Def","--def",cls.def],["Utilitaire","--keep",cls.neu]]
+    .map(([l,c,v]) => `<span><i class="dot" style="background:var(${c})"></i>${l} ${v.toLocaleString("fr-FR")} TS (${pct(v)})</span>`).join("")
+    + (unitsTot ? `<span>Troupes en ville : ${Math.round(unitsHome/unitsTot*100)} % (${unitsHome.toLocaleString("fr-FR")} / ${unitsTot.toLocaleString("fr-FR")} unités)</span>` : "");
+
+  $("resSummary").innerHTML = RES.map(([k,l]) => {
+    const n = {raffiner:0,hub:0,garder:0,afaire:0}; L.forEach(c => n[(c.res||{})[k]||"afaire"]++);
+    return `<tr><td>${l}</td><td>${n.raffiner}</td><td>${n.hub}</td><td>${n.garder}</td><td>${n.afaire}</td></tr>`;
+  }).join("");
+
+  const conts = [...new Set(L.map(c => continentOf(c.x,c.y)).filter(v => v!==null))].sort((a,b)=>a-b);
+  const fc = $("fl-cont"), keep = fc.value;
+  fc.innerHTML = `<option value="">Tous</option>` + conts.map(c => `<option value="${c}">C${String(c).padStart(2,"0")}</option>`).join("");
+  fc.value = conts.map(String).includes(keep) ? keep : "";
+
+  const fMil = $("fl-milieu").value, fCont = fc.value, sort = $("fl-sort").value;
+  const base = L.filter(c => (!fMil || milieuOf(c)===fMil) && (!fCont || String(continentOf(c.x,c.y))===fCont));
+  const rt = ROLE_TABS.find(t => t[0] === roleTab) || ROLE_TABS[0];
+  $("roleTabs").innerHTML = ROLE_TABS.map(([k,l,fn]) => `<button type="button" role="tab" data-role="${k}" aria-selected="${k===rt[0]}">${l}<small>${base.filter(c => fn(effRole(c))).length}</small></button>`).join("");
+  let rows = base.filter(c => rt[2](effRole(c)));
+  rows.sort((a,b) => sort==="name" ? a.name.localeCompare(b.name,"fr") : sort==="ts" ? cityTs(b)-cityTs(a)
+    : sort==="joueur" ? ficheNom(a._fid).localeCompare(ficheNom(b._fid),"fr") || a.name.localeCompare(b.name,"fr")
+    : (continentOf(a.x,a.y)-continentOf(b.x,b.y)) || a.name.localeCompare(b.name,"fr"));
+  const byId = Object.fromEntries(L.map(c => [c._fid + "/" + c.id, c]));
+  $("regBody").innerHTML = rows.map(c => {
+    const r = effRole(c), cont = continentOf(c.x,c.y);
+    const troops = (c.units
+      ? Object.entries(c.units).filter(([,u]) => +u.total>0).sort((a,b)=>b[1].total-a[1].total)
+          .map(([t,u]) => `<span class="t ${TROOP_CLASS[t]||"neu"}" title="${(+u.home).toLocaleString("fr-FR")} en ville / ${(+u.total).toLocaleString("fr-FR")} au total">${esc(t)} ${(+u.total).toLocaleString("fr-FR")}</span>`).join("")
+      : (c.troops||[]).map(t => `<span class="t ${TROOP_CLASS[t]||"neu"}">${esc(t)}</span>`).join("")) || `<span class="t neu">aucune</span>`;
+    const res = RES.map(([k]) => { const m = (c.res||{})[k]||"afaire";
+      return `<td><button class="rbtn r-${m}" data-cycle="${esc(c.id)}" data-fid="${esc(c._fid)}" data-res="${k}" aria-label="${k} : ${MODE_LABEL[m]}, cliquer pour changer">${MODE_LABEL[m]}</button></td>`; }).join("");
+    const hub = c.hubId && byId[c._fid + "/" + c.hubId] ? esc(byId[c._fid + "/" + c.hubId].name) : `<span style="color:var(--muted)">—</span>`;
+    const F = `data-fid="${esc(c._fid)}"`;
+    return `<tr class="c-${r}">
+      <td><div class="namecell"><b>${esc(c.name)}</b>${isAll() ? `<span class="owner">${esc(ficheNom(c._fid))}</span>` : ""}<button class="milieu m-${milieuOf(c)}" data-milieu="${esc(c.id)}" ${F} aria-label="Type de ville : ${milieuOf(c)==="mer"?"maritime":"terrestre"}, cliquer pour changer">${milieuOf(c)==="mer"?"⚓ Maritime":"⛰ Terrestre"}</button>${c.castle ? `<span class="castle" title="Château">♜ château</span>` : ""}</div>${c.reference ? `<div class="refnote">${esc(c.reference)}${c.score ? " · score " + (+c.score).toLocaleString("fr-FR") : ""}${c.wall!=null ? " · mur " + c.wall : ""}</div>` : ""}${(a => a.length ? `<div class="alerts">${a.map(([k,t]) => `<span class="ab ${k}">${esc(t)}</span>`).join("")}</div>` : "")(alertsOf(c))}</td>
+      <td class="mono"><span class="cont">C${String(cont).padStart(2,"0")}</span>${c.x}:${c.y}</td>
+      <td><span class="pill p-${r}">${ROLE_LABEL[r]}${c.role==="auto"||!c.role ? "" : ""}</span></td>
+      <td><div class="troops">${troops}</div></td>
+      <td class="mono">${cityTs(c).toLocaleString("fr-FR")}</td>
+      ${res}
+      <td style="white-space:nowrap">${hub}</td>
+      <td style="white-space:nowrap"><button class="link" data-edit="${esc(c.id)}" ${F}>Modifier</button><button class="link danger" data-del="${esc(c.id)}" ${F}>Supprimer</button></td>
+    </tr>`;
+  }).join("");
+  if (curView === "fiche" && countTxt) setStatus(isAll() ? `${L.length} villes (tous les joueurs) · enregistré automatiquement` : countTxt);
+  $("emptyState").hidden = rows.length > 0;
+  $("emptyState").textContent = L.length ? "Aucune ville ne correspond à ce filtre." : (isAll() ? "Aucune ville importée pour l'instant." : "Aucune ville pour l'instant. Clique « Importer mes CSV » en haut à droite, ou ajoute une ville dans ⚙ Réglages.");
+  if (!editingId) fillHubSelect($("f-hub").value);
+}
+
+/* ---------- actions ---------- */
+let pendingDelete = null;
+$("regBody").addEventListener("click", async e => {
+  const b = e.target.closest("button"); if (!b || !db) return;
+  const fid = b.dataset.fid || currentFiche, pool = allCities[fid] || cities;
+  if (b.dataset.milieu){
+    const c = pool.find(x => x.id === b.dataset.milieu); const next = milieuOf(c) === "mer" ? "terre" : "mer";
+    b.disabled = true;
+    try { await colOf(fid).doc(c.id).update({milieu:next}); } catch(err){ setStatus("Changement non enregistré : " + (err.message||err.code)); }
+    b.disabled = false; return;
+  }
+  if (b.dataset.cycle){
+    const c = pool.find(x => x.id === b.dataset.cycle); const k = b.dataset.res;
+    const cur = (c.res||{})[k]||"afaire"; const next = cur==="afaire" ? MODES[0] : MODES[(MODES.indexOf(cur)+1)%MODES.length];
+    b.disabled = true;
+    try { await colOf(fid).doc(c.id).update({res:{[k]:next}}); } catch(err){ setStatus("Changement non enregistré : " + (err.message||err.code)); }
+    b.disabled = false;
+  } else if (b.dataset.edit){ startEdit(b.dataset.edit, fid); }
+  else if (b.dataset.del){
+    if (pendingDelete !== b.dataset.del){ pendingDelete = b.dataset.del; b.textContent = "Confirmer ?"; setTimeout(()=>{ if(pendingDelete===b.dataset.del){pendingDelete=null; b.textContent="Supprimer";} }, 4000); return; }
+    pendingDelete = null;
+    try { await colOf(fid).doc(b.dataset.del).delete(); if (editingId===b.dataset.del) resetForm(); } catch(err){ setStatus("Suppression impossible : " + (err.message||err.code)); }
+  }
+});
+$("cityForm").addEventListener("submit", async e => {
+  e.preventDefault(); if (!db){ setStatus("Registre indisponible : ouvre la page en étant connecté à claude.ai."); return; }
+  if (!currentFiche){ setStatus("Choisis ou crée une fiche d'abord."); return; }
+  const data = {
+    name: $("f-name").value.trim(), x: +$("f-x").value, y: +$("f-y").value, ts: +$("f-ts").value || 0,
+    castle: $("f-castle").value === "1", milieu: $("f-milieu").value, role: $("f-role").value,
+    troops: [...document.querySelectorAll("#troopChips input:checked")].map(i => i.value),
+    res: Object.fromEntries(RES.map(([k]) => [k, $("f-res-"+k).value])),
+    hubId: $("f-hub").value || "", updatedAt: new Date().toISOString()
+  };
+  $("saveBtn").disabled = true;
+  try {
+    if (editingId) await col().doc(editingId).update(data);
+    else await col().add(data);
+    setStatus((editingId ? "Modifiée : " : "Ajoutée : ") + data.name);
+    resetForm();
+  } catch(err){ setStatus("Enregistrement impossible : " + (err.message||err.code)); }
+  $("saveBtn").disabled = false;
+});
+$("cancelBtn").addEventListener("click", resetForm);
+["fl-milieu","fl-cont","fl-sort"].forEach(id => $(id).addEventListener("change", render));
+let roleTab = "", viewAll = false;
+try { roleTab = localStorage.getItem("roleTab") || ""; viewAll = localStorage.getItem("villesTous") === "1"; } catch {}
+$("roleTabs").addEventListener("click", e => { const b = e.target.closest("[data-role]"); if (!b) return; roleTab = b.dataset.role; try { localStorage.setItem("roleTab", roleTab); } catch {} render(); });
+function setStatus(t){ $("status").textContent = t; }
+
+function buildTsGrid(){
+  $("tsGrid").innerHTML = Object.keys(TS_DEFAULT).map(t => `<label class="field"><span class="lbl">${t}</span><input type="number" min="0" step="1" id="w-${t}" value="${tsW[t]}"></label>`).join("");
+}
+$("tsSave").addEventListener("click", async () => {
+  const w = {}; Object.keys(TS_DEFAULT).forEach(t => w[t] = +$("w-"+t).value || 0);
+  if (!db){ tsW = w; render(); return; }
+  try { await db.doc("reglages/poidsTs").set({poids:w}); setStatus("Poids TS enregistrés"); } catch(err){ setStatus("Poids non enregistrés : " + (err.message||err.code)); }
+});
+$("tsReset").addEventListener("click", () => { Object.keys(TS_DEFAULT).forEach(t => $("w-"+t).value = TS_DEFAULT[t]); });
+
+/* ---------- import CSV ---------- */
+function parseCsv(text){
+  const rows = []; let row = [], f = "", q = false;
+  for (let i = 0; i < text.length; i++){
+    const ch = text[i];
+    if (q){ if (ch === '"'){ if (text[i+1] === '"'){ f += '"'; i++; } else q = false; } else f += ch; }
+    else if (ch === '"') q = true;
+    else if (ch === ","){ row.push(f); f = ""; }
+    else if (ch === "\n" || ch === "\r"){ if (ch === "\r" && text[i+1] === "\n") i++; row.push(f); rows.push(row); row = []; f = ""; }
+    else f += ch;
+  }
+  if (f !== "" || row.length){ row.push(f); rows.push(row); }
+  return rows.filter(r => r.some(c => c.trim() !== ""));
+}
+const num = v => +String(v ?? "").replace(/[,\s]/g, "") || 0;
+const coordsOf = v => { const m = String(v).match(/\((\d+):(\d+)\)/); return m ? {x:+m[1], y:+m[2]} : null; };
+const ALL_TYPES = Object.keys(TS_DEFAULT);
+
+function readExport(text, fileName){
+  const rows = parseCsv(text.replace(/^\uFEFF/, ""));
+  const hi = rows.findIndex(r => r.includes("Guard_home"));
+  if (hi >= 0){
+    const h = rows[hi]; const recs = [];
+    for (const r of rows.slice(hi+1)){
+      const d = Object.fromEntries(h.map((k,i) => [k, r[i]])); const c = coordsOf(d.l); if (!c) continue;
+      const units = {}; ALL_TYPES.forEach(t => { if (h.includes(t+"_total")) units[t] = {home:num(d[t+"_home"]), total:num(d[t+"_total"])}; });
+      recs.push({id:`${c.x}-${c.y}`, name:d.c, x:c.x, y:c.y, patch:{units, troops:Object.keys(units).filter(t => units[t].total>0),
+        wall:num(d.wall_lvl), spotTime:d.spot_time||"", troopSource:fileName}});
+    }
+    return {kind:"troupes", recs};
+  }
+  const hd = rows.findIndex(r => r[0] === "City" && r.includes("Per Hr"));
+  if (hd >= 0){
+    const recs = [];
+    for (const r of rows.slice(hd+1)){
+      const c = coordsOf(r[5]); if (!c) continue;
+      const stats = {}; ["bois","pierre","fer","nourriture"].forEach((k,i) => { const b = 6+3*i; stats[k] = {total:num(r[b]), parHeure:num(r[b+1]), stockage:num(r[b+2])}; });
+      recs.push({id:`${c.x}-${c.y}`, name:r[0], x:c.x, y:c.y, patch:{name:r[0], reference:r[1]||"", score:num(r[2]), sorcTower:r[3]==="Y", academy:r[4]==="Y",
+        x:c.x, y:c.y, stats, chariots:{dispo:num(r[18]), total:num(r[19])}, navires:{dispo:num(r[20]), total:num(r[21])}, source:fileName}});
+    }
+    return {kind:"villes", recs};
+  }
+  return {kind:null, recs:[]};
+}
+
+let pendingImport = null;
+async function handleFiles(files){
+  const parts = [];
+  for (const f of files){ try { parts.push({file:f.name, ...readExport(await f.text(), f.name)}); } catch { parts.push({file:f.name, kind:null, recs:[]}); } }
+  const pool = allCities[currentFiche] || cities;
+  const known = new Set(pool.map(c => c.id)), lines = [], merged = {};
+  for (const p of parts){
+    if (!p.kind){ lines.push(`<li class="warn">${esc(p.file)} : format non reconnu (ni export des villes, ni export des troupes).</li>`); continue; }
+    const nNew = p.recs.filter(r => !known.has(r.id)).length;
+    lines.push(`<li><b>${esc(p.file)}</b> — export des ${p.kind} : ${p.recs.length} villes, dont ${p.recs.length-nNew} mises à jour et ${nNew} nouvelles.</li>`);
+    if (p.kind === "villes"){
+      const seen = new Set(p.recs.map(r => r.id)); const gone = pool.filter(c => !seen.has(c.id));
+      if (gone.length) lines.push(`<li class="warn">Absentes de l'export, gardées dans le planner : ${gone.map(c => esc(c.name)).join(", ")}. Supprime-les à la main si tu les as perdues.</li>`);
+    }
+    for (const r of p.recs){ const m = merged[r.id] ||= {id:r.id, name:r.name, x:r.x, y:r.y, patch:{}}; Object.assign(m.patch, r.patch); }
+  }
+  pendingImport = Object.values(merged);
+  const fNom = ficheNom(currentFiche), mine = !moi || moi === currentFiche;
+  const totalRecs = pendingImport.length, newRecs = pendingImport.filter(r => !known.has(r.id)).length;
+  lines.unshift(`<li><b>Destination : fiche « ${esc(fNom)} »</b>${mine ? "" : ` (pas la tienne : tu importes pour ${esc(fNom)})`}</li>`);
+  if (pool.length && totalRecs && newRecs === totalRecs) lines.push(`<li class="warn">Aucune ville de l'export n'existe dans cette fiche : vérifie que c'est la bonne avant d'appliquer.</li>`);
+  $("impList").innerHTML = lines.join("");
+  $("impApply").hidden = !pendingImport.length;
+  $("impApply").textContent = mine ? "Appliquer la mise à jour" : `Importer dans la fiche de ${fNom}`;
+  $("impPreview").hidden = false;
+}
+function renderImpFor(){
+  $("impFor").innerHTML = fiches.map(f => `<option value="${esc(f.id)}"${f.id===currentFiche?" selected":""}>${esc(f.nom)}${f.id===moi?" (moi)":""}</option>`).join("") || `<option value="">Aucune fiche</option>`;
+}
+$("impFor").addEventListener("change", e => { if (e.target.value && e.target.value !== currentFiche){ viewAll = false; selectFiche(e.target.value); } pendingImport = null; $("impPreview").hidden = true; renderTabs(); });
+$("csvInput").addEventListener("change", e => { if (e.target.files.length) handleFiles([...e.target.files]); e.target.value = ""; });
+const drop = $("drop");
+["dragenter","dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave","drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", e => { const f = [...(e.dataTransfer?.files||[])]; if (f.length) handleFiles(f); });
+$("impCancel").addEventListener("click", () => { pendingImport = null; $("impPreview").hidden = true; });
+$("impApply").addEventListener("click", async () => {
+  if (!db || !currentFiche){ setStatus("Import impossible : choisis une fiche, connectée à claude.ai."); return; }
+  const btn = $("impApply"); btn.disabled = true; let ok = 0, ko = 0;
+  const pool = allCities[currentFiche] || cities;
+  const known = new Set(pool.map(c => c.id)); const hubImp = pendingImport.find(r => /hub/i.test(r.patch.reference||"")); const hubExist = pool.find(c => effRole(c)==="hub");
+  const hub = hubExist || (hubImp ? {id:hubImp.id} : null);
+  for (const r of pendingImport){
+    const patch = {...r.patch, updatedAt:new Date().toISOString()};
+    try {
+      if (known.has(r.id)) await col().doc(r.id).update(patch);
+      else {
+        const isHub = /hub/i.test(patch.reference||"");
+        await col().doc(r.id).set({name:r.name, x:r.x, y:r.y, ts:0, castle:false, role:isHub?"hub":"auto",
+          troops:[], res:{}, hubId:(!isHub && hub) ? hub.id : "", ...patch});
+      }
+      ok++; setStatus(`Import : ${ok}/${pendingImport.length}…`);
+    } catch(err){ ko++; }
+  }
+  btn.disabled = false; pendingImport = null; $("impPreview").hidden = true;
+  setStatus(ko ? `Import terminé : ${ok} villes à jour, ${ko} en échec. Relance l'import pour les reprendre.` : `Import terminé : ${ok} villes à jour.`);
+});
+
+/* ---------- fiches ---------- */
+let fiches = [], currentFiche = null, unsubVilles = null, curView = "fiche", countTxt = "";
+const COMMON_VIEWS = ["maintenant","binome","attaques","defense","outils"];
+const countStatus = () => COMMON_VIEWS.includes(curView) ? "Enregistré automatiquement" : (countTxt || "Enregistré automatiquement");
+const col = () => db.collection(`fiches/${currentFiche}/villes`);
+function renderTabs(){
+  $("ficheTabs").innerHTML = (fiches.length > 1 ? `<button type="button" class="tab" role="tab" aria-selected="${isAll()}" data-fiche="__all">Tous</button>` : "") + fiches.map(f => `<button type="button" class="tab" role="tab" aria-selected="${!isAll() && f.id===currentFiche}" data-fiche="${esc(f.id)}">${esc(f.nom)}${f.id===moi ? " (moi)" : ""}</button>`).join("")
+    || `<span class="note">Aucune fiche : crée la tienne dans Réglages.</span>`;
+  const f = fiches.find(x => x.id === currentFiche);
+  const common = COMMON_VIEWS.includes(curView);
+  document.querySelector("h1").textContent = common ? ({maintenant:"Maintenant", binome:"Binôme", attaques:"Attaques", defense:"Défense", outils:"Réglages"})[curView] : isAll() ? "Nos villes" : (f ? (f.id === moi ? "Mes villes" : "Villes de " + f.nom) : "Mes villes");
+  $("subTitle").textContent = curView === "maintenant" ? (moi ? "Ce que tu as à faire, en un coup d'œil." : "Choisis qui tu es en haut à droite pour voir tes ordres.")
+    : curView === "binome" ? "Vue commune : équilibre off / def et troupes de tous les joueurs."
+    : curView === "attaques" ? "Vue commune : opérations, plan de frappe et envois de chaque joueur."
+    : curView === "defense" ? "Vue commune : villes menacées, renforts engagés et ce que chacun doit envoyer."
+    : curView === "outils" ? "Joueurs, import des exports du jeu, ajout de villes et poids TS."
+    : "Coordonnées, troupes, rôle off/def et destination des ressources, ville par ville.";
+  $("ficheNav").hidden = common;
+  renderPlayers(); try { renderImpFor(); } catch {}
+  $("outilsFiche").textContent = f ? "Import et ajout de villes : fiche « " + f.nom + " »" + (f.id === moi ? " (la tienne)." : ".") : "Crée ta fiche ci-dessous, puis choisis-la dans « Je suis ».";
+}
+function selectFiche(id){
+  if (id === currentFiche && unsubVilles) return;
+  currentFiche = id; try { localStorage.setItem("ficheActive", id); } catch {}
+  if (unsubVilles){ unsubVilles(); unsubVilles = null; }
+  cities = []; resetForm(); pendingImport = null; $("impPreview").hidden = true; render(); renderTabs();
+  if (!id) return;
+  setStatus("Chargement de la fiche…");
+  unsubVilles = col().onSnapshot(snap => {
+    cities = snap.docs.map(d => ({id:d.id, ...d.data()}));
+    countTxt = cities.length + (cities.length>1 ? " villes" : " ville") + " · enregistré automatiquement"; setStatus(countStatus());
+    render();
+  }, err => setStatus("Connexion au registre perdue (" + (err.code||"erreur") + "). Recharge la page."));
+}
+$("ficheTabs").addEventListener("click", e => { const b = e.target.closest("[data-fiche]"); if (!b) return;
+  viewAll = b.dataset.fiche === "__all"; try { localStorage.setItem("villesTous", viewAll ? "1" : "0"); } catch {}
+  if (!viewAll) selectFiche(b.dataset.fiche); render(); renderTabs(); });
+let canWrite = null;
+function nfMsg(t, ok){ $("nf-msg").textContent = t; $("nf-msg").className = "fmsg " + (ok ? "ok" : "ko"); }
+function renderRO(){ $("roBanner").hidden = canWrite !== false; }
+function renderPlayers(){
+  $("playerList").innerHTML = fiches.length ? fiches.map(f => `<span>${esc(f.nom)}${f.id===moi ? " (moi)" : ""} · ${(allCities[f.id]||[]).length} villes</span>`).join("") : "";
+}
+$("newFiche").addEventListener("submit", async e => {
+  e.preventDefault();
+  if (!db){ nfMsg("La page n'a pas accès à l'enregistrement ici : ouvre-la depuis claude.ai en étant connecté à ton compte.", false); return; }
+  if (canWrite === false){ nfMsg("Ton accès à la page est en lecture seule : la fiche ne peut pas être créée (voir le message en haut de la page).", false); return; }
+  const nom = $("nf-name").value.trim(); if (!nom) return;
+  const slug = nom.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,24) || "joueur";
+  const id = fiches.some(f => f.id === slug) ? slug + "-" + Math.random().toString(36).slice(2,6) : slug;
+  const btn = e.submitter || $("newFiche").querySelector("button"); btn.disabled = true;
+  try { await db.doc("fiches/" + id).set({nom, creeLe:new Date().toISOString()}); $("nf-name").value = ""; selectFiche(id);
+    const auto = !moi; if (auto){ moi = id; try { localStorage.setItem("moi", id); } catch {} renderMe(); renderWelcome(); }
+    nfMsg(auto ? `Fiche « ${nom} » créée et choisie dans « Je suis ». Tu peux importer tes CSV.` : `Fiche « ${nom} » créée. Si c'est la tienne, choisis-la dans « Je suis » en haut à droite.`, true); }
+  catch(err){
+    if (err && err.code === "invalid_argument"){ canWrite = false; renderRO(); nfMsg("Création refusée : ton accès à la page ne permet pas d'enregistrer (voir le message en haut de la page).", false); }
+    else nfMsg("La fiche n'a pas été créée (" + (err?.message || err?.code || "erreur inconnue") + "). Réessaie dans un instant.", false); }
+  btn.disabled = false;
+});
+
+/* ---------- vue binôme ---------- */
+const allCities = {}; const subsFiche = {};
+let objectif = {pct:50, ts:null};
+function statsOf(list){
+  const st = {off:0,def:0,mixte:0,hub:0,none:0,terre:0,mer:0,tsOff:0,tsDef:0,offCities:[],defCities:[]};
+  list.forEach(c => { const r = effRole(c); st[r]++; st[milieuOf(c)]++; const o = c.units ? classTs(c) : {off:r==="off"?+c.ts||0:0, def:r==="def"?+c.ts||0:0};
+    st.tsOff += o.off; st.tsDef += o.def;
+    if (r==="off") st.offCities.push(o.off); if (r==="def") st.defCities.push(o.def); });
+  return st;
+}
+const fmt = n => Math.round(n).toLocaleString("fr-FR");
+const avg = a => a.length ? a.reduce((x,y)=>x+y,0)/a.length : 0;
+function gapTo(st, t){
+  const T = st.tsOff + st.tsDef; if (!T) return null;
+  const share = st.tsOff / T;
+  if (Math.abs(share - t) < 0.02) return {ok:true, share};
+  if (share < t) return {need:"off", ts:(t*T - st.tsOff)/(1-t), share};
+  return {need:"def", ts:((1-t)*T - st.tsDef)/t, share};
+}
+function renderBinome(){
+  const t = Math.min(Math.max((+objectif.pct||50)/100, 0.05), 0.95);
+  const rows = fiches.map(f => ({nom:f.nom, st:statsOf(allCities[f.id]||[])}));
+  const team = statsOf(fiches.flatMap(f => allCities[f.id]||[]));
+  const all = rows.length > 1 ? [...rows, {nom:`Ensemble (${rows.length} joueurs)`, st:team, team:true}] : rows;
+  // chart
+  const W = Math.max(280, Math.round($("chartWrap").clientWidth || 640)), L = 0, R = 84, rowH = 52, H = Math.max(all.length,1)*rowH + 4;
+  const max = Math.max(1, ...all.map(r => r.st.tsOff + r.st.tsDef));
+  const sc = v => v / max * (W - L - R);
+  let g = "";
+  all.forEach((r,i) => {
+    const y = i*rowH, by = y + 20, bh = 18, wo = sc(r.st.tsOff), wd = sc(r.st.tsDef), tot = r.st.tsOff + r.st.tsDef;
+    const gap = wo && wd ? 2 : 0;
+    g += `<text x="${L}" y="${y+13}"><tspan ${r.team?'font-weight="600"':''}>${esc(r.nom)}</tspan>${tot ? `<tspan class="muted" dx="8" fill="var(--muted)" font-size="12">${Math.round(r.st.tsOff/tot*100)} % off · ${Math.round(r.st.tsDef/tot*100)} % def</tspan>` : ""}</text>`;
+    if (!tot){ g += `<text class="muted" x="${L}" y="${by+13}">Aucune troupe importée</text>`; return; }
+    if (wo) g += `<path d="M${L+4},${by} H${L+wo-gap} V${by+bh} H${L+4} a4,4 0 0 1 -4,-4 V${by+4} a4,4 0 0 1 4,-4 Z" fill="var(--c-off)"/>`;
+    if (wd){ const x0 = L+wo+(wo?0:0), x1 = L+wo+wd; g += wo
+      ? `<path d="M${x0},${by} H${x1-4} a4,4 0 0 1 4,4 V${by+bh-4} a4,4 0 0 1 -4,4 H${x0} Z" fill="var(--c-def)"/>`
+      : `<rect x="${x0}" y="${by}" width="${wd}" height="${bh}" rx="4" fill="var(--c-def)"/>`; }
+    const tx = L + sc(tot)*t;
+    g += `<line x1="${tx}" x2="${tx}" y1="${by-5}" y2="${by+bh+5}" stroke="var(--ink)" stroke-width="2" stroke-dasharray="3 2"/>`;
+    g += `<text class="num muted" x="${L+sc(tot)+8}" y="${by+13}">${fmt(tot)}</text>`;
+    g += `<rect class="hit" x="0" y="${y}" width="${W}" height="${rowH-6}" data-row="${i}"/>`;
+  });
+  const svg = $("bChart"); svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("width", W); svg.setAttribute("height", H);
+  svg.innerHTML = `<title id="bChartTitle">TS off et def par joueur et pour le binôme</title>` + g;
+  svg._rows = all;
+  // troop types
+  const cols = all.map((r,i) => ({nom:r.nom, list: r.team ? fiches.flatMap(f => allCities[f.id]||[]) : (allCities[fiches[i].id]||[])}));
+  const agg = cols.map(c => { const o = {}; c.list.forEach(v => { for (const t in (v.units||{})){ const u = v.units[t]; o[t] ||= {n:0, ts:0}; o[t].n += +u.total||0; o[t].ts += (+u.total||0)*(+tsW[t]||0); } }); return o; });
+  const present = ALL_TYPES.filter(t => agg.some(a => a[t] && a[t].n > 0));
+  const tmax = Math.max(1, ...present.flatMap(t => agg.map(a => a[t]?.ts||0)));
+  const colorOf = t => ({off:"var(--c-off)", def:"var(--c-def)"})[TROOP_CLASS[t]] || "var(--keep)";
+  const grp = {off:"Offensives", def:"Défensives", neu:"Utilitaires"};
+  let tb = `<thead><tr><th>Troupe</th>${cols.map((c,i) => `<th${all[i].team?' style="color:var(--ink)"':''}>${esc(c.nom)}</th>`).join("")}</tr></thead><tbody>`;
+  ["off","def","neu"].forEach(k => { const ts = present.filter(t => (TROOP_CLASS[t]||"neu")===k); if (!ts.length) return;
+    tb += `<tr class="grp"><td colspan="${cols.length+1}">${grp[k]}</td></tr>`;
+    ts.forEach(t => { tb += `<tr><td>${t}</td>` + agg.map(a => { const x = a[t]; if (!x || !x.n) return `<td><span class="v zero">—</span></td>`;
+      return `<td><div class="cell" title="${fmt(x.n)} unités × ${tsW[t]} TS"><span class="mb" style="width:${Math.max(2, x.ts/tmax*100)}px;background:${colorOf(t)}"></span><span class="v">${fmt(x.ts)}</span></div></td>`; }).join("") + `</tr>`; }); });
+  $("tTable").innerHTML = present.length ? tb + "</tbody>" : `<tbody><tr><td class="zero">Aucune troupe importée pour l'instant.</td></tr></tbody>`;
+  // table
+  $("bTable").innerHTML = all.map(r => { const T = r.st.tsOff + r.st.tsDef;
+    return `<tr class="${r.team?"team":""}"><td>${esc(r.nom)}</td><td>${r.st.off}</td><td>${r.st.def}</td><td>${r.st.mixte}</td><td>${r.st.hub}</td><td>${r.st.terre} / ${r.st.mer}</td><td>${fmt(r.st.tsOff)}</td><td>${fmt(r.st.tsDef)}</td><td>${T ? Math.round(r.st.tsOff/T*100) + " %" : "—"}</td></tr>`; }).join("");
+  // advice
+  const tsFor = need => +objectif.ts || avg(need==="off" ? team.offCities : team.defCities) || avg([...team.offCities, ...team.defCities]);
+  const pctTxt = `${Math.round(t*100)} % off / ${100-Math.round(t*100)} % def`;
+  $("bAdvice").innerHTML = all.map(r => {
+    const gp = gapTo(r.st, t); if (!gp) return "";
+    if (gp.ok) return `<p><b>${esc(r.nom)}</b> : équilibre atteint (${Math.round(gp.share*100)} % off), objectif ${pctTxt}.</p>`;
+    const per = tsFor(gp.need), n = per ? Math.ceil(gp.ts/per) : null;
+    return `<p><b>${esc(r.nom)}</b> : il manque <b>${fmt(gp.ts)} TS ${gp.need}</b> pour viser ${pctTxt}${n ? `, soit environ <b>${n} ville${n>1?"s":""} ${gp.need}</b> de ${fmt(per)} TS` : ""}.</p>`;
+  }).join("") + `<p class="note" style="background:none;padding:0">« TS d'une nouvelle ville » vide : estimation sur la moyenne actuelle des villes off (ou def) du binôme. Indique le TS d'une ville pleine pour viser plus loin.</p>`;
+}
+// tooltip
+$("bChart").addEventListener("mousemove", e => {
+  const h = e.target.closest(".hit"); const tip = $("bTip");
+  if (!h){ tip.hidden = true; return; }
+  const r = $("bChart")._rows[+h.dataset.row]; const T = r.st.tsOff + r.st.tsDef;
+  tip.innerHTML = `<b>${esc(r.nom)}</b><br>Off : ${fmt(r.st.tsOff)} TS (${T?Math.round(r.st.tsOff/T*100):0} %)<br>Def : ${fmt(r.st.tsDef)} TS (${T?Math.round(r.st.tsDef/T*100):0} %)<br>${r.st.off} off · ${r.st.def} def · ${r.st.mixte} mixte`;
+  const box = $("chartWrap").getBoundingClientRect(); tip.hidden = false;
+  tip.style.left = Math.min(e.clientX - box.left + 12, box.width - tip.offsetWidth) + "px"; tip.style.top = (e.clientY - box.top + 12) + "px";
+});
+$("bChart").addEventListener("mouseleave", () => $("bTip").hidden = true);
+try { let lastW = 0; new ResizeObserver(() => { const w = $("chartWrap").clientWidth; if (Math.abs(w - lastW) > 4){ lastW = w; renderBinome(); } }).observe($("chartWrap")); } catch {}
+let objTimer = null;
+["obj-pct","obj-ts"].forEach(id => $(id).addEventListener("input", () => {
+  objectif = {pct:+$("obj-pct").value || 50, ts:+$("obj-ts").value || null}; renderBinome();
+  clearTimeout(objTimer); objTimer = setTimeout(async () => { if (db) try { await db.doc("reglages/objectif").set(objectif); } catch {} }, 800);
+}));
+function syncFicheSubs(){
+  fiches.forEach(f => { if (subsFiche[f.id]) return;
+    subsFiche[f.id] = db.collection(`fiches/${f.id}/villes`).onSnapshot(snap => { allCities[f.id] = snap.docs.map(d => ({id:d.id, ...d.data()})); renderBinome(); renderAttaques(); renderDefense(); renderWelcome(); if (isAll()) render(); }, () => {}); });
+  renderBinome();
+}
+
+/* ---------- vue attaques ---------- */
+const WAVE_UNITS = [["Siège",["Ram+Scorpion","Ram","Scorpion"]],["Offensives",["Vanquisher","Sorcerer","Horseman","Druid"]],["Défensives",["Praetor","Arbalist"]],["Navales",["Warship","Galley"]]];
+const UNIT_ALIAS = {cava:"Horseman", mage:"Sorcerer", druide:"Druid", druid:"Druid", ws:"Warship", warship:"Warship", zerk:"Vanquisher", zerks:"Vanquisher", vanq:"Vanquisher", vanqs:"Vanquisher", cata:"Ram+Scorpion", catas:"Ram+Scorpion"};
+const UNIT_COMBO = {"Ram+Scorpion":["Ram","Scorpion"]};
+const UNIT_TEXT = {"Ram+Scorpion":"Ram + Scorpion (cata)"};
+const unitParts = g => UNIT_COMBO[g] || [g];
+const unitCount = (city, g) => unitParts(g).reduce((n, t) => n + (+((city.units||{})[t]||{}).total||0), 0);
+function unitGame(u){ if (!u) return ""; if (TROOP_CLASS[u] || UNIT_COMBO[u]) return u; return UNIT_ALIAS[String(u).toLowerCase()] || ""; }
+function unitLabel(u){ if (!u) return "—"; const g = unitGame(u); return g ? esc(UNIT_TEXT[g]||g) : `${esc(u)}<span class="unk" title="Unité à préciser : choisis le nom du jeu dans « modifier »">?</span>`; }
+function fillUnitSelect(cur){
+  const known = !cur || unitGame(cur);
+  $("w-unite").innerHTML = `<option value="">—</option>` + (known ? "" : `<option value="${esc(cur)}">${esc(cur)} (à préciser)</option>`)
+    + WAVE_UNITS.map(([g, list]) => `<optgroup label="${g}">${list.map(t => `<option value="${t}">${UNIT_TEXT[t]||t}</option>`).join("")}</optgroup>`).join("");
+  $("w-unite").value = cur ? (unitGame(cur) || cur) : "";
+}
+const VT_LABEL = {cata:"Cata", siege:"Siège", assaut:"Assaut"};
+const ST_ORDER = ["prevu","envoye","arrive"];
+const ST_LABEL = {prevu:"Prévu", envoye:"Envoyé", arrive:"Arrivé", annule:"Annulé"};
+let ops = [], curOp = null, opCibles = [], opVagues = [], opAff = {}, opUnsubs = [], openCell = null, editTgt = null, editWav = null;
+const opPath = (...p) => ["operations", curOp, ...p].join("/");
+const hhmm = t => !t ? "—" : (t.length >= 8 && t.slice(6,8) !== "00") ? t.slice(0,8) : t.slice(0,5);
+const normT = t => !t ? "" : (t.length === 5 ? t + ":00" : t.slice(0,8));
+const cityByRef = (fid, vid) => (allCities[fid]||[]).find(c => c.id === vid);
+const ficheNom = fid => (fiches.find(f => f.id === fid)||{}).nom || fid;
+const dist = (a, b) => Math.hypot((+a.x)-(+b.x), (+a.y)-(+b.y));
+const affKey = (cid, vid) => cid + "__" + vid;
+function armDelete(btn, fn){
+  if (btn.dataset.armed){ fn(); return; }
+  btn.dataset.armed = "1"; const old = btn.textContent; btn.textContent = "Confirmer ?"; btn.classList.add("confirm");
+  setTimeout(() => { if (btn.isConnected){ delete btn.dataset.armed; btn.textContent = old; btn.classList.remove("confirm"); } }, 3500);
+}
+
+function subscribeOp(id){
+  opUnsubs.forEach(u => { try { u(); } catch {} }); opUnsubs = [];
+  curOp = id; opCibles = []; opVagues = []; opAff = {}; openCell = null; resetTgt(); resetWav();
+  try { localStorage.setItem("opActive", id || ""); } catch {}
+  renderAttaques();
+  if (!id || !db) return;
+  opUnsubs.push(db.collection(opPath("cibles")).orderBy("ordre").onSnapshot(s => { opCibles = s.docs.map(d => ({id:d.id, ...d.data()})); renderAttaques(); }, () => {}));
+  opUnsubs.push(db.collection(opPath("vagues")).orderBy("ordre").onSnapshot(s => { opVagues = s.docs.map(d => ({id:d.id, ...d.data()})); renderAttaques(); }, () => {}));
+  opUnsubs.push(db.collection(opPath("affectations")).onSnapshot(s => { opAff = Object.fromEntries(s.docs.map(d => [d.id, {id:d.id, ...d.data()}])); renderAttaques(); }, () => {}));
+}
+
+function opStats(){
+  const total = opCibles.length * opVagues.length;
+  const prioV = new Set(opVagues.filter(v => v.prio).map(v => v.id));
+  let filled = 0, pTot = opCibles.length * prioV.size, pFill = 0, nonPrioFilled = 0, env = 0, arr = 0;
+  const used = {};
+  opCibles.forEach(c => opVagues.forEach(v => { const a = opAff[affKey(c.id, v.id)]; if (!a || !a.villeId || a.statut === "annule") return;
+    filled++; if (prioV.has(v.id)) pFill++; else nonPrioFilled++;
+    if (a.statut === "envoye") env++; if (a.statut === "arrive") arr++;
+    const k = a.fiche + "/" + a.villeId; used[k] = (used[k]||0) + 1; }));
+  const offCities = fiches.flatMap(f => (allCities[f.id]||[]).filter(c => ["off","mixte"].includes(effRole(c))).map(c => f.id + "/" + c.id));
+  const free = offCities.filter(k => !used[k]).length;
+  return {total, filled, pTot, pFill, nonPrioFilled, env, arr, used, engaged:Object.keys(used).length, free, offCount:offCities.length};
+}
+
+function renderAttaques(){
+  if (!$("view-attaques")) return;
+  // operation selector
+  $("op-sel").innerHTML = ops.length ? ops.map(o => `<option value="${esc(o.id)}"${o.id===curOp?" selected":""}>${esc(o.nom)}</option>`).join("") : `<option value="">Aucune opération</option>`;
+  const op = ops.find(o => o.id === curOp);
+  $("op-del").hidden = !op; $("op-date").disabled = !op;
+  if (document.activeElement?.id !== "op-date") $("op-date").value = op?.date || "";
+  $("op-dfmt").value = op?.dfmt || "mdy"; $("op-dfmt").disabled = !op;
+  $("env-fiche").innerHTML = fiches.map(f => `<option value="${esc(f.id)}"${f.id===($("env-fiche").value||moi||currentFiche)?" selected":""}>${esc(f.nom)}</option>`).join("") || `<option value="">Aucune fiche</option>`;
+  const st = opStats();
+  $("op-kpis").innerHTML = !op ? "" : [
+    ["Cibles", opCibles.length], ["Vagues", opVagues.length],
+    ["Prioritaires couvertes", `${st.pFill}<small> / ${st.pTot}</small>`],
+    ["Cases attribuées", `${st.filled}<small> / ${st.total}</small>`],
+    ["Envoyées", st.env], ["Arrivées", st.arr],
+    ["Villes off engagées", `${st.engaged}<small> · ${st.free} libres</small>`]
+  ].map(([l,v]) => `<div><span class="lbl">${l}</span><b>${v}</b></div>`).join("");
+  $("op-rule").innerHTML = !op ? `<p class="ruleok">Crée une opération pour commencer : ajoute ensuite les cibles, puis les vagues.</p>`
+    : (st.pFill < st.pTot && st.nonPrioFilled > 0) ? `<p class="rulewarn">${st.nonPrioFilled} case${st.nonPrioFilled>1?"s":""} non prioritaire${st.nonPrioFilled>1?"s":""} attribuée${st.nonPrioFilled>1?"s":""} alors que ${st.pTot - st.pFill} case${st.pTot-st.pFill>1?"s":""} verte${st.pTot-st.pFill>1?"s":""} reste${st.pTot-st.pFill>1?"nt":""} vide${st.pTot-st.pFill>1?"s":""}. Règle : couvrir toutes les vertes d'abord.</p>`
+    : st.pTot && st.pFill === st.pTot ? `<p class="ruleok">Toutes les cases prioritaires sont couvertes : les autres vagues peuvent être attribuées.</p>`
+    : `<p class="ruleok">Règle : couvrir toutes les cases vertes avant d'attribuer les autres.</p>`;
+  $("planPanel").hidden = !op;
+  // grid
+  if (op){
+    if (!opCibles.length && !opVagues.length) $("planTable").innerHTML = `<tbody><tr><td class="empty">Ajoute une première cible et une première vague ci-dessous.</td></tr></tbody>`;
+    else {
+      const fPrio = $("pf-prio").checked, fMine = $("pf-mine").checked && moi;
+      const mineAt = (c, v) => { const a = opAff[affKey(c.id, v.id)]; return a && a.villeId && a.fiche === moi; };
+      const vagues = opVagues.filter(v => (!fPrio || v.prio) && (!fMine || opCibles.some(c => mineAt(c, v))));
+      const cibles = fMine ? opCibles.filter(c => vagues.some(v => mineAt(c, v))) : opCibles;
+      $("pf-info").textContent = (fPrio || fMine) ? `${vagues.length} vague${vagues.length>1?"s":""} sur ${opVagues.length} · ${cibles.length} cible${cibles.length>1?"s":""} sur ${opCibles.length}` : "";
+      $("pf-mine").disabled = !moi; $("pf-mine").parentElement.title = moi ? "" : "Choisis d'abord « Je suis » en haut à droite";
+      let h = `<thead><tr><th class="tgt">Cible</th>` + vagues.map(v => `<th class="${v.prio?"prio":""}"><div class="wh"><span class="vt vt-${esc(v.type)}">${VT_LABEL[v.type]||esc(v.type)}</span><span class="wu">${unitLabel(v.unite)}</span><span class="wtime">${hhmm(v.heure)}</span><span class="mini"><button type="button" class="link" data-wedit="${esc(v.id)}">modifier</button><button type="button" class="link danger" data-wdel="${esc(v.id)}">suppr.</button></span></div></th>`).join("") + `</tr></thead><tbody>`;
+      cibles.forEach(c => {
+        h += `<tr><td class="tgt"><div class="tgtname">${esc(c.joueur)}</div><div class="tgtsub"><span class="cont">C${continentOf(c.x,c.y) ?? "?"}</span><span class="mono">${c.x}:${c.y}</span>${c.def ? ` · ${esc(c.def)}` : ""}</div>${c.note ? `<div class="tgtsub">${esc(c.note)}</div>` : ""}<span class="mini"><button type="button" class="link" data-tedit="${esc(c.id)}">modifier</button><button type="button" class="link danger" data-tdel="${esc(c.id)}">suppr.</button></span></td>`;
+        vagues.forEach(v => {
+          const k = affKey(c.id, v.id), a = opAff[k], open = openCell === k;
+          if (!a || !a.villeId){ h += `<td><button type="button" class="cellbtn vide${v.prio?" prio":""}" data-cell="${k}" aria-expanded="${open}">${v.prio ? "Prioritaire" : "Libre"}</button></td>`; return; }
+          const city = cityByRef(a.fiche, a.villeId), dup = (st.used[a.fiche + "/" + a.villeId]||0) > 1 && a.statut !== "annule";
+          h += `<td><button type="button" class="cellbtn st-${esc(a.statut||"prevu")}${dup?" dup":""}${a.fiche===moi?" mine":""}" data-cell="${k}" aria-expanded="${open}" title="${dup?"Cette ville est engagée sur plusieurs cases":""}"><span class="who">${esc(ficheNom(a.fiche))}${a.fake ? ' <span class="fake">fake</span>' : ""}</span><span class="from">${city ? esc(city.name) + " " + city.x + ":" + city.y : "ville supprimée"}</span><span class="tm">${hhmm(a.heure || v.heure)}${a.heure && a.heure !== v.heure ? " (décalée)" : ""} · ${ST_LABEL[a.statut||"prevu"]}</span></button></td>`;
+        });
+        h += `</tr>`;
+      });
+      if (!cibles.length) h += `<tr><td class="tgt empty">${opCibles.length ? "Aucune case ne correspond aux filtres" : "Aucune cible"}</td>${vagues.map(() => "<td></td>").join("")}</tr>`;
+      $("planTable").innerHTML = h + `</tbody>`;
+    }
+  }
+  renderEditor(st); renderEnvois();
+}
+
+function renderEditor(st){
+  const ed = $("cellEditor");
+  if (!openCell){ ed.hidden = true; ed.innerHTML = ""; return; }
+  const [cid, vid] = openCell.split("__"), c = opCibles.find(x => x.id === cid), v = opVagues.find(x => x.id === vid);
+  if (!c || !v){ openCell = null; ed.hidden = true; return; }
+  if (ed.dataset.cell === openCell && !ed.hidden && ed.contains(document.activeElement)) return; // ne pas écraser une saisie en cours
+  const a = opAff[openCell] || {};
+  const fid = a.fiche || moi || currentFiche || fiches[0]?.id || "";
+  ed.dataset.cell = openCell; ed.hidden = false;
+  ed.innerHTML = `<h3>${VT_LABEL[v.type]||""} ${esc(v.unite||"")} sur ${esc(c.joueur)} <span class="mono">${c.x}:${c.y}</span></h3>
+    <div class="row">
+      <label class="field w-sel"><span class="lbl">Joueur</span><select id="e-fiche">${fiches.map(f => `<option value="${esc(f.id)}"${f.id===fid?" selected":""}>${esc(f.nom)}</option>`).join("")}</select></label>
+      <label class="field w-name" style="flex-basis:280px"><span class="lbl">Depuis la ville</span><select id="e-ville"></select></label>
+      <label class="field w-sel"><span class="lbl">Arrivée</span><input id="e-heure" type="time" step="1" value="${esc(normT(a.heure || v.heure))}"></label>
+      <label class="field w-sel"><span class="lbl">Statut</span><select id="e-statut">${["prevu","envoye","arrive","annule"].map(s => `<option value="${s}"${(a.statut||"prevu")===s?" selected":""}>${ST_LABEL[s]}</option>`).join("")}</select></label>
+      <label class="field w-name"><span class="lbl">Note</span><input id="e-note" maxlength="80" value="${esc(a.note||"")}"></label>
+      <label class="chk" style="align-self:end;padding-bottom:8px"><input type="checkbox" id="e-fake"${a.fake?" checked":""}> Fake (attaque leurre)</label>
+    </div>
+    <p class="warn" id="e-warn"></p>
+    <div class="btns"><button type="button" class="primary" id="e-save">Enregistrer</button>${a.villeId ? `<button type="button" class="danger" id="e-clear">Libérer la case</button>` : ""}<button type="button" id="e-close">Fermer</button></div>`;
+  fillVilles(fid, a.villeId, c, st);
+}
+function fillVilles(fid, sel, c, st){
+  st = st || opStats();
+  const vw = opVagues.find(x => x.id === (openCell||"").split("__")[1]); const ug = unitGame(vw?.unite);
+  const list = (allCities[fid]||[]).map(x => ({x, r:effRole(x), d:dist(x, c), n:st.used[fid + "/" + x.id]||0, u: ug ? unitCount(x, ug) : -1}))
+    .sort((p,q) => (ug ? (q.u>0) - (p.u>0) : 0) || (["off","mixte"].includes(q.r) - ["off","mixte"].includes(p.r)) || p.d - q.d);
+  $("e-ville").innerHTML = `<option value="">Choisir…</option>` + list.map(o => `<option value="${esc(o.x.id)}"${o.x.id===sel?" selected":""}>${esc(o.x.name)} (${o.x.x}:${o.x.y}) · ${ROLE_LABEL[o.r]}${ug ? (o.u>0 ? ` · ${fmt(o.u)} ${UNIT_COMBO[ug] ? "Ram/Scorpion" : ug}` : ` · sans ${UNIT_COMBO[ug] ? "Ram ni Scorpion" : ug}`) : ""} · ${o.d.toFixed(1)} cases${o.n ? ` · déjà ${o.n}×` : ""}</option>`).join("");
+  warnVille();
+}
+function warnVille(){
+  const [cid] = (openCell||"").split("__"); const fid = $("e-fiche")?.value, vid = $("e-ville")?.value; if (!fid) return;
+  const city = cityByRef(fid, vid); const st = opStats(); const cur = opAff[openCell];
+  const n = (st.used[fid + "/" + vid]||0) - (cur && cur.fiche === fid && cur.villeId === vid && cur.statut !== "annule" ? 1 : 0);
+  const w = [];
+  if (city && !["off","mixte"].includes(effRole(city))) w.push(`Cette ville est classée ${ROLE_LABEL[effRole(city)]}, pas off.`);
+  if (n > 0) w.push(`Cette ville est déjà engagée sur ${n} autre${n>1?"s":""} case${n>1?"s":""} de l'opération : vérifie qu'elle a assez de troupes.`);
+  $("e-warn").textContent = w.join(" ");
+}
+
+function renderEnvois(){
+  const fid = $("env-fiche").value; const rows = [];
+  opCibles.forEach(c => opVagues.forEach(v => { const a = opAff[affKey(c.id, v.id)];
+    if (a && a.villeId && a.fiche === fid) rows.push({c, v, a, city:cityByRef(fid, a.villeId), t:normT(a.heure || v.heure)}); }));
+  rows.sort((p,q) => p.t.localeCompare(q.t));
+  $("envTable").innerHTML = !curOp ? `<tbody><tr><td class="empty">Aucune opération sélectionnée.</td></tr></tbody>`
+    : !rows.length ? `<tbody><tr><td class="empty">Aucun envoi attribué à ce joueur pour cette opération.</td></tr></tbody>`
+    : `<thead><tr><th>Arrivée</th><th>Vague</th><th>Cible</th><th>Depuis</th><th>Distance</th><th>Statut</th></tr></thead><tbody>` + rows.map(r =>
+      `<tr><td class="mono">${hhmm(r.t)}</td><td><span class="vt vt-${esc(r.v.type)}">${VT_LABEL[r.v.type]||""}</span> ${esc(r.v.unite||"")}${r.a.fake ? ' <span class="fake">fake</span>' : ""}</td><td><b>${esc(r.c.joueur)}</b> <span class="mono">${r.c.x}:${r.c.y}</span></td><td>${r.city ? esc(r.city.name) + ` <span class="mono">${r.city.x}:${r.city.y}</span>` : "ville supprimée"}</td><td class="mono">${r.city ? dist(r.city, r.c).toFixed(1) + " cases" : "—"}</td><td><button type="button" class="stbtn s-${esc(r.a.statut||"prevu")}" data-st="${esc(r.a.id)}">${ST_LABEL[r.a.statut||"prevu"]}</button></td></tr>`).join("") + `</tbody>`;
+  $("env-copy").disabled = !rows.length; $("env-copy")._rows = rows;
+  renderShares(rows);
+}
+function shareDate(iso, fmt){ if (!iso) return ""; const [y,m,d] = iso.split("-"); return fmt === "dmy" ? `${d}/${m}/${y}` : `${m}/${d}/${y}`; }
+function buildShare(list, t, date){
+  const [hh,mm,ss] = normT(t).split(":");
+  return JSON.stringify({x:list.map(r => String(r.c.x)), y:list.map(r => String(r.c.y)), type:list.map(r => r.a.fake ? "0" : "1"), time:[hh, mm, ss, date]});
+}
+function renderShares(rows){
+  const op = ops.find(o => o.id === curOp); const el = $("shareList");
+  const live = rows.filter(r => r.a.statut !== "annule" && r.city);
+  if (!op || !live.length){ el.innerHTML = `<p class="note" style="margin:0">Aucun envoi à convertir pour ce joueur.</p>`; return; }
+  const groups = {}; live.forEach(r => { const k = r.a.villeId + "|" + r.t; (groups[k] ||= []).push(r); });
+  const date = shareDate(op.date, op.dfmt || "mdy");
+  el.innerHTML = Object.values(groups).map((g, i) => { const code = buildShare(g, g[0].t, date); const nf = g.filter(r => r.a.fake).length;
+    return `<div class="share"><div class="sh"><span><b>${esc(g[0].city.name)}</b> <span class="mono">${g[0].city.x}:${g[0].city.y}</span> · arrivée <span class="mono">${hhmm(g[0].t)}</span> · ${g.length - nf} réelle${g.length-nf>1?"s":""}, ${nf} fake${nf>1?"s":""}</span><button type="button" data-share="${i}">Copier le code</button></div><code>${esc(code)}</code>${date ? "" : `<p class="warn">Renseigne la date de l'opération en haut : sans elle, le code est incomplet.</p>`}</div>`; }).join("");
+  el._codes = Object.values(groups).map(g => buildShare(g, g[0].t, date));
+}
+
+/* événements */
+$("op-sel").addEventListener("change", e => subscribeOp(e.target.value || null));
+$("op-new").addEventListener("submit", async e => {
+  e.preventDefault(); if (!db){ setStatus("Création impossible : registre indisponible."); return; }
+  const nom = $("op-nom").value.trim(); if (!nom) return;
+  try { const ref = await db.collection("operations").add({nom, date:"", creeLe:new Date().toISOString()}); $("op-nom").value = ""; subscribeOp(ref.id); setStatus("Opération créée : " + nom); }
+  catch(err){ setStatus("Opération non créée : " + (err.message||err.code)); }
+});
+$("op-date").addEventListener("change", async e => { if (db && curOp) try { await db.doc("operations/" + curOp).update({date:e.target.value}); } catch(err){ setStatus("Date non enregistrée : " + (err.message||err.code)); } });
+$("op-del").addEventListener("click", e => armDelete(e.currentTarget, async () => {
+  const id = curOp; if (!db || !id) return;
+  try {
+    for (const sub of ["affectations","cibles","vagues"]){ const s = await db.collection(`operations/${id}/${sub}`).get(); for (const d of s.docs) await db.doc(`operations/${id}/${sub}/${d.id}`).delete(); }
+    await db.doc("operations/" + id).delete(); setStatus("Opération supprimée.");
+  } catch(err){ setStatus("Suppression impossible : " + (err.message||err.code)); }
+}));
+
+function resetTgt(){ editTgt = null; if (!$("tgtForm")) return; $("tgtForm").reset(); $("t-save").textContent = "Ajouter la cible"; $("t-cancel").hidden = true; $("tgtTitle").textContent = "Ajouter une cible"; }
+function resetWav(){ editWav = null; if (!$("wavForm")) return; $("wavForm").reset(); fillUnitSelect(""); $("w-save").textContent = "Ajouter la vague"; $("w-cancel").hidden = true; $("wavTitle").textContent = "Ajouter une vague"; }
+$("t-cancel").addEventListener("click", resetTgt); $("w-cancel").addEventListener("click", resetWav);
+$("tgtForm").addEventListener("submit", async e => {
+  e.preventDefault(); if (!db || !curOp) return;
+  const data = {joueur:$("t-joueur").value.trim(), x:+$("t-x").value, y:+$("t-y").value, def:$("t-def").value.trim(), note:$("t-note").value.trim()};
+  try {
+    if (editTgt) await db.doc(opPath("cibles", editTgt)).update(data);
+    else await db.collection(opPath("cibles")).add({...data, ordre: Date.now()});
+    setStatus((editTgt ? "Cible modifiée : " : "Cible ajoutée : ") + data.joueur + " " + data.x + ":" + data.y); resetTgt(); $("t-joueur").focus();
+  } catch(err){ setStatus("Cible non enregistrée : " + (err.message||err.code)); }
+});
+$("wavForm").addEventListener("submit", async e => {
+  e.preventDefault(); if (!db || !curOp) return;
+  const data = {type:$("w-type").value, unite:$("w-unite").value, heure:normT($("w-heure").value), prio:$("w-prio").checked};
+  try {
+    if (editWav) await db.doc(opPath("vagues", editWav)).update(data);
+    else { const last = opVagues.reduce((m,v) => Math.max(m, +v.ordre||0), 0); await db.collection(opPath("vagues")).add({...data, ordre:last + 1}); }
+    setStatus(editWav ? "Vague modifiée." : "Vague ajoutée."); resetWav();
+  } catch(err){ setStatus("Vague non enregistrée : " + (err.message||err.code)); }
+});
+$("planTable").addEventListener("click", async e => {
+  const b = e.target.closest("button"); if (!b || !db) return;
+  if (b.dataset.cell){ openCell = openCell === b.dataset.cell ? null : b.dataset.cell; $("cellEditor").dataset.cell = ""; renderAttaques(); if (openCell) $("cellEditor").scrollIntoView({block:"nearest"}); return; }
+  if (b.dataset.tedit){ const c = opCibles.find(x => x.id === b.dataset.tedit); if (!c) return; editTgt = c.id;
+    $("t-joueur").value = c.joueur||""; $("t-x").value = c.x; $("t-y").value = c.y; $("t-def").value = c.def||""; $("t-note").value = c.note||"";
+    $("t-save").textContent = "Enregistrer la cible"; $("t-cancel").hidden = false; $("tgtTitle").textContent = "Modifier la cible"; $("tgtPanel").open = true; $("t-joueur").focus(); return; }
+  if (b.dataset.wedit){ const v = opVagues.find(x => x.id === b.dataset.wedit); if (!v) return; editWav = v.id;
+    $("w-type").value = v.type; fillUnitSelect(v.unite||""); $("w-heure").value = normT(v.heure); $("w-prio").checked = !!v.prio;
+    $("w-save").textContent = "Enregistrer la vague"; $("w-cancel").hidden = false; $("wavTitle").textContent = "Modifier la vague"; $("wavPanel").open = true; $("w-unite").focus(); return; }
+  const delCol = b.dataset.tdel ? ["cibles", b.dataset.tdel, 0] : b.dataset.wdel ? ["vagues", b.dataset.wdel, 1] : null;
+  if (delCol) armDelete(b, async () => {
+    const [sub, id, pos] = delCol;
+    try {
+      for (const k in opAff){ if (k.split("__")[pos] === id) await db.doc(opPath("affectations", k)).delete(); }
+      await db.doc(opPath(sub, id)).delete(); if (openCell && openCell.split("__")[pos] === id) openCell = null;
+    } catch(err){ setStatus("Suppression impossible : " + (err.message||err.code)); }
+  });
+});
+$("cellEditor").addEventListener("change", e => {
+  if (e.target.id === "e-fiche"){ const [cid] = openCell.split("__"); fillVilles(e.target.value, "", opCibles.find(x => x.id === cid)); }
+  if (e.target.id === "e-ville") warnVille();
+});
+$("cellEditor").addEventListener("click", async e => {
+  const id = e.target.id; if (!["e-save","e-clear","e-close"].includes(id)) return;
+  if (id === "e-close"){ openCell = null; renderAttaques(); return; }
+  if (!db || !openCell) return;
+  const [cid, vid] = openCell.split("__"), v = opVagues.find(x => x.id === vid);
+  try {
+    if (id === "e-clear"){ await db.doc(opPath("affectations", openCell)).delete(); openCell = null; setStatus("Case libérée."); return; }
+    const villeId = $("e-ville").value; if (!villeId){ $("e-warn").textContent = "Choisis la ville qui envoie les troupes."; return; }
+    const h = normT($("e-heure").value);
+    await db.doc(opPath("affectations", openCell)).set({cibleId:cid, vagueId:vid, fiche:$("e-fiche").value, villeId, heure: h && h !== normT(v?.heure) ? h : "", statut:$("e-statut").value, fake:$("e-fake").checked, note:$("e-note").value.trim(), maj:new Date().toISOString()});
+    openCell = null; setStatus("Case attribuée."); renderAttaques();
+  } catch(err){ setStatus("Attribution non enregistrée : " + (err.message||err.code)); }
+});
+$("env-fiche").addEventListener("change", renderEnvois);
+$("shareList").addEventListener("click", async e => {
+  const b = e.target.closest("[data-share]"); if (!b) return; const code = $("shareList")._codes?.[+b.dataset.share]; if (!code) return;
+  try { await navigator.clipboard.writeText(code); b.textContent = "Copié"; setTimeout(() => b.textContent = "Copier le code", 1500); }
+  catch { const c = b.closest(".share").querySelector("code"); const r = document.createRange(); r.selectNodeContents(c); const s = getSelection(); s.removeAllRanges(); s.addRange(r); setStatus("Code sélectionné : copie-le avec Ctrl+C."); }
+});
+$("op-dfmt").addEventListener("change", async e => { if (db && curOp) try { await db.doc("operations/" + curOp).update({dfmt:e.target.value}); } catch(err){ setStatus("Format non enregistré : " + (err.message||err.code)); } });
+$("envTable").addEventListener("click", async e => {
+  const b = e.target.closest("[data-st]"); if (!b || !db) return; const a = opAff[b.dataset.st]; if (!a) return;
+  const i = ST_ORDER.indexOf(a.statut||"prevu"); const next = ST_ORDER[(i + 1) % ST_ORDER.length];
+  try { await db.doc(opPath("affectations", a.id)).update({statut:next, maj:new Date().toISOString()}); } catch(err){ setStatus("Statut non enregistré : " + (err.message||err.code)); }
+});
+$("env-copy").addEventListener("click", async () => {
+  const rows = $("env-copy")._rows || []; const op = ops.find(o => o.id === curOp);
+  const txt = `${op?.nom || "Opération"}${op?.date ? " · " + op.date : ""} · ${ficheNom($("env-fiche").value)}\n` + rows.map(r => `${hhmm(r.t)} · ${VT_LABEL[r.v.type]||""} ${r.v.unite||""} → ${r.c.joueur} ${r.c.x}:${r.c.y} · depuis ${r.city ? r.city.name + " " + r.city.x + ":" + r.city.y : "?"}`).join("\n");
+  try { await navigator.clipboard.writeText(txt); setStatus("Liste copiée."); }
+  catch { const ta = document.createElement("textarea"); ta.value = txt; ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); setStatus("Liste copiée."); } catch { setStatus("Copie refusée : sélectionne la liste à la main."); } ta.remove(); }
+});
+function startAttaques(){
+  db.collection("operations").orderBy("creeLe").onSnapshot(s => {
+    ops = s.docs.map(d => ({id:d.id, ...d.data()}));
+    let want = curOp; if (!want){ try { want = localStorage.getItem("opActive"); } catch {} }
+    if (!ops.some(o => o.id === want)) want = ops[ops.length-1]?.id || null;
+    if (want !== curOp) subscribeOp(want); else renderAttaques();
+    syncOpAll();
+  }, () => {});
+}
+const opAll = {}; const opAllSubs = {};
+function syncOpAll(){
+  const keep = new Set(ops.slice(-10).map(o => o.id));
+  for (const id in opAllSubs) if (!keep.has(id)){ opAllSubs[id].forEach(u => { try { u(); } catch {} }); delete opAllSubs[id]; delete opAll[id]; }
+  keep.forEach(id => { if (opAllSubs[id]) return; opAll[id] = {cibles:[], vagues:[], aff:[]};
+    opAllSubs[id] = ["cibles","vagues","affectations"].map(sub => db.collection(`operations/${id}/${sub}`).onSnapshot(s => {
+      opAll[id][sub === "affectations" ? "aff" : sub] = s.docs.map(d => ({id:d.id, ...d.data()})); renderNow(); }, () => {})); });
+  renderNow();
+}
+
+/* ---------- je suis ---------- */
+try { $("pf-prio").checked = localStorage.getItem("pfPrio") === "1"; $("pf-mine").checked = localStorage.getItem("pfMine") === "1"; } catch {}
+["pf-prio","pf-mine"].forEach(id => $(id).addEventListener("change", e => { try { localStorage.setItem(id === "pf-prio" ? "pfPrio" : "pfMine", e.target.checked ? "1" : "0"); } catch {} renderAttaques(); }));
+let moi = ""; try { moi = localStorage.getItem("moi") || ""; } catch {}
+function renderMe(){
+  if (moi && fiches.length && !fiches.some(f => f.id === moi)) moi = "";
+  try { renderPlayers(); } catch {}
+  $("meSel").innerHTML = `<option value="">— choisir —</option>` + fiches.map(f => `<option value="${esc(f.id)}"${f.id===moi?" selected":""}>${esc(f.nom)}</option>`).join("");
+}
+function renderWelcome(){
+  let seen = false; try { seen = localStorage.getItem("accueilVu") === "1"; } catch {}
+  const mineEmpty = moi && allCities[moi] && !allCities[moi].length;
+  const show = !seen && db && (!moi || mineEmpty);
+  $("welcome").hidden = !show; if (!show) return;
+  $("welcomeSteps").innerHTML = [
+    moi ? `<li><s>Choisis qui tu es</s> : c'est fait.</li>` : `<li><b>Crée ta fiche</b> avec ton pseudo dans <b>⚙ Réglages</b>, puis choisis-toi dans <b>Je suis</b> en haut à droite.</li>`,
+    `<li>Clique <b>Importer mes CSV</b> en haut à droite et sélectionne tes deux exports du jeu : CotG_Dashboard (villes) et CotG_Troop_export (troupes).</li>`,
+    `<li><b>Maintenant</b> te montre tes ordres et les alertes. <b>Binôme</b>, <b>Attaques</b> et <b>Défense</b> sont communs à vous deux.</li>`
+  ].join("");
+}
+$("welcomeClose").addEventListener("click", () => { try { localStorage.setItem("accueilVu", "1"); } catch {} $("welcome").hidden = true; });
+$("meSel").addEventListener("change", e => { moi = e.target.value; try { localStorage.setItem("moi", moi); } catch {}
+  if (moi) $("env-fiche").value = moi; renderTabs(); renderAttaques(); renderDefense(); renderWelcome(); });
+
+/* ---------- vue défense ---------- */
+const DEF_UNITS = TROOPS.def;
+let menaces = [], renforts = [], editMen = null, openRf = null;
+const dDate = d => { if (!d) return ""; const [y,m,j] = d.split("-"); return `${j}/${m}`; };
+const impactKey = m => (m.date||"") + "T" + normT(m.heure||"");
+function menCity(m){ return m.fiche ? cityByRef(m.fiche, m.villeId) : null; }
+function menPos(m){ const c = menCity(m); return c ? {x:+c.x, y:+c.y} : {x:+m.x, y:+m.y}; }
+function menLabel(m){ const c = menCity(m); return c ? `${esc(c.name)} <span class="msub">(${esc(ficheNom(m.fiche))})</span>` : `${esc(m.nom || "Ville alliée")} <span class="msub">(allié)</span>`; }
+function homeDefTs(c){ if (!c || !c.units) return 0; let t = 0; for (const k of DEF_UNITS) t += (+((c.units[k]||{}).home)||0) * (+tsW[k]||0); return t; }
+const rfTs = r => (+r.nombre||0) * (+tsW[r.unite]||0);
+const rfLive = r => r.statut !== "annule";
+function committed(fid, vid, unit, exceptId){
+  const open = new Set(menaces.filter(m => m.statut !== "terminee").map(m => m.id));
+  return renforts.filter(r => r.id !== exceptId && rfLive(r) && r.statut !== "arrive" && open.has(r.menaceId) && r.fiche === fid && r.villeId === vid && r.unite === unit)
+    .reduce((n, r) => n + (+r.nombre||0), 0);
+}
+function menStats(m){
+  const list = renforts.filter(r => r.menaceId === m.id && rfLive(r));
+  const surPlace = homeDefTs(menCity(m)), engage = list.reduce((n, r) => n + rfTs(r), 0);
+  const voulu = +m.tsVoulu || 0, total = surPlace + engage;
+  return {list, surPlace, engage, total, voulu, couverte: voulu ? total >= voulu : null};
+}
+
+function fillMenVilles(sel){
+  const groups = fiches.map(f => { const list = (allCities[f.id]||[]).slice().sort((a,b) => a.name.localeCompare(b.name,"fr"));
+    return list.length ? `<optgroup label="${esc(f.nom)}">${list.map(c => `<option value="${esc(f.id + "|" + c.id)}">${esc(c.name)} (${c.x}:${c.y})</option>`).join("")}</optgroup>` : ""; }).join("");
+  $("m-ville").innerHTML = `<option value="">Choisir…</option>${groups}<option value="autre">Autre ville (alliée)…</option>`;
+  if (sel) $("m-ville").value = sel;
+  $("m-autre").hidden = $("m-ville").value !== "autre";
+}
+function resetMen(){ editMen = null; $("menForm").reset(); fillMenVilles(""); $("m-save").textContent = "Signaler la menace"; $("m-cancel").hidden = true; $("menTitle").textContent = "Signaler une menace"; }
+
+function renderDefense(){
+  if (!$("view-defense")) return;
+  if (!$("menPanel").open || !$("menPanel").contains(document.activeElement)) fillMenVilles($("m-ville").value);
+  const showDone = $("df-done").checked;
+  const list = menaces.filter(m => showDone || m.statut !== "terminee").sort((a,b) => impactKey(a).localeCompare(impactKey(b)));
+  const open = menaces.filter(m => m.statut !== "terminee"), st = open.map(menStats);
+  const toSend = renforts.filter(r => r.statut === "prevu" && open.some(m => m.id === r.menaceId));
+  $("df-kpis").innerHTML = [
+    ["Menaces ouvertes", open.length],
+    ["Couvertes", `${st.filter(x => x.couverte === true).length}<small> / ${st.filter(x => x.couverte !== null).length} avec objectif</small>`],
+    ["Renforts à envoyer", toSend.length],
+    ["Envoyés", renforts.filter(r => r.statut === "envoye" && open.some(m => m.id === r.menaceId)).length]
+  ].map(([l,v]) => `<div><span class="lbl">${l}</span><b>${v}</b></div>`).join("");
+  $("menList").innerHTML = !db ? `<p class="empty">Registre indisponible ici.</p>`
+    : !list.length ? `<p class="empty">Aucune menace ${showDone ? "" : "ouverte "}pour l'instant. Signale une attaque repérée ci-dessus : la ville, l'heure d'impact et, si tu la connais, la def voulue.</p>`
+    : list.map(m => {
+      const s = menStats(m), c = menCity(m), pos = menPos(m), done = m.statut === "terminee";
+      const pill = done ? `<span class="pill p-done">Terminée</span>` : s.couverte === true ? `<span class="pill p-ok">Couverte</span>` : s.couverte === false ? `<span class="pill p-ko">À couvrir</span>` : `<span class="pill p-none">Sans objectif</span>`;
+      const max = Math.max(s.voulu, s.total, 1);
+      const cov = `<div class="cov"><div class="covtxt">Def sur place <b>${fmt(s.surPlace)}</b> TS + renforts <b>${fmt(s.engage)}</b> TS = <b>${fmt(s.total)}</b> TS${s.voulu ? ` sur <b>${fmt(s.voulu)}</b> voulus${s.total < s.voulu ? ` · il manque <b>${fmt(s.voulu - s.total)}</b>` : ""}` : ""}</div>
+        <div class="bar"><span style="width:${s.surPlace/max*100}%;background:var(--keep)" title="Def sur place"></span><span style="width:${s.engage/max*100}%;background:var(--c-def)" title="Renforts"></span></div></div>`;
+      const rows = renforts.filter(r => r.menaceId === m.id).map(r => { const from = cityByRef(r.fiche, r.villeId);
+        return `<tr class="${r.fiche===moi?"mine":""}"><td><b>${esc(ficheNom(r.fiche))}</b></td><td>${from ? esc(from.name) + ` <span class="mono">${from.x}:${from.y}</span>` : "ville supprimée"}</td><td>${esc(r.unite)} × <span class="mono">${fmt(+r.nombre||0)}</span></td><td class="mono">${fmt(rfTs(r))}</td><td class="mono">${from ? dist(from, pos).toFixed(1) + " cases" : "—"}</td><td class="mono">${hhmm(r.heure || m.heure)}</td><td><button type="button" class="stbtn s-${esc(r.statut||"prevu")}" data-rfst="${esc(r.id)}">${ST_LABEL[r.statut||"prevu"]}</button></td><td><button type="button" class="link danger" data-rfdel="${esc(r.id)}">suppr.</button></td></tr>`; }).join("");
+      return `<article class="mcard${done?" done":""}">
+        <div class="mhead"><div class="mtitle"><b>${menLabel(m)}</b><span class="mono"><span class="cont">C${continentOf(pos.x,pos.y) ?? "?"}</span>${pos.x}:${pos.y}</span>${pill}<span class="pill ${m.type==="mer"?"m-mer":"m-terre"}">${m.type==="mer"?"⚓ Maritime":"⛰ Terrestre"}</span></div>
+          <div class="mactions"><span class="mimpact">Impact ${dDate(m.date)} ${hhmm(m.heure)}</span><button type="button" class="link" data-mdone="${esc(m.id)}">${done ? "rouvrir" : "terminer"}</button><button type="button" class="link" data-medit="${esc(m.id)}">modifier</button><button type="button" class="link danger" data-mdel="${esc(m.id)}">suppr.</button></div></div>
+        ${m.attaque || m.note || (c && c.wall != null) ? `<div class="msub">${[m.attaque ? "Attaque : " + esc(m.attaque) : "", c && c.wall != null ? "mur " + c.wall : "", m.note ? esc(m.note) : ""].filter(Boolean).join(" · ")}</div>` : ""}
+        ${cov}
+        ${rows ? `<div class="scroll"><table class="rftab"><thead><tr><th>Joueur</th><th>Depuis</th><th>Troupes</th><th>TS</th><th>Distance</th><th>Arrivée</th><th>Statut</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : ""}
+        ${done ? "" : `<div><button type="button" data-rfadd="${esc(m.id)}" aria-expanded="${openRf===m.id}">${openRf===m.id ? "Fermer l'ajout de renfort" : "+ Ajouter un renfort"}</button></div>`}
+      </article>`; }).join("");
+  renderRfEditor(); renderMyRf(); renderNow();
+}
+
+function renderRfEditor(){
+  const ed = $("rfEditor"); const m = menaces.find(x => x.id === openRf);
+  if (!m){ openRf = null; ed.hidden = true; ed.innerHTML = ""; return; }
+  if (!ed.hidden && ed.dataset.m === m.id && ed.contains(document.activeElement)) return;
+  ed.dataset.m = m.id; ed.hidden = false;
+  const fid = $("r-fiche")?.value || moi || fiches[0]?.id || "";
+  ed.innerHTML = `<h3>Renfort pour ${menLabel(m)} · impact ${dDate(m.date)} ${hhmm(m.heure)}</h3>
+    <div class="row">
+      <label class="field w-sel"><span class="lbl">Joueur</span><select id="r-fiche">${fiches.map(f => `<option value="${esc(f.id)}"${f.id===fid?" selected":""}>${esc(f.nom)}</option>`).join("")}</select></label>
+      <label class="field w-name" style="flex-basis:320px"><span class="lbl">Depuis la ville</span><select id="r-ville"></select></label>
+      <label class="field w-sel"><span class="lbl">Unité</span><select id="r-unite"></select></label>
+      <label class="field w-sel" style="flex-basis:120px"><span class="lbl">Nombre</span><input id="r-nb" type="number" min="1" step="1"></label>
+      <label class="field w-sel" style="flex-basis:130px"><span class="lbl">Arrivée</span><input id="r-heure" type="time" step="1" value="${esc(normT(m.heure))}"></label>
+    </div>
+    <p class="warn" id="r-warn"></p>
+    <div class="btns"><button type="button" class="primary" id="r-save">Ajouter le renfort</button><button type="button" id="r-close">Fermer</button></div>`;
+  fillRfVilles(m);
+}
+function fillRfVilles(m){
+  const fid = $("r-fiche").value, pos = menPos(m), tgt = menCity(m);
+  const list = (allCities[fid]||[]).filter(c => !(tgt && m.fiche === fid && c.id === tgt.id)).map(c => {
+    const free = DEF_UNITS.reduce((n, u) => n + Math.max(0, (+((c.units||{})[u]||{}).home||0) - committed(fid, c.id, u)) * (+tsW[u]||0), 0);
+    return {c, r:effRole(c), d:dist(c, pos), free}; })
+    .sort((a,b) => (b.free > 0) - (a.free > 0) || (["def","mixte"].includes(b.r) - ["def","mixte"].includes(a.r)) || a.d - b.d);
+  $("r-ville").innerHTML = `<option value="">Choisir…</option>` + list.map(o => `<option value="${esc(o.c.id)}">${esc(o.c.name)} (${o.c.x}:${o.c.y}) · ${ROLE_LABEL[o.r]} · ${o.free ? fmt(o.free) + " TS def dispo" : "pas de def dispo"} · ${o.d.toFixed(1)} cases</option>`).join("");
+  fillRfUnits(m);
+}
+function fillRfUnits(m){
+  const fid = $("r-fiche").value, c = cityByRef(fid, $("r-ville").value);
+  const opts = DEF_UNITS.map(u => { const home = +((c?.units||{})[u]||{}).home||0; const free = Math.max(0, home - committed(fid, c?.id, u)); return {u, home, free}; });
+  const avail = opts.filter(o => o.home > 0);
+  const show = avail.length ? avail : opts;
+  $("r-unite").innerHTML = show.map(o => `<option value="${o.u}">${o.u}${c?.units ? ` (${fmt(o.free)} dispo / ${fmt(o.home)} en ville)` : ""}</option>`).join("");
+  const first = avail.sort((a,b) => b.free*(+tsW[b.u]||0) - a.free*(+tsW[a.u]||0))[0];
+  if (first) $("r-unite").value = first.u;
+  setRfDefault(); warnRf(m);
+}
+function setRfDefault(){
+  const fid = $("r-fiche").value, c = cityByRef(fid, $("r-ville").value), u = $("r-unite").value;
+  const home = +((c?.units||{})[u]||{}).home||0; const free = Math.max(0, home - committed(fid, c?.id, u));
+  $("r-nb").value = free || "";
+}
+function warnRf(m){
+  const fid = $("r-fiche").value, c = cityByRef(fid, $("r-ville").value), u = $("r-unite").value, n = +$("r-nb").value||0, pos = menPos(m), w = [];
+  if (c){
+    const home = +((c.units||{})[u]||{}).home||0, other = committed(fid, c.id, u);
+    if (c.units && n + other > home) w.push(`${c.name} n'a que ${fmt(home)} ${u} en ville${other ? `, dont ${fmt(other)} déjà engagés dans d'autres renforts en cours` : ""}.`);
+    if (continentOf(c.x, c.y) !== continentOf(pos.x, pos.y)) w.push(`Autre continent que la ville menacée : vérifie que l'envoi est possible par la mer.`);
+  }
+  $("r-warn").textContent = w.join(" ");
+}
+
+function renderMyRf(){
+  const rows = !moi ? [] : renforts.filter(r => r.fiche === moi && rfLive(r) && r.statut !== "arrive").map(r => ({r, m:menaces.find(x => x.id === r.menaceId)}))
+    .filter(x => x.m && x.m.statut !== "terminee").sort((a,b) => ((a.m.date||"") + normT(a.r.heure || a.m.heure)).localeCompare((b.m.date||"") + normT(b.r.heure || b.m.heure)));
+  $("myRfTitle").textContent = moi ? `Mes renforts en cours (${ficheNom(moi)})` : "Mes renforts en cours";
+  $("myRfTable").innerHTML = !moi ? `<tbody><tr><td class="empty">Choisis qui tu es dans « Je suis », en haut à droite, pour voir ta liste.</td></tr></tbody>`
+    : !rows.length ? `<tbody><tr><td class="empty">Aucun renfort prévu pour toi en ce moment.</td></tr></tbody>`
+    : `<thead><tr><th>Arrivée</th><th>Vers</th><th>Depuis</th><th>Troupes</th><th>Statut</th></tr></thead><tbody>` + rows.map(({r, m}) => { const from = cityByRef(r.fiche, r.villeId), pos = menPos(m);
+      return `<tr><td class="mono">${dDate(m.date)} ${hhmm(r.heure || m.heure)}</td><td><b>${menLabel(m)}</b> <span class="mono">${pos.x}:${pos.y}</span></td><td>${from ? esc(from.name) + ` <span class="mono">${from.x}:${from.y}</span>` : "ville supprimée"}</td><td>${esc(r.unite)} × <span class="mono">${fmt(+r.nombre||0)}</span></td><td><button type="button" class="stbtn s-${esc(r.statut||"prevu")}" data-rfst="${esc(r.id)}">${ST_LABEL[r.statut||"prevu"]}</button></td></tr>`; }).join("") + `</tbody>`;
+  $("rf-copy").disabled = !rows.length; $("rf-copy")._rows = rows;
+}
+
+/* événements défense */
+$("df-done").addEventListener("change", renderDefense);
+$("m-ville").addEventListener("change", () => { $("m-autre").hidden = $("m-ville").value !== "autre"; });
+$("m-cancel").addEventListener("click", resetMen);
+$("menForm").addEventListener("submit", async e => {
+  e.preventDefault(); if (!db) return;
+  const v = $("m-ville").value; if (!v){ setStatus("Choisis la ville menacée."); return; }
+  const base = {date:$("m-date").value, heure:normT($("m-heure").value), type:$("m-type").value, attaque:$("m-att").value.trim(), tsVoulu:+$("m-ts").value||0, note:$("m-note").value.trim()};
+  if (v === "autre"){ if (!$("m-x").value || !$("m-y").value){ setStatus("Indique les coordonnées de la ville alliée."); return; }
+    Object.assign(base, {fiche:"", villeId:"", nom:$("m-nom").value.trim(), x:+$("m-x").value, y:+$("m-y").value}); }
+  else { const [fid, vid] = v.split("|"); Object.assign(base, {fiche:fid, villeId:vid, nom:"", x:null, y:null}); }
+  try {
+    if (editMen) await db.doc("menaces/" + editMen).update(base);
+    else await db.collection("menaces").add({...base, statut:"ouverte", creeLe:new Date().toISOString()});
+    setStatus(editMen ? "Menace modifiée." : "Menace signalée."); resetMen(); $("menPanel").open = false;
+  } catch(err){ setStatus("Menace non enregistrée : " + (err.message||err.code)); }
+});
+async function cycleRf(id){
+  const r = renforts.find(x => x.id === id); if (!r || !db) return;
+  const i = ST_ORDER.indexOf(r.statut||"prevu"); const next = ST_ORDER[(i + 1) % ST_ORDER.length];
+  try { await db.doc("renforts/" + id).update({statut:next, maj:new Date().toISOString()}); } catch(err){ setStatus("Statut non enregistré : " + (err.message||err.code)); }
+}
+$("myRfTable").addEventListener("click", e => { const b = e.target.closest("[data-rfst]"); if (b) cycleRf(b.dataset.rfst); });
+$("menList").addEventListener("click", async e => {
+  const b = e.target.closest("button"); if (!b || !db) return;
+  if (b.dataset.rfst) return cycleRf(b.dataset.rfst);
+  if (b.dataset.rfadd){ openRf = openRf === b.dataset.rfadd ? null : b.dataset.rfadd; $("rfEditor").dataset.m = ""; renderDefense(); if (openRf) $("rfEditor").scrollIntoView({block:"nearest"}); return; }
+  if (b.dataset.mdone){ const m = menaces.find(x => x.id === b.dataset.mdone); if (!m) return;
+    try { await db.doc("menaces/" + m.id).update({statut: m.statut === "terminee" ? "ouverte" : "terminee"}); if (openRf === m.id) openRf = null; } catch(err){ setStatus("Changement non enregistré : " + (err.message||err.code)); } return; }
+  if (b.dataset.medit){ const m = menaces.find(x => x.id === b.dataset.medit); if (!m) return; editMen = m.id;
+    fillMenVilles(m.fiche ? m.fiche + "|" + m.villeId : "autre");
+    $("m-date").value = m.date||""; $("m-heure").value = normT(m.heure); $("m-type").value = m.type||"terre"; $("m-att").value = m.attaque||""; $("m-ts").value = m.tsVoulu||""; $("m-note").value = m.note||"";
+    $("m-nom").value = m.nom||""; $("m-x").value = m.x ?? ""; $("m-y").value = m.y ?? "";
+    $("m-save").textContent = "Enregistrer la menace"; $("m-cancel").hidden = false; $("menTitle").textContent = "Modifier la menace"; $("menPanel").open = true; $("menPanel").scrollIntoView({block:"nearest"}); return; }
+  if (b.dataset.mdel) return armDelete(b, async () => { const id = b.dataset.mdel;
+    try { for (const r of renforts.filter(x => x.menaceId === id)) await db.doc("renforts/" + r.id).delete(); await db.doc("menaces/" + id).delete(); if (openRf === id) openRf = null; setStatus("Menace supprimée."); }
+    catch(err){ setStatus("Suppression impossible : " + (err.message||err.code)); } });
+  if (b.dataset.rfdel) return armDelete(b, async () => { try { await db.doc("renforts/" + b.dataset.rfdel).delete(); } catch(err){ setStatus("Suppression impossible : " + (err.message||err.code)); } });
+});
+$("rfEditor").addEventListener("change", e => {
+  const m = menaces.find(x => x.id === openRf); if (!m) return;
+  if (e.target.id === "r-fiche") fillRfVilles(m);
+  else if (e.target.id === "r-ville") fillRfUnits(m);
+  else if (e.target.id === "r-unite"){ setRfDefault(); warnRf(m); }
+});
+$("rfEditor").addEventListener("input", e => { if (e.target.id === "r-nb"){ const m = menaces.find(x => x.id === openRf); if (m) warnRf(m); } });
+$("rfEditor").addEventListener("click", async e => {
+  const id = e.target.id; if (id === "r-close"){ openRf = null; renderDefense(); return; }
+  if (id !== "r-save" || !db) return;
+  const m = menaces.find(x => x.id === openRf); if (!m) return;
+  const villeId = $("r-ville").value, nombre = +$("r-nb").value||0;
+  if (!villeId){ $("r-warn").textContent = "Choisis la ville qui envoie la def."; return; }
+  if (nombre <= 0){ $("r-warn").textContent = "Indique le nombre d'unités envoyées."; return; }
+  const h = normT($("r-heure").value);
+  try { await db.collection("renforts").add({menaceId:m.id, fiche:$("r-fiche").value, villeId, unite:$("r-unite").value, nombre, heure: h && h !== normT(m.heure) ? h : "", statut:"prevu", maj:new Date().toISOString()});
+    setStatus("Renfort ajouté."); $("rfEditor").dataset.m = ""; renderDefense(); }
+  catch(err){ setStatus("Renfort non enregistré : " + (err.message||err.code)); }
+});
+$("rf-copy").addEventListener("click", async () => {
+  const rows = $("rf-copy")._rows || [];
+  const txt = `Renforts de ${ficheNom(moi)}\n` + rows.map(({r, m}) => { const from = cityByRef(r.fiche, r.villeId), pos = menPos(m), tgt = menCity(m);
+    return `${dDate(m.date)} ${hhmm(r.heure || m.heure)} · ${r.unite} × ${r.nombre} → ${tgt ? tgt.name : (m.nom || "allié")} ${pos.x}:${pos.y} · depuis ${from ? from.name + " " + from.x + ":" + from.y : "?"}`; }).join("\n");
+  try { await navigator.clipboard.writeText(txt); setStatus("Liste copiée."); }
+  catch { const ta = document.createElement("textarea"); ta.value = txt; ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); setStatus("Liste copiée."); } catch { setStatus("Copie refusée : sélectionne la liste à la main."); } ta.remove(); }
+});
+try { $("df-done").checked = localStorage.getItem("dfDone") === "1"; } catch {}
+$("df-done").addEventListener("change", e => { try { localStorage.setItem("dfDone", e.target.checked ? "1" : "0"); } catch {} });
+function startDefense(){
+  db.collection("menaces").onSnapshot(s => { menaces = s.docs.map(d => ({id:d.id, ...d.data()})); renderDefense(); }, () => {});
+  db.collection("renforts").onSnapshot(s => { renforts = s.docs.map(d => ({id:d.id, ...d.data()})); renderDefense(); }, () => {});
+}
+
+/* ---------- vue maintenant ---------- */
+const ACTIVE = ["prevu","envoye"];
+function myOrders(){
+  if (!moi) return [];
+  const out = [];
+  ops.forEach(op => { const d = opAll[op.id]; if (!d) return;
+    d.aff.forEach(a => { if (a.fiche !== moi || !a.villeId || !ACTIVE.includes(a.statut||"prevu")) return;
+      const c = d.cibles.find(x => x.id === a.cibleId), v = d.vagues.find(x => x.id === a.vagueId); if (!c || !v) return;
+      out.push({kind:"att", key:(op.date||"9999-12-31") + "T" + normT(a.heure || v.heure), date:op.date, t:normT(a.heure || v.heure),
+        what:`${VT_LABEL[v.type]||""} ${unitLabel(v.unite)}${a.fake ? ' <span class="fake">fake</span>' : ""}`, to:`<b>${esc(c.joueur)}</b> <span class="mono">${c.x}:${c.y}</span>`,
+        from:cityByRef(a.fiche, a.villeId), statut:a.statut||"prevu", ref:`operations/${op.id}/affectations/${a.id}`, ctx:esc(op.nom)}); }); });
+  renforts.forEach(r => { if (r.fiche !== moi || !ACTIVE.includes(r.statut||"prevu")) return;
+    const m = menaces.find(x => x.id === r.menaceId); if (!m || m.statut === "terminee") return; const pos = menPos(m);
+    out.push({kind:"def", key:(m.date||"9999-12-31") + "T" + normT(r.heure || m.heure), date:m.date, t:normT(r.heure || m.heure),
+      what:`${esc(r.unite)} × <span class="mono">${fmt(+r.nombre||0)}</span>`, to:`<b>${menLabel(m)}</b> <span class="mono">${pos.x}:${pos.y}</span>`,
+      from:cityByRef(r.fiche, r.villeId), statut:r.statut||"prevu", ref:`renforts/${r.id}`, ctx:"Défense"}); });
+  return out.sort((a,b) => a.key.localeCompare(b.key));
+}
+function renderNow(){
+  if (!$("view-maintenant")) return;
+  const rows = myOrders();
+  $("nowInfo").textContent = moi ? `${rows.length} ordre${rows.length>1?"s":""} en cours pour ${ficheNom(moi)}` : "";
+  $("nowOrders").innerHTML = !db ? `<tbody><tr><td class="empty">Registre indisponible ici.</td></tr></tbody>`
+    : !moi ? `<tbody><tr><td class="empty">Choisis qui tu es dans « Je suis », en haut à droite. ${fiches.length ? "" : "Pas encore de fiche : crée-la dans ⚙ Réglages."}</td></tr></tbody>`
+    : !rows.length ? `<tbody><tr><td class="empty">Rien à envoyer pour l'instant. Les attaques et renforts qu'on t'attribue apparaîtront ici.</td></tr></tbody>`
+    : `<thead><tr><th>Arrivée</th><th>Type</th><th>Quoi</th><th>Vers</th><th>Depuis</th><th>Statut</th></tr></thead><tbody>` + rows.map((r, i) =>
+      `<tr><td class="mono">${r.date ? dDate(r.date) + " " : ""}${hhmm(r.t)}</td><td><span class="kind ${r.kind==="att"?"k-att":"k-def"}">${r.kind==="att"?"Attaque":"Renfort"}</span><div class="msub">${r.ctx}</div></td><td>${r.what}</td><td>${r.to}</td><td>${r.from ? esc(r.from.name) + ` <span class="mono">${r.from.x}:${r.from.y}</span>` : "ville supprimée"}</td><td><button type="button" class="stbtn s-${esc(r.statut)}" data-now="${i}">${ST_LABEL[r.statut]}</button></td></tr>`).join("") + `</tbody>`;
+  $("nowOrders")._rows = rows;
+  const open = menaces.filter(m => m.statut !== "terminee").sort((a,b) => impactKey(a).localeCompare(impactKey(b)));
+  $("nowThreats").innerHTML = !open.length ? `<p class="nempty">Aucune menace ouverte.</p>` : `<div class="nlist">` + open.slice(0, 6).map(m => { const s = menStats(m), max = Math.max(s.voulu, s.total, 1);
+    const pill = s.couverte === true ? `<span class="pill p-ok">Couverte</span>` : s.couverte === false ? `<span class="pill p-ko">À couvrir</span>` : `<span class="pill p-none">Sans objectif</span>`;
+    return `<div class="nitem"><div class="nh"><span><b>${menLabel(m)}</b></span><span class="mono">${dDate(m.date)} ${hhmm(m.heure)}</span></div>
+      <div class="nh"><span class="msub">${fmt(s.total)} TS${s.voulu ? " / " + fmt(s.voulu) : ""}</span>${pill}</div>
+      <div class="bar"><span style="width:${s.surPlace/max*100}%;background:var(--keep)"></span><span style="width:${s.engage/max*100}%;background:var(--c-def)"></span></div></div>`; }).join("")
+    + (open.length > 6 ? `<p class="nempty">et ${open.length - 6} autre${open.length-6>1?"s":""}…</p>` : "") + `</div>`;
+  const mine = moi ? (allCities[moi]||[]) : [];
+  const al = mine.map(c => ({c, a:alertsOf(c)})).filter(x => x.a.length).sort((p,q) => q.a.filter(z => z[0]==="def").length - p.a.filter(z => z[0]==="def").length);
+  $("nowAlerts").innerHTML = !moi ? `<p class="nempty">Choisis qui tu es pour voir tes alertes.</p>` : !mine.length ? `<p class="nempty">Aucune ville importée : clique « Importer mes CSV ».</p>`
+    : !al.length ? `<p class="nempty">Rien à signaler sur tes ${mine.length} villes.</p>`
+    : `<div class="nlist">` + al.map(({c, a}) => `<div class="nitem"><div class="nh"><b>${esc(c.name)}</b><span class="mono msub">${c.x}:${c.y}</span></div><div class="alerts">${a.map(([k,t]) => `<span class="ab ${k}">${esc(t)}</span>`).join("")}</div></div>`).join("") + `</div>`;
+  const team = fiches.map(f => ({nom:f.nom, me:f.id===moi, st:statsOf(allCities[f.id]||[])}));
+  if (team.length > 1) team.push({nom:"Ensemble", team:true, st:statsOf(fiches.flatMap(f => allCities[f.id]||[]))});
+  $("nowTeam").innerHTML = !team.length ? `<p class="nempty">Aucune fiche pour l'instant.</p>` : `<div class="nlist">` + team.map(r => { const T = r.st.tsOff + r.st.tsDef;
+    return `<div class="nitem"><div class="nh"><span${r.team?' style="font-weight:600"':''}>${esc(r.nom)}${r.me ? " (moi)" : ""}</span><span class="msub mono">${T ? Math.round(r.st.tsOff/T*100) + " % off · " + fmt(T) + " TS" : "pas de troupes"}</span></div>
+      ${T ? `<div class="bar"><span style="width:${r.st.tsOff/T*100}%;background:var(--c-off)"></span><span style="width:${r.st.tsDef/T*100}%;background:var(--c-def)"></span></div>` : ""}</div>`; }).join("") + `</div>`;
+}
+$("nowOrders").addEventListener("click", async e => {
+  const b = e.target.closest("[data-now]"); if (!b || !db) return; const r = $("nowOrders")._rows?.[+b.dataset.now]; if (!r) return;
+  const i = ST_ORDER.indexOf(r.statut); const next = ST_ORDER[(i + 1) % ST_ORDER.length];
+  try { await db.doc(r.ref).update({statut:next, maj:new Date().toISOString()}); } catch(err){ setStatus("Statut non enregistré : " + (err.message||err.code)); }
+});
+
+/* ---------- vues ---------- */
+function showView(v){
+  if (!["maintenant","fiche","binome","attaques","defense","outils"].includes(v)) v = "maintenant";
+  if (v === "outils" && moi && !editingId && currentFiche !== moi && fiches.some(f => f.id === moi)) selectFiche(moi);
+  const st = $("status").textContent; const wasCount = !st || st === countTxt || st === "Enregistré automatiquement";
+  curView = v; renderTabs(); document.body.classList.toggle("wide", v === "attaques"); if (wasCount && countTxt) setStatus(countStatus()); renderWelcome();
+  document.querySelectorAll(".vbtn").forEach(b => b.setAttribute("aria-selected", String(b.dataset.view === v)));
+  ["maintenant","fiche","binome","attaques","defense","outils"].forEach(k => $("view-"+k).hidden = k !== v);
+  try { localStorage.setItem("vueActive", v); } catch {}
+  if (v === "binome") renderBinome();
+  if (v === "attaques") renderAttaques();
+  if (v === "defense") renderDefense();
+  if (v === "maintenant") renderNow();
+}
+document.querySelector(".views").addEventListener("click", e => { const b = e.target.closest("[data-view]"); if (b) showView(b.dataset.view); });
+showView("maintenant");
+document.addEventListener("click", e => { const g = e.target.closest("[data-goto]"); if (g){ if (g.dataset.goto === "fiche" && moi){ viewAll = false; if (currentFiche !== moi) selectFiche(moi); render(); } showView(g.dataset.goto); window.scrollTo({top:0}); } });
+$("quickImport").addEventListener("click", () => {
+  if (!moi){ setStatus("Choisis d'abord qui tu es dans « Je suis »."); $("meSel").focus(); return; }
+  if (currentFiche !== moi) selectFiche(moi);
+  showView("outils"); $("csvInput").click();
+});
+
+/* ---------- boot ---------- */
+buildForm(); buildTsGrid(); resetForm(); fillUnitSelect(""); render(); renderTabs(); renderBinome(); renderAttaques(); renderDefense(); renderNow();
+(async () => {
+  try { db = await window.claude?.use?.("db"); } catch { db = null; }
+  if (!db){ setStatus("Registre indisponible ici : ouvre la page depuis claude.ai, connectée."); return; }
+  (async () => { try { const u = await window.claude?.use?.("user"); if (u){ const c = await u.can("data.write"); if (c === false || c === true) canWrite = c; } } catch {} renderRO(); })();
+  db.doc("reglages/poidsTs").onSnapshot(d => { tsW = {...TS_DEFAULT, ...((d.exists && d.data().poids) || {})}; buildTsGrid(); render(); renderBinome(); renderDefense(); }, () => {});
+  db.doc("reglages/objectif").onSnapshot(d => { if (d.exists){ objectif = {pct:+d.data().pct||50, ts:+d.data().ts||null};
+    if (document.activeElement?.id !== "obj-pct") $("obj-pct").value = objectif.pct; if (document.activeElement?.id !== "obj-ts") $("obj-ts").value = objectif.ts || ""; renderBinome(); } }, () => {});
+  startAttaques(); startDefense();
+  db.collection("fiches").orderBy("creeLe").onSnapshot(snap => {
+    fiches = snap.docs.map(d => ({id:d.id, nom:d.data().nom || d.id}));
+    let want = currentFiche; if (!want){ try { want = moi || localStorage.getItem("ficheActive"); } catch {} }
+    renderMe();
+    if (!fiches.some(f => f.id === want)) want = fiches[0]?.id || null;
+    if (want !== currentFiche || !unsubVilles) selectFiche(want); else renderTabs();
+    if (!fiches.length) setStatus("Crée une première fiche pour commencer.");
+    syncFicheSubs(); renderAttaques();
+  }, err => setStatus("Connexion au registre perdue (" + (err.code||"erreur") + "). Recharge la page."));
+})();
+</script>
