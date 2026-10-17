@@ -115,6 +115,7 @@ svg.chart text{font-family:var(--f-body);font-size:11px;fill:var(--muted)}
       <button type="button" class="vbtn" role="tab" data-view="cabines" aria-selected="false">Cabines</button>
       <button type="button" class="vbtn" role="tab" data-view="raids" aria-selected="false">Raids</button>
     </div>
+    <div class="vgrp"><a class="vbtn" href="./" style="text-decoration:none">← Planner</a></div>
   </div>
 
   <!-- ================= MA CITÉ ================= -->
@@ -501,10 +502,10 @@ function renderRaidsAll(){ renderRaid(); renderJournal(); renderSynth(); }
 function renderAll(){ renderCite(); renderCab(); renderDem(); renderRaidsAll(); renderSim(); renderResume(); }
 
 /* ---------- vues ---------- */
-function showView(v){ document.querySelectorAll(".vbtn").forEach(b => b.setAttribute("aria-selected", String(b.dataset.view === v)));
+function showView(v){ if (!["cite","castle","cabines","raids"].includes(v)) v = "cite"; document.querySelectorAll(".vbtn").forEach(b => b.setAttribute("aria-selected", String(b.dataset.view === v)));
   ["cite","castle","cabines","raids"].forEach(k => $("view-" + k).hidden = k !== v); try { localStorage.setItem("calcView", v); } catch {}
   if (v === "castle" && !lastBest && !solving) solve(); }
-document.querySelector(".views").addEventListener("click", e => { const b = e.target.closest(".vbtn"); if (b) showView(b.dataset.view); });
+document.querySelector(".views").addEventListener("click", e => { const b = e.target.closest("[data-view]"); if (b) showView(b.dataset.view); });
 
 /* ---------- enregistrement ---------- */
 function setStatus(t){ $("status").textContent = t; }
