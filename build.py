@@ -1,4 +1,4 @@
-"""Génère index.html (version GitHub Pages + Firebase) depuis la source de l'artifact."""
+"""Génère index.html depuis la source de l'artifact. ATTENTION : index.html est désormais modifié directement (voir README) ; relancer ce script écraserait ces changements."""
 import sys, pathlib
 src = pathlib.Path(sys.argv[1]).read_text()
 shim = pathlib.Path(__file__).with_name("src").joinpath("firebase-shim.js").read_text()
