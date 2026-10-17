@@ -170,6 +170,8 @@ body.wide .wrap{max-width:1880px}
 .welcome ol{margin:0;padding-left:20px;display:grid;gap:4px}
 .welcome .btns{justify-content:flex-start}
 .regh{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
+.regf{flex-wrap:nowrap;gap:10px}.regf .w-sel{flex:0 0 auto;width:132px}
+@media (max-width:760px){.regf{flex-wrap:wrap}.regf .w-sel{flex:1 1 130px;width:auto}}
 .seg{display:flex;gap:2px;background:var(--keep-soft);padding:3px;border-radius:8px;flex-wrap:wrap}
 .seg button{border:none;background:transparent;padding:5px 12px;border-radius:6px;font-weight:600;font-size:13px;color:var(--muted)}
 .seg button[aria-selected="true"]{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
@@ -374,7 +376,7 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
   <section class="panel" aria-label="Registre des villes">
     <div class="toolbar">
       <div class="regh"><h2 style="margin:0">Registre</h2><div class="seg" id="roleTabs" role="tablist" aria-label="Filtrer par rôle"></div></div>
-      <div class="row">
+      <div class="row regf">
         <label class="field w-sel"><span class="lbl">Type</span>
           <select id="fl-milieu"><option value="">Tous</option><option value="terre">Terrestre</option><option value="mer">Maritime</option></select></label>
         <label class="field w-sel"><span class="lbl">Troupe</span><select id="fl-troupe"><option value="">Toutes</option></select></label>
