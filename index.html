@@ -119,6 +119,8 @@ table.reg{border-collapse:collapse;width:100%;min-width:980px;font-size:13px}
 .milieu{font-size:11.5px;padding:2px 8px;border-radius:999px;font-weight:600;white-space:nowrap}
 .m-terre{background:var(--ref-soft);border-color:var(--ref);color:var(--ref)}
 .m-mer{background:var(--def-soft);border-color:var(--def);color:var(--def)}
+.k-oui{background:var(--brass-soft);border-color:var(--brass);color:var(--brass)}
+.k-non{background:transparent;border:1px dashed var(--line);color:var(--muted);font-weight:500}
 .chartwrap{position:relative;margin-top:6px}
 #bChart{display:block;overflow:visible;max-width:100%}
 #bChart text{fill:var(--ink);font-family:var(--f-body);font-size:13px}
@@ -977,7 +979,7 @@ function render(){
     const hub = c.hubId && byId[c._fid + "/" + c.hubId] ? esc(byId[c._fid + "/" + c.hubId].name) : `<span style="color:var(--muted)">—</span>`;
     const F = `data-fid="${esc(c._fid)}"`;
     return `<tr class="c-${r}">
-      <td><div class="namecell"><b>${esc(c.name)}</b>${isAll() ? `<span class="owner" style="color:${pCol(c._fid)};background:${pSoft(c._fid)}">${esc(ficheNom(c._fid))}</span>` : ""}<button class="milieu m-${milieuOf(c)}" data-milieu="${esc(c.id)}" ${F} aria-label="Type de ville : ${milieuOf(c)==="mer"?"maritime":"terrestre"}, cliquer pour changer">${milieuOf(c)==="mer"?"⚓ Maritime":"⛰ Terrestre"}</button>${c.castle ? `<span class="castle" title="Château">♜ château</span>` : ""}</div>${c.reference ? `<div class="refnote">${esc(c.reference)}${c.score ? " · score " + (+c.score).toLocaleString("fr-FR") : ""}${c.wall!=null ? " · mur " + c.wall : ""}</div>` : ""}${(a => a.length ? `<div class="alerts">${a.map(([k,t]) => `<span class="ab ${k}">${esc(t)}</span>`).join("")}</div>` : "")(alertsOf(c))}</td>
+      <td><div class="namecell"><b>${esc(c.name)}</b>${isAll() ? `<span class="owner" style="color:${pCol(c._fid)};background:${pSoft(c._fid)}">${esc(ficheNom(c._fid))}</span>` : ""}<button class="milieu m-${milieuOf(c)}" data-milieu="${esc(c.id)}" ${F} aria-label="Type de ville : ${milieuOf(c)==="mer"?"maritime":"terrestre"}, cliquer pour changer">${milieuOf(c)==="mer"?"⚓ Maritime":"⛰ Terrestre"}</button><button class="milieu ${c.castle ? "k-oui" : "k-non"}" data-castle="${esc(c.id)}" ${F} aria-label="${c.castle ? "Château" : "Pas de château"}, cliquer pour changer">${c.castle ? "♜ Château" : "♜ Sans château"}</button></div>${c.reference ? `<div class="refnote">${esc(c.reference)}${c.score ? " · score " + (+c.score).toLocaleString("fr-FR") : ""}${c.wall!=null ? " · mur " + c.wall : ""}</div>` : ""}${(a => a.length ? `<div class="alerts">${a.map(([k,t]) => `<span class="ab ${k}">${esc(t)}</span>`).join("")}</div>` : "")(alertsOf(c))}</td>
       <td class="mono"><span class="cont">C${String(cont).padStart(2,"0")}</span>${c.x}:${c.y}</td>
       <td><span class="pill p-${r}">${ROLE_LABEL[r]}${c.role==="auto"||!c.role ? "" : ""}</span></td>
       <td><div class="troops">${troops}</div></td>
@@ -1002,6 +1004,12 @@ $("regBody").addEventListener("click", async e => {
     const c = pool.find(x => x.id === b.dataset.milieu); const next = milieuOf(c) === "mer" ? "terre" : "mer";
     b.disabled = true;
     try { await colOf(fid).doc(c.id).update({milieu:next}); } catch(err){ setStatus("Changement non enregistré : " + (err.message||err.code)); }
+    b.disabled = false; return;
+  }
+  if (b.dataset.castle){
+    const c = pool.find(x => x.id === b.dataset.castle); if (!c) return;
+    b.disabled = true;
+    try { await colOf(fid).doc(c.id).update({castle:!c.castle}); } catch(err){ setStatus("Changement non enregistré : " + (err.message||err.code)); }
     b.disabled = false; return;
   }
   if (b.dataset.cycle){
