@@ -162,6 +162,66 @@
     const suivant = niv[k + 1] || null;
     return { niveaux: niv, niveau: L, choix, suivant, plusRapide: o.fastest };
   }
+
+  /* ================= CABINES : temps de construction de la cité complète ================= */
+  // Bâtiments du plan, tous montés au niveau 10. Temps de base (s) de chaque bâtiment, du niveau 1 au niveau 10.
+  const CITE_BAT = {
+    barracks:  { nom: "Barracks",        t: () => B.barT },
+    arenas:    { nom: "Training Arena",  t: () => B.arenaT },
+    academies: { nom: "Académie",        t: () => B.academieT },
+    forums:    { nom: "Forum",           t: () => B.forumT },
+    entrepots: { nom: "Entrepôt",        t: () => B.barT },       // Storehouse : mêmes temps que la Barracks (wiki COTG)
+    tours:     { nom: "Tour de sorcier", t: () => C.TT.slice(1) },
+    castles:   { nom: "Castle",          t: () => B.castleT }
+  };
+  // p : {bonus, depart (niveau déjà atteint par les Cabines), groupe, basDepart, plan:{barracks, arenas, …}, places (100), sansLimitePlaces}
+  function citeTemps(p, n, L) {
+    const T = cabTables(), b = T.b, base = 1 + p.bonus, places = p.places || 100;
+    // liste des bâtiments du plan, avec leur temps total 1 → 10 (s)
+    const bats = [];
+    for (const k in CITE_BAT) { const nb = Math.max(0, Math.floor(+((p.plan || {})[k]) || 0)), tot = sum(CITE_BAT[k].t()); for (let i = 0; i < nb; i++) bats.push({ k, tot }); }
+    const F = bats.length;
+    if (!p.sansLimitePlaces && n > 10 * p.basDepart) return null;      // pas assez d'emplacements pour poser les Cabines au départ
+    if (F > places) return null;
+    // 1. Cabines posées puis montées par couches jusqu'au niveau L
+    let montee = 0;
+    for (let k = 1; k <= L; k++) { if (k <= p.depart) continue;
+      for (let i = 0; i < n; i++) montee += T.t[k] / (base + n * b[k - 1] + i * (b[k] - b[k - 1])); }
+    const D = base + n * b[L];
+    // 2. Basilica jusqu'au niveau 10
+    let basilica = 0; for (let lv = Math.max(1, p.basDepart + 1); lv <= 10; lv++) basilica += C.BAS[lv] / D;
+    // 3. bâtiments posés à côté des Cabines ; les derniers (les plus rapides à construire) attendent la démolition
+    const principaux = Math.min(F, places - n), derniers = F - principaux;
+    bats.sort((x, y) => y.tot - x.tot);                                 // les plus longs d'abord, à pleine vitesse
+    const principal = sum(bats.slice(0, principaux).map(x => x.tot)) / D;
+    // 4. démolition par groupes et pose des derniers bâtiments, la vitesse baisse à chaque groupe
+    const g = Math.max(1, p.groupe || 1), K = T.H[L] / 2; let demolition = 0, reconstruction = 0, reste = n, idx = principaux, groupes = [];
+    while (idx < F) {
+      const s_ = Math.min(g, F - idx), avant = base + reste * b[L];
+      let dm = 0; for (let i = 0; i < s_; i++) dm += K / (avant - i * b[L]);
+      const apres = avant - s_ * b[L], rb = sum(bats.slice(idx, idx + s_).map(x => x.tot)) / apres;
+      demolition += dm; reconstruction += rb; groupes.push({ taille: s_, vitesseAvant: avant, demolition: dm / 86400, reconstruction: rb / 86400 });
+      reste -= s_; idx += s_;
+    }
+    const total = (montee + basilica + principal + demolition + reconstruction) / 86400;
+    return { n, niveau: L, vitesse: D, montee: montee / 86400, basilica: basilica / 86400, principal: principal / 86400, demolition: demolition / 86400,
+             reconstruction: reconstruction / 86400, total, demolies: derniers, gardees: n - derniers, batiments: F,
+             pertePierre: derniers * (T.G[L] - T.J[L]) + (n - derniers) * 0, coutPierre: n * Math.max(0, T.G[L] - T.G[p.depart || 0]), groupes };
+  }
+  function citeOptimise(p, seuil, tol) {
+    const maxN = Math.min(p.places || 100, p.sansLimitePlaces ? 100 : 10 * p.basDepart);
+    const sans = citeTemps(p, 0, 1);
+    const rows = []; for (let L = 1; L <= 10; L++) for (let n = 5; n <= maxN; n += 5) { const r = citeTemps(p, n, L); if (r) rows.push(r); }
+    if (!rows.length) return { sans, rows, maxN };
+    const perLevel = []; for (let L = 1; L <= 10; L++) { let x = null; for (const r of rows) if (r.niveau === L && (!x || r.total < x.total)) x = r; if (x) perLevel.push(x); }
+    const niv = perLevel.map((m, i) => { const pr = i ? perLevel[i - 1] : null, gain = pr ? pr.total - m.total : null, pierre = pr ? m.coutPierre - pr.coutPierre : null;
+      return { niveau: m.niveau, meilleur: m, gain, pierreEnPlus: pierre, pierreParJour: gain > 0 ? pierre / gain : null }; });
+    let k = 0; while (k + 1 < niv.length && niv[k + 1].gain >= seuil) k++;
+    const L = niv[k].niveau, auNiv = rows.filter(r => r.niveau === L), best = Math.min(...auNiv.map(r => r.total));
+    const choix = auNiv.filter(r => r.total <= best + tol).sort((a, b) => a.n - b.n)[0];
+    const fast = rows.reduce((a, r) => r.total < a.total ? r : a, rows[0]);
+    return { sans, rows, maxN, niveaux: niv, niveau: L, choix, suivant: niv[k + 1] || null, plusRapide: fast };
+  }
   function cabDemolition(p) {
     // p : {n, niveau, groupe, bonus, remplacer ('Barracks'|'Training Arena'), vise, overrides: {g: type}}
     const T = cabTables(), L = p.niveau, b = T.b[L], dem = T.K[L], rb = T.I[L], rp = T.J[L];
@@ -356,5 +416,5 @@
              zerksReelsH, excedentFer: j(excedentFer), raffinage };
   }
 
-  root.CrownEngine = { castleCombo, castleGrid, castleSolve, castleLoss, cabOptimise, cabRatio, cabDemolition, cabParams, raidSim, journalRow, raidSynthese, recrutement, heures, lireRapport, unitStats, butinBase, defenseParPoint, TYPES };
+  root.CrownEngine = { castleCombo, castleGrid, castleSolve, castleLoss, cabOptimise, cabRatio, citeTemps, citeOptimise, cabDemolition, cabParams, raidSim, journalRow, raidSynthese, recrutement, heures, lireRapport, unitStats, butinBase, defenseParPoint, TYPES };
 })(typeof window !== "undefined" ? window : globalThis);
