@@ -22,3 +22,12 @@ Enregistrement Firestore : `fiches/{fiche}/calculs/reglages` (réglages) `fiches
 - Coller une capture dans le planner ouvre Calculs › Recrutement (`src/planner-addons.js`, injecté par `build.py`).
 - Nombres lisibles dans les cases (« 1 000 000 ») et saisies « 150k », « 1,5M » acceptées.
 
+
+## Planner : modifications faites directement dans index.html
+
+Depuis la mise à jour « ergonomie 2 », `index.html` est modifié directement : onglets groupés Moi / Ensemble,
+menu déroulant par ressource dans le registre, alertes de ville retirées, âge du dernier import
+(stocké dans `fiches/{fiche}.importVilles` et `.importTroupes`, délai d'alerte dans Réglages),
+raccourcis sur Maintenant, modification d'une ville sous sa ligne (suppression dans le formulaire),
+Attaques en étapes 1-2-3 et notifications visibles. **Ne pas relancer `build.py`** sur l'ancienne source
+de l'artifact : il écraserait ces changements.

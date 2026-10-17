@@ -34,6 +34,8 @@ h1{font-family:var(--f-display);font-size:2rem;margin:0;letter-spacing:.02em;tex
 h2{font-family:var(--f-display);font-size:1.25rem;margin:0 0 10px;letter-spacing:.03em}
 .sub{color:var(--muted);margin:0}
 .status{font-size:12px;color:var(--muted)}
+.age{font-size:12px;color:var(--muted)}
+.age.vieux{color:var(--hub);font-weight:600}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
 .big{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:10px}
@@ -100,6 +102,8 @@ table.reg{border-collapse:collapse;width:100%;min-width:980px;font-size:13px}
 .r-hub{background:var(--hub-soft);border-color:var(--hub);color:var(--hub)}
 .r-afaire{background:transparent;border-style:dashed;border-color:var(--line);color:var(--muted)}
 .r-garder{background:var(--keep-soft);border-color:var(--line);color:var(--muted)}
+.rsel{font:inherit;font-size:12px;font-weight:600;padding:3px 22px 3px 8px;border-radius:5px;border:1px solid var(--line);min-width:96px;min-height:0;cursor:pointer}
+.rsel.r-afaire{border-style:dashed;background-color:transparent}
 .refnote{font-size:11.5px;color:var(--muted);white-space:nowrap}
 .wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-top:12px}
 .wgrid input{width:100%}
@@ -144,6 +148,23 @@ table.reg{border-collapse:collapse;width:100%;min-width:980px;font-size:13px}
 .ttab .zero{color:var(--muted)}
 .views{display:flex;gap:8px;flex-wrap:wrap;max-width:100%}
 .vgrp{display:flex;align-items:center;gap:4px;background:var(--keep-soft);padding:4px;border-radius:10px;flex-wrap:wrap}
+#cityForm .field input,#cityForm .field select{width:100%;min-width:0;box-sizing:border-box}
+.dzone{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.dbtn{border-color:var(--off);color:var(--off);background:transparent}
+tr.editrow>td{background:var(--bg);padding:10px 12px}
+tr.editrow #formPanel{margin:0}
+tr.editing>td{background:var(--keep-soft)}
+#toasts{position:fixed;right:20px;bottom:20px;z-index:60;display:grid;gap:8px;justify-items:end;max-width:min(440px,calc(100vw - 40px))}
+.toast{display:flex;gap:10px;align-items:center;background:#1c2230;color:#fff;padding:10px 12px 10px 14px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.25);font-size:14px;line-height:1.35}
+.toast .ti{flex:none;display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#3d9a5c;font-size:12px;font-weight:700}
+.toast.warn .ti{background:#c58a1b}.toast.err .ti{background:#b23a3a}
+.toast button{flex:none;background:none;border:none;color:#fff;opacity:.7;font-size:18px;padding:0 2px;min-height:0;box-shadow:none;cursor:pointer}
+.step{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--brass);color:var(--panel);font-size:13px;font-weight:600;margin-right:8px;vertical-align:3px}
+#planPanel .adds{margin-bottom:12px}
+.qbar{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}
+.qbar button{font-weight:600;display:flex;gap:7px;align-items:center}
+.qbar .q-men{border-color:var(--off);color:var(--off)}
+.glbl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:0 6px 0 8px;white-space:nowrap}
 .vlab{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:0 6px 0 8px}
 .adds .field{grid-template-columns:minmax(0,1fr)}
 .adds .field input,.adds .field select{width:100%;min-width:0;box-sizing:border-box}
@@ -152,10 +173,6 @@ table.reg{border-collapse:collapse;width:100%;min-width:980px;font-size:13px}
 .view{display:grid;gap:20px}
 [hidden]{display:none!important}
 .ficheNote{margin:0;font-size:13px}
-.alerts{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
-.ab{font-size:11px;padding:1px 7px;border-radius:999px;white-space:nowrap;font-weight:600}
-.ab.def{background:var(--off-soft);color:var(--off)}
-.ab.stock{background:var(--hub-soft);color:var(--hub)}
 .hright{display:grid;justify-items:end;gap:4px}
 .me{display:flex;align-items:center;gap:8px}
 .me select{font:inherit;padding:4px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)}
@@ -329,6 +346,7 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
     <div class="hright">
       <div class="me"><label class="me"><span class="lbl">Je suis</span><select id="meSel"><option value="">— choisir —</option></select></label><button type="button" class="primary" id="quickImport">Importer mes CSV</button></div>
       <span class="status" id="status">Connexion au registre…</span>
+      <span class="age" id="dataAge" hidden></span>
     </div>
   </header>
 
@@ -344,9 +362,11 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
   </section>
 
   <div class="views" role="tablist" aria-label="Vues">
-    <div class="vgrp">
+    <div class="vgrp"><span class="glbl">Moi</span>
       <button type="button" class="vbtn" role="tab" data-view="maintenant" aria-selected="true">Maintenant</button>
       <button type="button" class="vbtn" role="tab" data-view="fiche" aria-selected="false">Mes villes</button>
+    </div>
+    <div class="vgrp"><span class="glbl">Ensemble</span>
       <button type="button" class="vbtn" role="tab" data-view="binome" aria-selected="false">Binôme</button>
       <button type="button" class="vbtn" role="tab" data-view="attaques" aria-selected="false">Attaques</button>
       <button type="button" class="vbtn" role="tab" data-view="defense" aria-selected="false">Défense</button>
@@ -363,6 +383,11 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
 
 
   <div class="view" id="view-maintenant" hidden>
+    <div class="qbar">
+      <button type="button" class="q-men" data-quick="menace"><span aria-hidden="true">⚠</span> Signaler une menace</button>
+      <button type="button" data-quick="baron"><span aria-hidden="true">♜</span> Noter un baron envoyé</button>
+      <button type="button" data-quick="operation"><span aria-hidden="true">⚔</span> Nouvelle opération</button>
+    </div>
     <div class="nowgrid">
       <section class="panel" aria-label="Mes ordres">
         <div class="toolbar"><h2 style="margin:0">Mes ordres</h2><span class="note" id="nowInfo" style="margin:0"></span></div>
@@ -373,10 +398,6 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
         <section class="panel" aria-label="Menaces ouvertes">
           <div class="toolbar"><h2 style="margin:0">Menaces ouvertes</h2><button type="button" class="link" data-goto="defense">Défense →</button></div>
           <div id="nowThreats"></div>
-        </section>
-        <section class="panel" aria-label="Alertes de mes villes">
-          <div class="toolbar"><h2 style="margin:0">Alertes de mes villes</h2><button type="button" class="link" data-goto="fiche">Mes villes →</button></div>
-          <div id="nowAlerts"></div>
         </section>
         <section class="panel" aria-label="Binôme">
           <div class="toolbar"><h2 style="margin:0">Binôme</h2><button type="button" class="link" data-goto="binome">Détail →</button></div>
@@ -409,7 +430,7 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
         <thead><tr><th>Ressource</th><th style="color:var(--ref)">Raffiner</th><th style="color:var(--hub)">Hub</th><th>Garder</th><th>À définir</th></tr></thead>
         <tbody id="resSummary"></tbody>
       </table>
-      <p class="note">Clique sur une case Bois / Pierre / Fer / Nourriture du registre pour la faire tourner : Raffiner → Hub → Garder.</p>
+      <p class="note">Choisis la destination de chaque ressource dans le menu de sa case, dans le registre.</p>
     </div>
   </section>
 
@@ -473,25 +494,29 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
 
   <div class="view" id="view-attaques" hidden>
   <section class="panel" aria-label="Opération">
+    <div class="toolbar"><h2 style="margin:0"><span class="step">1</span>Opération</h2></div>
     <div class="opbar">
-      <div class="row">
-        <label class="field w-sel" style="flex-basis:240px"><span class="lbl">Opération</span><select id="op-sel"></select></label>
-        <label class="field w-sel" style="flex-basis:150px"><span class="lbl">Date</span><input id="op-date" type="date"></label>
-        <label class="field w-sel" style="flex-basis:170px"><span class="lbl">Date dans le sharestring</span><select id="op-dfmt"><option value="mdy">MM/JJ/AAAA</option><option value="dmy">JJ/MM/AAAA</option></select></label>
-        <button type="button" class="link danger" id="op-del" hidden>Supprimer l'opération</button>
+      <div class="row" style="flex:1 1 320px;max-width:440px">
+        <label class="field w-sel" style="flex:1 1 auto"><span class="lbl">Opération</span><select id="op-sel"></select></label>
       </div>
       <form class="row" id="op-new" autocomplete="off">
-        <label class="field w-name"><span class="lbl">Nouvelle opération</span><input id="op-nom" maxlength="40" placeholder="ex. Opé C20" required></label>
+        <label class="field w-name"><span class="lbl">ou en créer une</span><input id="op-nom" maxlength="40" placeholder="ex. Opé C20" required></label>
         <button type="submit">Créer</button>
       </form>
     </div>
+    <div class="row" style="margin-top:12px;align-items:start">
+      <label class="field w-sel" style="flex:0 1 190px"><span class="lbl">Jour d'arrivée</span><input id="op-date" type="date"></label>
+      <label class="field w-sel" style="flex:0 1 300px"><span class="lbl">Format de date du jeu</span><select id="op-dfmt"><option value="mdy">MM/JJ/AAAA</option><option value="dmy">JJ/MM/AAAA</option></select>
+        <span class="note" style="margin:0">Celui affiché dans ton jeu (MM/JJ/AAAA si le jeu est en anglais) : il sert aux sharestrings.</span></label>
+    </div>
     <div class="kpis" id="op-kpis"></div>
     <div id="op-rule"></div>
+    <div style="display:flex;justify-content:flex-end"><button type="button" class="link danger" id="op-del" hidden>Supprimer l'opération</button></div>
   </section>
 
   <section class="panel" id="planPanel" aria-label="Plan de frappe">
     <div class="toolbar">
-      <h2 style="margin:0">Plan de frappe</h2>
+      <h2 style="margin:0"><span class="step">2</span>Cibles et vagues</h2>
       <div class="filt">
         <label class="chk"><input type="checkbox" id="pf-prio"> Vagues prioritaires seulement</label>
         <label class="chk"><input type="checkbox" id="pf-mine"> Mes cases seulement</label>
@@ -499,8 +524,6 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
       </div>
     </div>
     <p class="note" style="margin:0 0 8px">Une ligne par cible, une colonne par vague. Les cases vertes sont prioritaires. Clique une case pour l'attribuer.</p>
-    <div class="planscroll"><table class="plan" id="planTable"></table></div>
-    <div class="editor" id="cellEditor" hidden></div>
     <div class="adds">
       <details id="tgtPanel">
         <summary id="tgtTitle">Ajouter une cible</summary>
@@ -524,11 +547,13 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
         </form>
       </details>
     </div>
+    <div class="planscroll"><table class="plan" id="planTable"></table></div>
+    <div class="editor" id="cellEditor" hidden></div>
   </section>
 
   <section class="panel" aria-label="Envois par joueur">
     <div class="toolbar">
-      <h2 style="margin:0">Envois par joueur</h2>
+      <h2 style="margin:0"><span class="step">3</span>Envois par joueur</h2>
       <div class="row">
         <label class="field w-sel"><span class="lbl">Joueur</span><select id="env-fiche"></select></label>
         <button type="button" id="env-copy" style="align-self:end">Copier la liste</button>
@@ -713,8 +738,11 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
       <ul class="implist" id="impList"></ul>
       <div class="btns"><button type="button" class="primary" id="impApply">Appliquer la mise à jour</button><button type="button" id="impCancel">Annuler</button></div>
     </div>
+    <label class="field" style="margin-top:12px;max-width:340px"><span class="lbl">Signaler des données anciennes après (heures)</span><input id="ageMax" type="number" min="1" step="1" value="24"></label>
+    <p class="note" style="margin-top:4px">La date du dernier import s'affiche en haut à droite. Elle passe en orange au-delà de ce délai.</p>
   </section>
 
+  <div id="formHome"></div>
   <details class="panel" id="formPanel">
     <summary id="formTitle">Ajouter une ville</summary>
     <form id="cityForm" autocomplete="off">
@@ -744,6 +772,10 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
       <div class="btns">
         <button type="submit" class="primary" id="saveBtn">Enregistrer la ville</button>
         <button type="button" id="cancelBtn" hidden>Annuler la modification</button>
+      </div>
+      <div class="dzone" id="delZone" hidden>
+        <span class="note" style="margin:0">La ville reste dans le jeu : seule sa ligne du planner disparaît.</span>
+        <button type="button" class="dbtn" id="delCityBtn">Supprimer cette ville du planner</button>
       </div>
     </form>
   </details>
@@ -976,15 +1008,6 @@ function cityTs(c){ if (!c.units) return +c.ts||0; const o = classTs(c); return 
 const NAVAL = ["Galley","Stinger","Warship"];
 function milieuOf(c){ if (c.milieu === "terre" || c.milieu === "mer") return c.milieu;
   return c.units && NAVAL.some(t => +(c.units[t]||{}).total > 0) ? "mer" : "terre"; }
-function alertsOf(c){
-  const out = [];
-  if (c.wall === 0) out.push(["def","mur 0"]);
-  if (c.units && ["def","mixte"].includes(effRole(c))){ let h = 0, t = 0; for (const k in c.units) if (TROOP_CLASS[k] === "def"){ h += +c.units[k].home||0; t += +c.units[k].total||0; }
-    if (t > 0 && h/t < 0.10) out.push(["def", Math.round(h/t*100) + " % def en ville"]); }
-  const lab = {bois:"bois", pierre:"pierre", fer:"fer", nourriture:"nourr."};
-  for (const k in (c.stats||{})){ const st = c.stats[k]; if (st.stockage > 0 && st.total/st.stockage >= 0.75) out.push(["stock", `${lab[k]||k} ${Math.round(st.total/st.stockage*100)} %`]); }
-  return out;
-}
 function effRole(c){
   if (c.role && c.role !== "auto") return c.role;
   if (c.units){ const o = classTs(c); const t = o.off+o.def; if (!t) return "none"; const r = o.off/t; return r>=0.8 ? "off" : r<=0.2 ? "def" : "mixte"; }
@@ -1011,8 +1034,12 @@ function fillHubSelect(selected){
   $("f-hub").innerHTML = `<option value="">— aucun —</option>` + hubs.map(h => `<option value="${esc(h.id)}">${esc(h.name)} (${h.x}:${h.y})</option>`).join("");
   $("f-hub").value = selected || "";
 }
+function homeForm(){
+  const fp = $("formPanel"), home = $("formHome");
+  if (fp.parentElement !== home.parentElement || fp.previousElementSibling !== home) home.after(fp);
+}
 function resetForm(){
-  editingId = null; $("cityForm").reset();
+  editingId = null; $("cityForm").reset(); homeForm(); $("delZone").hidden = true; pendingCityDel = false; $("delCityBtn").textContent = "Supprimer cette ville du planner";
   RES.forEach(([k]) => $("f-res-"+k).value = "afaire");
   $("formTitle").textContent = "Ajouter une ville"; $("saveBtn").textContent = "Enregistrer la ville"; $("cancelBtn").hidden = true;
   fillHubSelect("");
@@ -1028,7 +1055,10 @@ function startEdit(id, fid){
   RES.forEach(([k]) => $("f-res-"+k).value = (c.res||{})[k] || "afaire");
   fillHubSelect(c.hubId);
   $("formTitle").textContent = "Modifier : " + c.name; $("saveBtn").textContent = "Enregistrer les modifications"; $("cancelBtn").hidden = false;
-  showView("outils"); $("formPanel").open = true; $("formPanel").scrollIntoView({behavior:"smooth", block:"start"});
+  $("delZone").hidden = false;
+  if (curView !== "fiche") showView("fiche"); else render();
+  $("formPanel").open = true;
+  requestAnimationFrame(() => { const tr = document.querySelector("#regBody tr.editing"); (tr || $("formPanel")).scrollIntoView({behavior:"smooth", block:"start"}); });
 }
 
 /* ---------- render ---------- */
@@ -1077,6 +1107,9 @@ function render(){
     : sort==="joueur" ? ficheNom(a._fid).localeCompare(ficheNom(b._fid),"fr") || a.name.localeCompare(b.name,"fr")
     : (continentOf(a.x,a.y)-continentOf(b.x,b.y)) || a.name.localeCompare(b.name,"fr"));
   const byId = Object.fromEntries(L.map(c => [c._fid + "/" + c.id, c]));
+  const act = document.activeElement, actIn = $("formPanel").contains(act) ? act : null;
+  const selS = actIn && "selectionStart" in actIn ? [actIn.selectionStart, actIn.selectionEnd] : null;
+  homeForm();
   $("regBody").innerHTML = rows.map(c => {
     const r = effRole(c), cont = continentOf(c.x,c.y);
     const troops = (c.units
@@ -1084,20 +1117,24 @@ function render(){
           .map(([t,u]) => `<span class="t ${TROOP_CLASS[t]||"neu"}" title="${(+u.home).toLocaleString("fr-FR")} en ville / ${(+u.total).toLocaleString("fr-FR")} au total">${esc(t)} ${(+u.total).toLocaleString("fr-FR")}</span>`).join("")
       : (c.troops||[]).map(t => `<span class="t ${TROOP_CLASS[t]||"neu"}">${esc(t)}</span>`).join("")) || `<span class="t neu">aucune</span>`;
     const res = RES.map(([k]) => { const m = (c.res||{})[k]||"afaire";
-      return `<td><button class="rbtn r-${m}" data-cycle="${esc(c.id)}" data-fid="${esc(c._fid)}" data-res="${k}" aria-label="${k} : ${MODE_LABEL[m]}, cliquer pour changer">${MODE_LABEL[m]}</button></td>`; }).join("");
+      return `<td><select class="rsel r-${m}" data-rsel="${esc(c.id)}" data-fid="${esc(c._fid)}" data-res="${k}" aria-label="${k} : destination">${["afaire",...MODES].map(o => `<option value="${o}"${o===m?" selected":""}>${MODE_LABEL[o]}</option>`).join("")}</select></td>`; }).join("");
     const hub = c.hubId && byId[c._fid + "/" + c.hubId] ? esc(byId[c._fid + "/" + c.hubId].name) : `<span style="color:var(--muted)">—</span>`;
     const F = `data-fid="${esc(c._fid)}"`;
-    return `<tr class="c-${r}">
-      <td><div class="namecell"><b>${esc(c.name)}</b>${isAll() ? `<span class="owner" style="color:${pCol(c._fid)};background:${pSoft(c._fid)}">${esc(ficheNom(c._fid))}</span>` : ""}<button class="milieu m-${milieuOf(c)}" data-milieu="${esc(c.id)}" ${F} aria-label="Type de ville : ${milieuOf(c)==="mer"?"maritime":"terrestre"}, cliquer pour changer">${milieuOf(c)==="mer"?"⚓ Maritime":"⛰ Terrestre"}</button><button class="milieu ${c.castle ? "k-oui" : "k-non"}" data-castle="${esc(c.id)}" ${F} aria-label="${c.castle ? "Château" : "Pas de château"}, cliquer pour changer">${c.castle ? "♜ Château" : "♜ Sans château"}</button></div>${c.reference ? `<div class="refnote">${esc(c.reference)}${c.score ? " · score " + (+c.score).toLocaleString("fr-FR") : ""}${c.wall!=null ? " · mur " + c.wall : ""}</div>` : ""}${(a => a.length ? `<div class="alerts">${a.map(([k,t]) => `<span class="ab ${k}">${esc(t)}</span>`).join("")}</div>` : "")(alertsOf(c))}</td>
+    return `<tr class="c-${r}${editingId === c.id && c._fid === currentFiche ? " editing" : ""}">
+      <td><div class="namecell"><b>${esc(c.name)}</b>${isAll() ? `<span class="owner" style="color:${pCol(c._fid)};background:${pSoft(c._fid)}">${esc(ficheNom(c._fid))}</span>` : ""}<button class="milieu m-${milieuOf(c)}" data-milieu="${esc(c.id)}" ${F} aria-label="Type de ville : ${milieuOf(c)==="mer"?"maritime":"terrestre"}, cliquer pour changer">${milieuOf(c)==="mer"?"⚓ Maritime":"⛰ Terrestre"}</button><button class="milieu ${c.castle ? "k-oui" : "k-non"}" data-castle="${esc(c.id)}" ${F} aria-label="${c.castle ? "Château" : "Pas de château"}, cliquer pour changer">${c.castle ? "♜ Château" : "♜ Sans château"}</button></div>${c.reference ? `<div class="refnote">${esc(c.reference)}${c.score ? " · score " + (+c.score).toLocaleString("fr-FR") : ""}${c.wall!=null ? " · mur " + c.wall : ""}</div>` : ""}</td>
       <td class="mono"><span class="cont">C${String(cont).padStart(2,"0")}</span>${c.x}:${c.y}</td>
       <td><span class="pill p-${r}">${ROLE_LABEL[r]}${c.role==="auto"||!c.role ? "" : ""}</span></td>
       <td><div class="troops">${troops}</div></td>
       <td class="mono">${cityTs(c).toLocaleString("fr-FR")}</td>
       ${res}
       <td style="white-space:nowrap">${hub}</td>
-      <td style="white-space:nowrap"><button class="link" data-edit="${esc(c.id)}" ${F}>Modifier</button><button class="link danger" data-del="${esc(c.id)}" ${F}>Supprimer</button></td>
+      <td style="white-space:nowrap"><button class="link" data-edit="${esc(c.id)}" ${F}>Modifier</button></td>
     </tr>`;
   }).join("");
+  const etr = document.querySelector("#regBody tr.editing");
+  if (editingId && etr){ const tr = document.createElement("tr"); tr.className = "editrow"; const td = document.createElement("td");
+    td.colSpan = etr.children.length; td.append($("formPanel")); tr.append(td); etr.after(tr);
+    if (actIn && document.contains(actIn)){ actIn.focus({preventScroll:true}); if (selS) try { actIn.setSelectionRange(...selS); } catch {} } }
   if (curView === "fiche" && countTxt) setStatus(isAll() ? `${L.length} villes (tous les joueurs) · enregistré automatiquement` : countTxt);
   $("emptyState").hidden = rows.length > 0;
   $("emptyState").textContent = L.length ? "Aucune ville ne correspond à ce filtre." : (isAll() ? "Aucune ville importée pour l'instant." : "Aucune ville pour l'instant. Clique « Importer mes CSV » en haut à droite, ou ajoute une ville dans ⚙ Réglages.");
@@ -1105,7 +1142,6 @@ function render(){
 }
 
 /* ---------- actions ---------- */
-let pendingDelete = null;
 $("regBody").addEventListener("click", async e => {
   const b = e.target.closest("button"); if (!b || !db) return;
   const fid = b.dataset.fid || currentFiche, pool = allCities[fid] || cities;
@@ -1121,18 +1157,23 @@ $("regBody").addEventListener("click", async e => {
     try { await colOf(fid).doc(c.id).update({castle:!c.castle}); } catch(err){ setStatus("Changement non enregistré : " + (err.message||err.code)); }
     b.disabled = false; return;
   }
-  if (b.dataset.cycle){
-    const c = pool.find(x => x.id === b.dataset.cycle); const k = b.dataset.res;
-    const cur = (c.res||{})[k]||"afaire"; const next = cur==="afaire" ? MODES[0] : MODES[(MODES.indexOf(cur)+1)%MODES.length];
-    b.disabled = true;
-    try { await colOf(fid).doc(c.id).update({res:{[k]:next}}); } catch(err){ setStatus("Changement non enregistré : " + (err.message||err.code)); }
-    b.disabled = false;
-  } else if (b.dataset.edit){ startEdit(b.dataset.edit, fid); }
-  else if (b.dataset.del){
-    if (pendingDelete !== b.dataset.del){ pendingDelete = b.dataset.del; b.textContent = "Confirmer ?"; setTimeout(()=>{ if(pendingDelete===b.dataset.del){pendingDelete=null; b.textContent="Supprimer";} }, 4000); return; }
-    pendingDelete = null;
-    try { await colOf(fid).doc(b.dataset.del).delete(); if (editingId===b.dataset.del) resetForm(); } catch(err){ setStatus("Suppression impossible : " + (err.message||err.code)); }
-  }
+  if (b.dataset.edit){ if (editingId === b.dataset.edit && (b.dataset.fid || currentFiche) === currentFiche) resetForm(), render(); else startEdit(b.dataset.edit, fid); }
+});
+let pendingCityDel = false;
+$("delCityBtn").addEventListener("click", async () => {
+  const b = $("delCityBtn"); if (!db || !editingId) return;
+  if (!pendingCityDel){ pendingCityDel = true; b.textContent = "Confirmer la suppression ?";
+    setTimeout(() => { if (pendingCityDel){ pendingCityDel = false; b.textContent = "Supprimer cette ville du planner"; } }, 4000); return; }
+  pendingCityDel = false; const id = editingId, nom = $("f-name").value;
+  try { await col().doc(id).delete(); resetForm(); render(); setStatus("Ville supprimée du planner : " + nom); }
+  catch(err){ setStatus("Suppression impossible : " + (err.message||err.code)); }
+});
+$("regBody").addEventListener("change", async e => {
+  const sel = e.target.closest("select[data-rsel]"); if (!sel || !db) return;
+  const fid = sel.dataset.fid || currentFiche, k = sel.dataset.res, v = sel.value;
+  sel.className = "rsel r-" + v; sel.disabled = true;
+  try { await colOf(fid).doc(sel.dataset.rsel).update({res:{[k]:v}}); } catch(err){ setStatus("Changement non enregistré : " + (err.message||err.code)); }
+  sel.disabled = false;
 });
 $("cityForm").addEventListener("submit", async e => {
   e.preventDefault(); if (!db){ setStatus("Registre indisponible : ouvre la page en étant connecté à claude.ai."); return; }
@@ -1149,16 +1190,32 @@ $("cityForm").addEventListener("submit", async e => {
     if (editingId) await col().doc(editingId).update(data);
     else await col().add(data);
     setStatus((editingId ? "Modifiée : " : "Ajoutée : ") + data.name);
-    resetForm();
+    resetForm(); render();
   } catch(err){ setStatus("Enregistrement impossible : " + (err.message||err.code)); }
   $("saveBtn").disabled = false;
 });
-$("cancelBtn").addEventListener("click", resetForm);
+$("cancelBtn").addEventListener("click", () => { resetForm(); render(); });
 ["fl-milieu","fl-troupe","fl-cont","fl-sort"].forEach(id => $(id).addEventListener("change", render));
 let roleTab = "", viewAll = false;
 try { roleTab = localStorage.getItem("roleTab") || ""; viewAll = localStorage.getItem("villesTous") === "1"; } catch {}
 $("roleTabs").addEventListener("click", e => { const b = e.target.closest("[data-role]"); if (!b) return; roleTab = b.dataset.role; try { localStorage.setItem("roleTab", roleTab); } catch {} render(); });
-function setStatus(t){ $("status").textContent = t; }
+function setStatus(t){ $("status").textContent = t; toast(t); }
+/* notification visible pour les actions : vert = fait, orange = à compléter, rouge = échec (reste affichée) */
+const TOAST_QUIET = /^(Chargement|Connexion au registre…|Enregistré automatiquement|Import : \d+\/)|enregistré automatiquement$|^\d+ villes?\b/;
+const TOAST_ERR = /impossible|non enregistr|non créée|perdue|indisponible|incomplet|refusée|en échec/i;
+const TOAST_WARN = /^(Choisis|Indique|Crée une première)/;
+function toast(t){
+  let ct = ""; try { ct = countTxt; } catch {}
+  if (!t || TOAST_QUIET.test(t) || t === ct) return;
+  let box = $("toasts"); if (!box){ box = document.createElement("div"); box.id = "toasts"; box.setAttribute("role", "status"); document.body.append(box); }
+  const kind = TOAST_ERR.test(t) ? "err" : TOAST_WARN.test(t) ? "warn" : "ok";
+  [...box.children].forEach(x => { if (x.dataset.t === t) x.remove(); });
+  const el = document.createElement("div"); el.className = "toast " + kind; el.dataset.t = t;
+  el.innerHTML = `<span class="ti">${kind === "ok" ? "✓" : "!"}</span><span></span><button type="button" aria-label="Fermer">×</button>`;
+  el.children[1].textContent = t; el.querySelector("button").onclick = () => el.remove();
+  box.append(el); while (box.children.length > 3) box.firstElementChild.remove();
+  if (kind !== "err") setTimeout(() => el.remove(), kind === "ok" ? 3500 : 6000);
+}
 
 function buildTsGrid(){
   $("tsGrid").innerHTML = Object.keys(TS_DEFAULT).map(t => `<label class="field"><span class="lbl">${t}</span><input type="number" min="0" step="1" id="w-${t}" value="${tsW[t]}"></label>`).join("");
@@ -1215,7 +1272,7 @@ function readExport(text, fileName){
   return {kind:null, recs:[]};
 }
 
-let pendingImport = null;
+let pendingImport = null, pendingKinds = [];
 async function handleFiles(files){
   const parts = [];
   for (const f of files){ try { parts.push({file:f.name, ...readExport(await f.text(), f.name)}); } catch { parts.push({file:f.name, kind:null, recs:[]}); } }
@@ -1231,7 +1288,7 @@ async function handleFiles(files){
     }
     for (const r of p.recs){ const m = merged[r.id] ||= {id:r.id, name:r.name, x:r.x, y:r.y, patch:{}}; Object.assign(m.patch, r.patch); }
   }
-  pendingImport = Object.values(merged);
+  pendingImport = Object.values(merged); pendingKinds = [...new Set(parts.map(p => p.kind).filter(Boolean))];
   const fNom = ficheNom(currentFiche), mine = !moi || moi === currentFiche;
   const totalRecs = pendingImport.length, newRecs = pendingImport.filter(r => !known.has(r.id)).length;
   lines.unshift(`<li><b>Destination : fiche « ${esc(fNom)} »</b>${mine ? "" : ` (pas la tienne : tu importes pour ${esc(fNom)})`}</li>`);
@@ -1269,6 +1326,9 @@ $("impApply").addEventListener("click", async () => {
       ok++; setStatus(`Import : ${ok}/${pendingImport.length}…`);
     } catch(err){ ko++; }
   }
+  if (ok){ const now = new Date().toISOString(), upd = {};
+    if (pendingKinds.includes("villes")) upd.importVilles = now; if (pendingKinds.includes("troupes")) upd.importTroupes = now;
+    try { await db.doc(`fiches/${currentFiche}`).update(upd); } catch {} }
   btn.disabled = false; pendingImport = null; $("impPreview").hidden = true;
   setStatus(ko ? `Import terminé : ${ok} villes à jour, ${ko} en échec. Relance l'import pour les reprendre.` : `Import terminé : ${ok} villes à jour.`);
 });
@@ -1532,7 +1592,7 @@ function renderAttaques(){
   $("planPanel").hidden = !op;
   // grid
   if (op){
-    if (!opCibles.length && !opVagues.length) $("planTable").innerHTML = `<tbody><tr><td class="empty">Ajoute une première cible et une première vague ci-dessous.</td></tr></tbody>`;
+    if (!opCibles.length && !opVagues.length) $("planTable").innerHTML = `<tbody><tr><td class="empty">Ajoute une première cible et une première vague avec les boutons ci-dessus.</td></tr></tbody>`;
     else {
       const fPrio = $("pf-prio").checked, fMine = $("pf-mine").checked && moi;
       const mineAt = (c, v) => { const a = opAff[affKey(c.id, v.id)]; return a && a.villeId && a.fiche === moi; };
@@ -1744,6 +1804,7 @@ function renderMe(){
   if (moi && fiches.length && !fiches.some(f => f.id === moi)) moi = "";
   try { renderPlayers(); } catch {}
   $("meSel").innerHTML = `<option value="">— choisir —</option>` + fiches.map(f => `<option value="${esc(f.id)}"${f.id===moi?" selected":""}>${esc(f.nom)}</option>`).join("");
+  try { renderAge(); } catch {}
 }
 function renderWelcome(){
   let seen = false; try { seen = localStorage.getItem("accueilVu") === "1"; } catch {}
@@ -1753,7 +1814,7 @@ function renderWelcome(){
   $("welcomeSteps").innerHTML = [
     moi ? `<li><s>Choisis qui tu es</s> : c'est fait.</li>` : `<li><b>Crée ta fiche</b> avec ton pseudo dans <b>⚙ Réglages</b>, puis choisis-toi dans <b>Je suis</b> en haut à droite.</li>`,
     `<li>Clique <b>Importer mes CSV</b> en haut à droite et sélectionne tes deux exports du jeu : CotG_Dashboard (villes) et CotG_Troop_export (troupes).</li>`,
-    `<li><b>Maintenant</b> te montre tes ordres et les alertes. <b>Binôme</b>, <b>Attaques</b> et <b>Défense</b> sont communs à vous deux.</li>`
+    `<li><b>Maintenant</b> te montre tes ordres et les menaces ouvertes. <b>Binôme</b>, <b>Attaques</b> et <b>Défense</b> sont communs à vous deux.</li>`
   ].join("");
 }
 $("welcomeClose").addEventListener("click", () => { try { localStorage.setItem("accueilVu", "1"); } catch {} $("welcome").hidden = true; });
@@ -2060,11 +2121,6 @@ function renderNow(){
       <div class="nh"><span class="msub">${fmt(s.total)} TS${s.voulu ? " / " + fmt(s.voulu) : ""}</span>${pill}</div>
       <div class="bar"><span style="width:${s.surPlace/max*100}%;background:var(--keep)"></span><span style="width:${s.engage/max*100}%;background:var(--c-def)"></span></div></div>`; }).join("")
     + (open.length > 6 ? `<p class="nempty">et ${open.length - 6} autre${open.length-6>1?"s":""}…</p>` : "") + `</div>`;
-  const mine = moi ? (allCities[moi]||[]) : [];
-  const al = mine.map(c => ({c, a:alertsOf(c)})).filter(x => x.a.length).sort((p,q) => q.a.filter(z => z[0]==="def").length - p.a.filter(z => z[0]==="def").length);
-  $("nowAlerts").innerHTML = !moi ? `<p class="nempty">Choisis qui tu es pour voir tes alertes.</p>` : !mine.length ? `<p class="nempty">Aucune ville importée : clique « Importer mes CSV ».</p>`
-    : !al.length ? `<p class="nempty">Rien à signaler sur tes ${mine.length} villes.</p>`
-    : `<div class="nlist">` + al.map(({c, a}) => `<div class="nitem"><div class="nh"><b>${esc(c.name)}</b><span class="mono msub">${c.x}:${c.y}</span></div><div class="alerts">${a.map(([k,t]) => `<span class="ab ${k}">${esc(t)}</span>`).join("")}</div></div>`).join("") + `</div>`;
   const team = fiches.map(f => ({fid:f.id, nom:f.nom, me:f.id===moi, st:statsOf(allCities[f.id]||[])}));
   if (team.length > 1) team.push({nom:"Ensemble", team:true, st:statsOf(fiches.flatMap(f => allCities[f.id]||[]))});
   $("nowTeam").innerHTML = !team.length ? `<p class="nempty">Aucune fiche pour l'instant.</p>` : `<div class="nlist">` + team.map(r => { const T = r.st.tsOff + r.st.tsDef;
@@ -2093,6 +2149,14 @@ function showView(v){
   if (v === "carte") renderCarte();
   if (v === "maintenant") renderNow();
 }
+document.querySelector(".qbar").addEventListener("click", e => {
+  const b = e.target.closest("[data-quick]"); if (!b) return; const q = b.dataset.quick;
+  const go = (view, panel, field) => { showView(view); if (panel) $(panel).open = true;
+    requestAnimationFrame(() => { const f = $(field); if (f){ f.scrollIntoView({block:"center"}); f.focus(); } }); };
+  if (q === "menace") go("defense", "menPanel", "m-ville");
+  else if (q === "baron") go("barons", "bnPanel", "bn-x");
+  else go("attaques", null, "op-nom");
+});
 document.querySelector(".views").addEventListener("click", e => { const b = e.target.closest("[data-view]"); if (b) showView(b.dataset.view); });
 showView("maintenant");
 document.addEventListener("click", e => { const g = e.target.closest("[data-goto]"); if (g){ if (g.dataset.goto === "fiche" && moi){ viewAll = false; if (currentFiche !== moi) selectFiche(moi); render(); } showView(g.dataset.goto); window.scrollTo({top:0}); } });
@@ -2551,6 +2615,22 @@ async function impApply(){
     $("cImpMsg").textContent = n ? `${imp.own.size} de vos villes chargées depuis le CSV (cadre vert) : elles seront ignorées par l'analyse.` : "Aucune coordonnée trouvée dans ce CSV : utilisez l'export CotG_Dashboard."; });
 })();
 
+/* ---------- âge des données importées ---------- */
+let ageMax = 24; try { ageMax = +localStorage.getItem("ageMax") || 24; } catch {}
+$("ageMax").value = ageMax;
+$("ageMax").addEventListener("change", e => { ageMax = Math.max(1, +e.target.value || 24); e.target.value = ageMax; try { localStorage.setItem("ageMax", ageMax); } catch {} renderAge(); });
+function depuis(iso){ const h = (Date.now() - new Date(iso)) / 36e5;
+  return h < 1 ? "il y a moins d'une heure" : h < 48 ? `il y a ${Math.floor(h)} h` : `il y a ${Math.floor(h / 24)} j`; }
+function renderAge(){
+  const el = $("dataAge"), f = fiches.find(x => x.id === moi);
+  if (!f){ el.hidden = true; return; }
+  const parts = [["Villes", f.importVilles], ["Troupes", f.importTroupes]].map(([l, d]) => d ? `${l} importées ${depuis(d)}` : `${l} : pas encore d'import daté`);
+  const vieux = [f.importVilles, f.importTroupes].some(d => !d || (Date.now() - new Date(d)) / 36e5 > ageMax);
+  el.textContent = parts.join(" · "); el.className = "age" + (vieux ? " vieux" : ""); el.hidden = false;
+  el.title = vieux ? `Plus de ${ageMax} h : réimporte tes CSV avant de planifier.` : "";
+}
+setInterval(renderAge, 60000);
+
 /* ---------- boot ---------- */
 buildForm(); buildTsGrid(); resetForm(); fillUnitSelect(""); render(); renderTabs(); renderBinome(); renderAttaques(); renderDefense(); renderNow();
 (async () => {
@@ -2562,7 +2642,8 @@ buildForm(); buildTsGrid(); resetForm(); fillUnitSelect(""); render(); renderTab
     if (document.activeElement?.id !== "obj-pct") $("obj-pct").value = objectif.pct; if (document.activeElement?.id !== "obj-ts") $("obj-ts").value = objectif.ts || ""; renderBinome(); } }, () => {});
   startAttaques(); startDefense(); startBarons(); startCarte();
   db.collection("fiches").orderBy("creeLe").onSnapshot(snap => {
-    fiches = snap.docs.map(d => ({id:d.id, nom:d.data().nom || d.id}));
+    fiches = snap.docs.map(d => ({id:d.id, nom:d.data().nom || d.id, importVilles:d.data().importVilles || "", importTroupes:d.data().importTroupes || ""}));
+    renderAge();
     let want = currentFiche; if (!want){ try { want = moi || localStorage.getItem("ficheActive"); } catch {} }
     renderMe();
     if (!fiches.some(f => f.id === want)) want = fiches[0]?.id || null;
