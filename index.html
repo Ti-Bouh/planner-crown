@@ -294,8 +294,11 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
 .brushes button{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
 .brushes button[aria-pressed="true"]{border-color:var(--brass);box-shadow:inset 0 0 0 1px var(--brass)}
 .csw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px}
-.clayout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
-@media (max-width:960px){.clayout{grid-template-columns:1fr}}
+.clayout{display:grid;grid-template-columns:300px minmax(0,1fr);gap:16px;align-items:start}
+.clayout>*{min-width:0}
+.cside{order:-1;position:sticky;top:8px;max-height:calc(100vh - 16px);overflow:auto}
+.cmapbox{max-width:100%;min-width:0}
+@media (max-width:960px){.clayout{grid-template-columns:1fr}.cside{position:static;max-height:none;order:0}}
 .cmapwrap{overflow:auto;max-height:76vh;border:1px solid var(--line);border-radius:8px;background:var(--keep-soft)}
 #cMap{display:block;cursor:crosshair;touch-action:none}
 .cmapbox{position:relative}
@@ -619,6 +622,8 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
       <label><span class="lbl">Continent</span><select id="cCont"></select></label>
       <div class="czoom"><span class="lbl">Zoom</span><div class="czbtns"><button type="button" id="cZoomOut" aria-label="Dézoomer">−</button><select id="cZoom" aria-label="Niveau de zoom"><option value="4">40 %</option><option value="6">60 %</option><option value="9" selected>100 %</option><option value="12">130 %</option><option value="16">180 %</option><option value="22">250 %</option><option value="30">330 %</option><option value="40">450 %</option></select><button type="button" id="cZoomIn" aria-label="Zoomer">+</button></div></div>
       <label><span class="lbl">Aller à (X:Y)</span><input id="cGoto" placeholder="348:326" style="width:110px"></label>
+      <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="cShowFond" checked><span class="chint" style="margin:0">Fond (capture)</span></label>
+      <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="cShowTerr" checked><span class="chint" style="margin:0">Terrain dessiné</span></label>
       <div class="cmodes" role="group" aria-label="Mode">
         <button type="button" id="cModeResa" aria-pressed="true">Réserver</button>
         <button type="button" id="cModeTerr" aria-pressed="false">Bloquer le terrain</button>
@@ -655,6 +660,7 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
       <li>Choisissez une capture de la carte du jeu.</li>
       <li>Cliquez au centre d'une ville dont vous connaissez les coordonnées (repère A), puis d'une deuxième (repère B), le plus loin possible de la première. Tapez leurs coordonnées.</li>
       <li>Vérifiez que la grille tombe bien sur les cases (ajustez si besoin), délimitez la zone de carte si la capture contient des menus, puis cliquez sur « Analyser ».</li>
+      <li>La partie de capture analysée devient aussi le <strong>fond de la carte</strong> (plusieurs captures se complètent).</li>
       <li>Contrôlez l'aperçu (cadre rouge = ville d'un autre joueur, bleu clair = case maritime au bord d'un cours d'eau ou de la mer), puis « Appliquer à la carte ». Corrigez ensuite au pinceau si nécessaire.</li>
     </ol>
     <div class="ctool">
@@ -674,7 +680,7 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
       <label><span class="lbl">Sensibilité</span><input type="range" id="cImpSens" min="0.6" max="1.4" step="0.05" value="1" style="width:130px"></label>
       <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="cImpOver"><span class="chint" style="margin:0">Écraser le terrain déjà dessiné</span></label>
       <button type="button" id="cImpRun">Analyser</button>
-      <button type="button" class="primary" id="cImpApply" disabled>Appliquer à la carte</button>
+      <button type="button" class="primary" id="cImpApply" disabled>Appliquer à la carte</button><button type="button" id="cFondDel">Supprimer le fond du continent</button>
     </div>
     <label style="display:flex;gap:6px;align-items:center;margin:4px 0"><input type="checkbox" id="cImpHide"><span class="chint" style="margin:0">Masquer l'analyse pour comparer avec la capture</span></label>
     <p class="chint" id="cImpMsg">Aucune capture chargée.</p>
@@ -2097,7 +2103,9 @@ $("quickImport").addEventListener("click", () => {
 const TERR = {foret:{n:"Forêt",c:"#3f6b35"}, montagne:{n:"Montagne",c:"#8c8c8c"}, colline:{n:"Colline",c:"#b39a5a"}, eau:{n:"Eau",c:"#3a7db8"}, mer:{n:"Maritime",c:"#9fd0ef",ok:true}};
 const RTYPES = ["Off","Def","Hub","Mixte","Maritime"];
 let resa = {}, terrain = {}, terrExists = false, autres = [], carteSel = null, carteMode = "resa", brush = "foret";
-let carteCont = null, carteSubs = [], painting = false, pendingTerr = {}, cCell = 9, rectSel = null;
+let carteCont = null, carteSubs = [], painting = false, pendingTerr = {}, cCell = 9, rectSel = null, fondImg = null, fondP = 0, fondTiles = {};
+const hasFond = () => !!(fondImg || Object.keys(fondTiles).length);
+const loadImg = src => new Promise(r => { const im = new Image(); im.onload = () => r(im); im.onerror = () => r(null); im.src = src; });
 const ck = (x, y) => x + "_" + y;
 const contOf = (x, y) => Math.floor(y / 100) * 10 + Math.floor(x / 100);
 const cvar = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
@@ -2112,9 +2120,10 @@ function resaStatut(r, cm){ return cm[ck(r.x, r.y)] ? "fondee" : (r.statut || "r
   const setMode = m => { carteMode = m; $("cModeResa").setAttribute("aria-pressed", String(m === "resa")); $("cModeTerr").setAttribute("aria-pressed", String(m === "terr")); $("cBrushBar").hidden = m !== "terr"; };
   $("cModeResa").onclick = () => setMode("resa"); $("cModeTerr").onclick = () => setMode("terr");
   $("cCont").addEventListener("change", () => { setCarteCont(+$("cCont").value); });
+  ["cShowFond","cShowTerr"].forEach(id => $(id).addEventListener("change", () => renderCarte()));
   $("cZoom").addEventListener("change", () => { const w = $("cWrap"), lab = 24, mx = w.clientWidth / 2, my = w.clientHeight / 2, fx = (w.scrollLeft + mx - lab) / cCell, fy = (w.scrollTop + my - lab) / cCell;
     try { localStorage.setItem("carteZoom", $("cZoom").value); } catch {} drawCarte(); w.scrollLeft = fx * cCell + lab - mx; w.scrollTop = fy * cCell + lab - my; });
-  $("cGoto").addEventListener("change", () => { const m = $("cGoto").value.match(/(\d{1,3})\D+(\d{1,3})/); if (m && +m[1] < 600 && +m[2] < 600) carteSelect(+m[1], +m[2]); });
+  $("cGoto").addEventListener("change", () => { const m = $("cGoto").value.match(/(\d{1,3})\D+(\d{1,3})/); if (m && +m[1] < 600 && +m[2] < 600 && !(carteSel && carteSel.x === +m[1] && carteSel.y === +m[2])) carteSelect(+m[1], +m[2]); });
   const cv = $("cMap");
   const at = ev => { const r = cv.getBoundingClientRect(), lab = 24; const cx = Math.floor((ev.clientX - r.left - lab) / cCell), cy = Math.floor((ev.clientY - r.top - lab) / cCell);
     if (cx < 0 || cy < 0 || cx > 99 || cy > 99 || carteCont == null) return null; return {x:(carteCont % 10) * 100 + cx, y:Math.floor(carteCont / 10) * 100 + cy}; };
@@ -2186,9 +2195,14 @@ async function flushTerrain(){
 }
 function setCarteCont(c){
   if (c === carteCont) return; carteCont = c; $("cCont").value = c; try { localStorage.setItem("carteCont", c); } catch {}
-  carteSubs.forEach(u => { try { u(); } catch {} }); carteSubs = []; terrain = {}; terrExists = false; autres = []; pendingTerr = {};
+  carteSubs.forEach(u => { try { u(); } catch {} }); carteSubs = []; fondImg = null; fondTiles = {}; terrain = {}; terrExists = false; autres = []; pendingTerr = {};
   if (db){
     carteSubs.push(db.doc(`carte/terrain_C${c}`).onSnapshot(d => { terrExists = d.exists; const cells = (d.exists && d.data().cells) || {}; terrain = {}; for (const k in cells) if (cells[k] && TERR[cells[k]]) terrain[k] = cells[k]; for (const k in pendingTerr){ if (pendingTerr[k]) terrain[k] = pendingTerr[k]; else delete terrain[k]; } renderCarte(); }, () => {}));
+    carteSubs.push(db.doc(`carte/fond_C${c}`).onSnapshot(d => { const v = d.exists && d.data(); if (!v || !v.img){ fondImg = null; renderCarte(); return; }
+      const im = new Image(); im.onload = () => { if (carteCont === c){ fondImg = im; fondP = v.p || 12; renderCarte(); } }; im.src = v.img; }, () => {}));
+    carteSubs.push(db.collection(`carte/fond_C${c}/tuiles`).onSnapshot(async sn => { const next = {};
+      for (const d of sn.docs){ const v = d.data(); if (!v || !v.img) continue; const old = fondTiles[d.id]; next[d.id] = old && old.src === v.img ? old : {src:v.img, img:await loadImg(v.img), p:v.p}; }
+      if (carteCont === c){ fondTiles = next; renderCarte(); } }, () => {}));
     carteSubs.push(db.doc(`carte/autres_C${c}`).onSnapshot(d => { autres = ((d.exists && d.data().list) || []).filter(a => typeof a.x === "number"); if (document.activeElement?.id !== "cAutres") $("cAutres").value = autres.map(a => `${a.x}:${a.y}${a.name ? " " + a.name : ""}`).join("\n"); renderCarte(); }, () => {}));
   }
   renderCarte();
@@ -2225,18 +2239,33 @@ function drawCarte(){
   const x0 = (carteCont % 10) * 100, y0 = Math.floor(carteCont / 10) * 100, cm = cityMap();
   const px = x => lab + (x - x0) * cCell, py = y => lab + (y - y0) * cCell, inC = (x, y) => x >= x0 && x < x0 + N && y >= y0 && y < y0 + N;
   g.fillStyle = cvar("--panel"); g.fillRect(0, 0, W, W);
+  const fond = hasFond() && $("cShowFond").checked;
+  if (fond){ g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high";
+    if (fondImg) g.drawImage(fondImg, lab, lab, N * cCell, N * cCell);
+    for (const k in fondTiles){ const t = fondTiles[k]; if (!t.img) continue; const [tx, ty] = k.split("_").map(Number); g.drawImage(t.img, lab + tx * 25 * cCell, lab + ty * 25 * cCell, 25 * cCell, 25 * cCell); } }
   g.fillStyle = cvar("--muted"); g.font = '11px "IBM Plex Mono", monospace'; g.textAlign = "center"; g.textBaseline = "middle";
   for (let i = 0; i < N; i += 10){ g.fillText(x0 + i, lab + i * cCell + cCell / 2, lab / 2); g.fillText(y0 + i, lab / 2, lab + i * cCell + cCell / 2); }
-  for (const k in terrain){ const [x, y] = k.split("_").map(Number); if (!inC(x, y)) continue; g.fillStyle = TERR[terrain[k]].c; g.fillRect(px(x), py(y), cCell, cCell); }
+  if ($("cShowTerr").checked){ g.globalAlpha = fond ? .38 : 1;
+    for (const k in terrain){ if (terrain[k] === "mer") continue; const [x, y] = k.split("_").map(Number); if (!inC(x, y)) continue; g.fillStyle = TERR[terrain[k]].c; g.fillRect(px(x), py(y), cCell, cCell); }
+    g.globalAlpha = 1; }
   g.fillStyle = cvar("--keep");
-  autres.forEach(a => { if (inC(a.x, a.y)) g.fillRect(px(a.x), py(a.y), cCell, cCell); });
-  for (const k in resa){ const r = resa[k]; if (!inC(r.x, r.y)) continue; const fond = resaStatut(r, cm) === "fondee";
-    g.fillStyle = pVar(r.fiche, !fond); g.fillRect(px(r.x), py(r.y), cCell, cCell);
+  if (fond){ g.strokeStyle = "#e23b3b"; g.lineWidth = Math.max(1.5, cCell / 8); autres.forEach(a => { if (inC(a.x, a.y)) g.strokeRect(px(a.x) + 1, py(a.y) + 1, cCell - 2, cCell - 2); }); }
+  else autres.forEach(a => { if (inC(a.x, a.y)) g.fillRect(px(a.x), py(a.y), cCell, cCell); });
+  const lw = Math.max(1.5, cCell / 9);
+  for (const k in resa){ const r = resa[k]; if (!inC(r.x, r.y)) continue; const fd = resaStatut(r, cm) === "fondee";
+    if (true){ // un simple cadre, plein pour une ville fondée, en pointillés pour une réservation
+      g.strokeStyle = pVar(r.fiche); g.lineWidth = lw; if (!fd) g.setLineDash([Math.max(3, cCell / 4), Math.max(2, cCell / 6)]);
+      g.strokeRect(px(r.x) + lw / 2, py(r.y) + lw / 2, cCell - lw, cCell - lw); g.setLineDash([]);
+      if (cCell >= 14 && !fd){ g.fillStyle = pVar(r.fiche); g.font = `700 ${Math.floor(cCell * .45)}px "IBM Plex Sans", sans-serif`; g.fillText((r.type || "?")[0], px(r.x) + cCell / 2, py(r.y) + cCell / 2 + 1); }
+      continue; }
+    g.fillStyle = pVar(r.fiche, !fd); g.fillRect(px(r.x), py(r.y), cCell, cCell);
     g.strokeStyle = pVar(r.fiche); g.lineWidth = 2; g.strokeRect(px(r.x) + 1, py(r.y) + 1, cCell - 2, cCell - 2);
-    if (cCell >= 14){ g.fillStyle = fond ? "#fff" : pVar(r.fiche); g.font = `600 ${Math.floor(cCell * .55)}px "IBM Plex Sans", sans-serif`; g.fillText((r.type || "?")[0], px(r.x) + cCell / 2, py(r.y) + cCell / 2 + 1); } }
-  for (const k in cm){ if (resa[k]) continue; const [x, y] = k.split("_").map(Number); if (!inC(x, y)) continue; g.fillStyle = pVar(cm[k].fid); g.fillRect(px(x), py(y), cCell, cCell); }
-  g.strokeStyle = cvar("--line");
-  for (let i = 0; i <= N; i++){ const w = i % 10 === 0 ? 1.4 : (cCell >= 9 ? .5 : 0); if (!w) continue; g.lineWidth = w;
+    if (cCell >= 14){ g.fillStyle = fd ? "#fff" : pVar(r.fiche); g.font = `600 ${Math.floor(cCell * .55)}px "IBM Plex Sans", sans-serif`; g.fillText((r.type || "?")[0], px(r.x) + cCell / 2, py(r.y) + cCell / 2 + 1); } }
+  for (const k in cm){ if (resa[k]) continue; const [x, y] = k.split("_").map(Number); if (!inC(x, y)) continue;
+    g.strokeStyle = pVar(cm[k].fid); g.lineWidth = lw; g.strokeRect(px(x) + lw / 2, py(y) + lw / 2, cCell - lw, cCell - lw);
+    if (!fond){ g.fillStyle = pVar(cm[k].fid); g.beginPath(); g.arc(px(x) + cCell / 2, py(y) + cCell / 2, Math.max(1.5, cCell / 6), 0, 7); g.fill(); } }
+  g.strokeStyle = fond ? "rgba(255,255,255,.35)" : cvar("--line");
+  for (let i = 0; i <= N; i++){ const w = i % 10 === 0 ? (fond ? 1 : 1.4) : (cCell >= (fond ? 14 : 9) ? .5 : 0); if (!w) continue; g.lineWidth = w;
     g.beginPath(); g.moveTo(lab + i * cCell + .5, lab); g.lineTo(lab + i * cCell + .5, W); g.stroke();
     g.beginPath(); g.moveTo(lab, lab + i * cCell + .5); g.lineTo(W, lab + i * cCell + .5); g.stroke(); }
   if (rectSel){ const xa = Math.min(rectSel.a.x, rectSel.b.x), xb = Math.max(rectSel.a.x, rectSel.b.x), ya = Math.min(rectSel.a.y, rectSel.b.y), yb = Math.max(rectSel.a.y, rectSel.b.y);
@@ -2251,9 +2280,10 @@ function renderCarte(){
   if (carteCont == null){ let c = 33; try { const s = localStorage.getItem("carteCont"); if (s !== null) c = +s; else { const v = (allCities[moi] || Object.values(allCities).flat())[0]; if (v && v.x !== "" && v.x != null) c = contOf(+v.x, +v.y); } } catch {} setCarteCont(c); return; }
   drawCarte();
   const cm = cityMap(), x0 = (carteCont % 10) * 100, y0 = Math.floor(carteCont / 10) * 100;
-  $("cLegend").innerHTML = fiches.map(f => `<span><i class="csw" style="background:${pCol(f.id)}"></i>${esc(f.nom)} : ville</span><span><i class="csw" style="background:${pSoft(f.id)};border:2px solid ${pCol(f.id)}"></i>${esc(f.nom)} : réservée</span>`).join("")
-    + Object.values(TERR).map(t => `<span><i class="csw" style="background:${t.c}"></i>${t.n}${t.ok ? " (constructible)" : ""}</span>`).join("") + `<span><i class="csw" style="background:var(--keep)"></i>Autre joueur</span>`
-    + `<span>Cases maritimes sur ce continent : ${Object.keys(terrain).filter(k => terrain[k] === "mer").length}</span>`;
+  const fl = hasFond() && $("cShowFond").checked;
+  $("cLegend").innerHTML = fiches.map(f => true ? `<span><i class="csw" style="border:2px solid ${pCol(f.id)}"></i>${esc(f.nom)} : ville</span><span><i class="csw" style="border:2px dashed ${pCol(f.id)}"></i>${esc(f.nom)} : réservée</span>` : `<span><i class="csw" style="background:${pCol(f.id)}"></i>${esc(f.nom)} : ville</span><span><i class="csw" style="background:${pSoft(f.id)};border:2px solid ${pCol(f.id)}"></i>${esc(f.nom)} : réservée</span>`).join("")
+    + Object.entries(TERR).filter(([k]) => k !== "mer").map(([, t]) => `<span><i class="csw" style="background:${t.c}"></i>${t.n}</span>`).join("") + `<span><i class="csw" style="background:var(--keep)"></i>Autre joueur</span>`
+;
   const rs = Object.values(resa).filter(r => r.x >= x0 && r.x < x0 + 100 && r.y >= y0 && r.y < y0 + 100).sort((a, b) => ficheNom(a.fiche).localeCompare(ficheNom(b.fiche)) || a.x - b.x || a.y - b.y);
   $("cList").innerHTML = rs.length ? rs.map(r => `<li data-x="${r.x}" data-y="${r.y}"><span><i class="csw" style="background:${pCol(r.fiche)}"></i> ${r.x}:${r.y} · ${esc(r.type)}${terrain[ck(r.x, r.y)] === "mer" ? " · maritime" : ""}</span><span class="lbl">${esc(ficheNom(r.fiche))}${resaStatut(r, cm) === "fondee" ? " · fondée" : ""}</span></li>`).join("") : `<li class="chint" style="cursor:default">Aucune réservation sur ce continent.</li>`;
   $("cList").querySelectorAll("li[data-x]").forEach(li => li.onclick = () => carteSelect(+li.dataset.x, +li.dataset.y));
@@ -2267,7 +2297,8 @@ function renderCarteCell(cm){
   else if (!ci && !au) h += `<span class="chint">Case terrestre</span>`;
   if (ci) h += `<span>Ville de ${pName(ci.fid)} : ${esc(ci.name || "")}${t === "mer" ? " · maritime" : ""}</span>`;
   if (au) h += `<span>Autre joueur : ${esc(au.name || "ville")}</span>`;
-  if (r) h += `<span>${resaStatut(r, cm) === "fondee" ? "Fondée" : "Réservée"} par ${pName(r.fiche)} · ${esc(r.type)}</span>` + (r.note ? `<span class="lbl">${esc(r.note)}</span>` : "") + (r.date ? `<span class="lbl">le ${new Date(r.date).toLocaleDateString("fr-FR")}</span>` : "");
+  if (!r && !ci && !au) h += `<span><strong>Non réservée</strong></span>`;
+  if (r) h += `<span><strong>${resaStatut(r, cm) === "fondee" ? "Fondée" : "Réservée"} par ${pName(r.fiche)}</strong> · ${esc(r.type)}</span>` + (r.note ? `<span class="lbl">${esc(r.note)}</span>` : "") + (r.date ? `<span class="lbl">le ${new Date(r.date).toLocaleDateString("fr-FR")}</span>` : "");
   h += `</div>`;
   const ro = !db || canWrite === false;
   if (ro){ box.innerHTML = h + `<p class="chint">Lecture seule.</p>`; return; }
@@ -2306,22 +2337,29 @@ function impCal(){
   const pa = $("cImpA").value.match(/(\d{1,3})\D+(\d{1,3})/), pb = $("cImpB").value.match(/(\d{1,3})\D+(\d{1,3})/);
   if (!imp.A || !imp.B || !pa || !pb) return null;
   const A = {x:+pa[1], y:+pa[2]}, B = {x:+pb[1], y:+pb[2]};
-  let sx = A.x !== B.x ? (imp.B.px - imp.A.px) / (B.x - A.x) : null, sy = A.y !== B.y ? (imp.B.py - imp.A.py) / (B.y - A.y) : null;
-  if (sx == null && sy == null) return null; if (sx == null) sx = sy; if (sy == null) sy = sx;
+  const dxc = B.x - A.x, dyc = B.y - A.y, dxp = imp.B.px - imp.A.px, dyp = imp.B.py - imp.A.py;
+  if (!dxc && !dyc) return null;
+  const big = Math.abs(dxc) >= Math.abs(dyc), m = Math.abs(big ? dxp / dxc : dyp / dyc); // taille d'une case (cases carrées)
+  let warn = null;
+  const offX = Math.abs(dxp - m * dxc), offY = Math.abs(dyp - m * dyc);
+  if (offX > m * .6 || offY > m * .6){
+    warn = `Les deux repères ne correspondent pas : avec ces coordonnées, les cases ne seraient pas carrées. Vérifiez les coordonnées tapées : d'après l'image, le repère B serait plutôt vers ${Math.round(A.x + dxp / m)}:${Math.round(A.y + dyp / m)}.`; }
+  let sx = m * (dxc ? Math.sign(dxp / dxc) || 1 : 1), sy = m * (dyc ? Math.sign(dyp / dyc) || 1 : 1);
   sx *= imp.k; sy *= imp.k; if (Math.abs(sx) < 4 || Math.abs(sy) < 4) return null;
   const toPx = (X, Y) => ({x:imp.A.px + imp.offX + (X - A.x) * sx, y:imp.A.py + imp.offY + (Y - A.y) * sy});
   const toCell = (px, py) => ({x:Math.round(A.x + (px - imp.A.px - imp.offX) / sx), y:Math.round(A.y + (py - imp.A.py - imp.offY) / sy)});
-  return {A, B, sx, sy, toPx, toCell};
+  return {A, B, sx, sy, toPx, toCell, warn};
 }
 function impDraw(){
   const cv = $("cImpCv"); if (!imp.img) return;
   const W = imp.img.width, H = imp.img.height; if (cv.width !== W){ cv.width = W; cv.height = H; }
   const g = cv.getContext("2d"); g.drawImage(imp.img, 0, 0);
   const cal = impCal();
+  if (cal && cal.warn){ $("cImpMsg").textContent = "⚠ " + cal.warn; $("cImpApply").disabled = true; }
   if (cal){
     const c0 = cal.toCell(0, 0), c1 = cal.toCell(W, H), xa = Math.min(c0.x, c1.x) - 1, xb = Math.max(c0.x, c1.x) + 1, ya = Math.min(c0.y, c1.y) - 1, yb = Math.max(c0.y, c1.y) + 1;
     const show = !$("cImpHide").checked;
-    if (show && imp.res) for (const k in imp.res){ const [x, y] = k.split("_").map(Number), p = cal.toPx(x, y), c = TERR[imp.res[k]].c; g.fillStyle = c + "55"; g.fillRect(p.x - cal.sx / 2, p.y - cal.sy / 2, cal.sx, cal.sy); g.strokeStyle = c; g.lineWidth = 2; g.strokeRect(p.x - cal.sx / 2 + 1.5, p.y - cal.sy / 2 + 1.5, cal.sx - 3, cal.sy - 3); }
+    if (show && imp.res) for (const k in imp.res){ if (imp.res[k] === "mer") continue; const [x, y] = k.split("_").map(Number), p = cal.toPx(x, y), c = TERR[imp.res[k]].c; g.fillStyle = c + "55"; g.fillRect(p.x - cal.sx / 2, p.y - cal.sy / 2, cal.sx, cal.sy); g.strokeStyle = c; g.lineWidth = 2; g.strokeRect(p.x - cal.sx / 2 + 1.5, p.y - cal.sy / 2 + 1.5, cal.sx - 3, cal.sy - 3); }
     if (show && imp.villes) imp.villes.forEach(v => { const p = cal.toPx(v.x, v.y); g.strokeStyle = "#ff3b3b"; g.lineWidth = 3; g.strokeRect(p.x - cal.sx / 2 + 2, p.y - cal.sy / 2 + 2, cal.sx - 4, cal.sy - 4); });
     if (show) ownCities().forEach(k => { const [x, y] = k.split("_").map(Number), p = cal.toPx(x, y); if (p.x < 0 || p.y < 0 || p.x > W || p.y > H) return; g.strokeStyle = "#2ee66b"; g.lineWidth = 3; g.strokeRect(p.x - cal.sx / 2 + 2, p.y - cal.sy / 2 + 2, cal.sx - 4, cal.sy - 4); });
     g.strokeStyle = "rgba(255,255,255,.45)"; g.lineWidth = 1;
@@ -2336,6 +2374,7 @@ function impDraw(){
 }
 function impClassify(){
   const cal = impCal(); if (!cal || !imp.data){ $("cImpMsg").textContent = "Placez d'abord les deux repères et tapez leurs coordonnées."; return; }
+  if (cal.warn){ $("cImpMsg").textContent = "⚠ " + cal.warn; return; }
   const W = imp.img.width, H = imp.img.height, d = imp.data.data, sens = +$("cImpSens").value;
   const z = imp.zone ? {x1:Math.min(imp.zone.x1, imp.zone.x2), x2:Math.max(imp.zone.x1, imp.zone.x2), y1:Math.min(imp.zone.y1, imp.zone.y2), y2:Math.max(imp.zone.y1, imp.zone.y2)} : {x1:0, y1:0, x2:W, y2:H};
   const c0 = cal.toCell(z.x1, z.y1), c1 = cal.toCell(z.x2, z.y2), own = ownCities(), au = new Set(autres.map(a => ck(a.x, a.y)));
@@ -2392,23 +2431,56 @@ function impClassify(){
   $("cImpMsg").textContent = `Analyse : ${cnt.ville} villes d'autres joueurs, ${cnt.foret} forêt, ${cnt.montagne} montagne, ${cnt.colline} colline, ${cnt.eau} eau, ${cnt.mer} maritimes (cours d'eau ou côte), ${cnt.libre} cases libres. Vérifiez l'aperçu, puis appliquez.`;
   impDraw();
 }
+async function impSaveFond(){
+  const cal = impCal(); if (!cal) return 0;
+  const W = imp.img.width, H = imp.img.height, z = imp.zone ? {x1:Math.min(imp.zone.x1, imp.zone.x2), x2:Math.max(imp.zone.x1, imp.zone.x2), y1:Math.min(imp.zone.y1, imp.zone.y2), y2:Math.max(imp.zone.y1, imp.zone.y2)} : {x1:0, y1:0, x2:W, y2:H};
+  const a = cal.toCell(z.x1, z.y1), b = cal.toCell(z.x2, z.y2);
+  const cx1 = Math.max(0, Math.min(a.x, b.x)), cx2 = Math.min(599, Math.max(a.x, b.x)), cy1 = Math.max(0, Math.min(a.y, b.y)), cy2 = Math.min(599, Math.max(a.y, b.y));
+  const P = Math.max(12, Math.min(40, Math.round(Math.abs(cal.sx)))); // résolution d'origine de la capture
+  let n = 0;
+  for (let TX = Math.floor(cx1 / 25); TX <= Math.floor(cx2 / 25); TX++) for (let TY = Math.floor(cy1 / 25); TY <= Math.floor(cy2 / 25); TY++){
+    const X0 = TX * 25, Y0 = TY * 25, c = contOf(X0, Y0), key = `${TX % 4}_${TY % 4}`;
+    try {
+      const ref = db ? db.doc(`carte/fond_C${c}/tuiles/${key}`) : null;
+      let oldSrc = null;
+      if (c === carteCont && fondTiles[key]) oldSrc = fondTiles[key].src; else if (ref){ const d = await ref.get(); if (d.exists) oldSrc = d.data().img; }
+      const cv = document.createElement("canvas"); cv.width = cv.height = 25 * P; const g = cv.getContext("2d");
+      g.fillStyle = "#6f7d3a"; g.fillRect(0, 0, cv.width, cv.height);
+      if (oldSrc){ const im = await loadImg(oldSrc); if (im) g.drawImage(im, 0, 0, cv.width, cv.height); }
+      else if (c === carteCont && fondImg){ g.drawImage(fondImg, -(TX % 4) * 25 * P, -(TY % 4) * 25 * P, 100 * P, 100 * P); }
+      g.save(); const kx = P / cal.sx, ky = P / cal.sy;
+      g.setTransform(kx, 0, 0, ky, (cal.A.x - X0 + .5) * P - (imp.A.px + imp.offX) * kx, (cal.A.y - Y0 + .5) * P - (imp.A.py + imp.offY) * ky);
+      g.beginPath(); g.rect(z.x1, z.y1, z.x2 - z.x1, z.y2 - z.y1); g.clip(); g.imageSmoothingQuality = "high"; g.drawImage(imp.img, 0, 0); g.restore();
+      let url = null; for (const q of [.88, .78, .65, .5]){ const u = cv.toDataURL("image/jpeg", q); if (u.length < 900000){ url = u; break; } }
+      if (!url) continue;
+      if (c === carteCont) fondTiles[key] = {src:url, img:await loadImg(url), p:P};
+      if (ref) await ref.set({img:url, p:P, maj:new Date().toISOString()});
+      n++;
+    } catch(err){ setStatus("Fond non enregistré : " + (err.message || err.code)); }
+  }
+  return n;
+}
 async function impApply(){
-  if (!imp.res || canWrite === false || !db) { if (!db) $("cImpMsg").textContent = "Registre indisponible ici : l'application se fait sur le site."; return; }
+  const cw = impCal(); if (cw && cw.warn){ $("cImpMsg").textContent = "⚠ " + cw.warn; return; }
+  if (!imp.res || canWrite === false) return;
   const over = $("cImpOver").checked, byC = {};
   for (const k in imp.res){ const [x, y] = k.split("_").map(Number); (byC[contOf(x, y)] ||= {})[k] = imp.res[k]; }
   let n = 0;
   for (const c in byC){
     const cells = byC[c];
     if (+c === carteCont){ for (const k in cells){ if (!over && terrain[k]) continue; terrain[k] = cells[k]; pendingTerr[k] = cells[k]; n++; } await flushTerrain(); }
+    else if (!db) continue;
     else { try { const ref = db.doc(`carte/terrain_C${c}`), d = await ref.get(), ex = (d.exists && d.data().cells) || {}, put = {};
       for (const k in cells){ if (!over && ex[k]) continue; put[k] = cells[k]; n++; }
       if (Object.keys(put).length){ if (d.exists) await ref.update({cells:put}); else await ref.set({cells:put}); } } catch(err){ setStatus("Terrain non enregistré : " + (err.message || err.code)); } }
   }
   let nv = 0; const vByC = {};
   (imp.villes || []).forEach(v => { (vByC[contOf(v.x, v.y)] ||= []).push(v); });
-  for (const c in vByC){ try { const ref = db.doc(`carte/autres_C${c}`), d = await ref.get(), list = ((d.exists && d.data().list) || []).slice(), have = new Set(list.map(a => ck(a.x, a.y)));
+  if (!db){ (vByC[carteCont] || []).forEach(v => { if (!autres.some(a => a.x === v.x && a.y === v.y)){ autres.push({x:v.x, y:v.y, name:"détectée"}); nv++; } }); }
+  else for (const c in vByC){ try { const ref = db.doc(`carte/autres_C${c}`), d = await ref.get(), list = ((d.exists && d.data().list) || []).slice(), have = new Set(list.map(a => ck(a.x, a.y)));
       vByC[c].forEach(v => { if (!have.has(ck(v.x, v.y))){ list.push({x:v.x, y:v.y, name:"détectée"}); nv++; } }); await ref.set({list}); } catch(err){ setStatus("Villes non enregistrées : " + (err.message || err.code)); } }
-  renderCarte(); $("cImpMsg").textContent = `${n} cases de terrain et ${nv} villes d'autres joueurs appliquées à la carte.`; setStatus(`${n} cases de terrain et ${nv} villes importées depuis la capture.`);
+  const nf = await impSaveFond();
+  renderCarte(); $("cImpMsg").textContent = (db ? "" : "Registre indisponible ici : affiché sur cette page seulement, pas partagé. ") + (nf ? "Fond de carte appliqué. " : "") + `${n} cases de terrain et ${nv} villes d'autres joueurs appliquées à la carte.`; setStatus(`${n} cases de terrain et ${nv} villes importées depuis la capture.`);
 }
 (function initImport(){
   const setM = m => { imp.mode = m; $("cImpRefA").setAttribute("aria-pressed", String(m === "A")); $("cImpRefB").setAttribute("aria-pressed", String(m === "B")); $("cImpZone").setAttribute("aria-pressed", String(m === "zone")); };
@@ -2437,6 +2509,10 @@ async function impApply(){
     if (a === "x-") imp.offX--; if (a === "x+") imp.offX++; if (a === "y-") imp.offY--; if (a === "y+") imp.offY++; if (a === "s-") imp.k *= 0.995; if (a === "s+") imp.k *= 1.005; imp.res = null; impDraw(); });
   $("cImpRun").onclick = impClassify; $("cImpApply").onclick = impApply;
   $("cImpHide").addEventListener("change", impDraw);
+  $("cFondDel").onclick = async () => { if (carteCont == null || !confirm(`Supprimer l'image de fond du continent C${carteCont} ?`)) return;
+    if (!db){ fondImg = null; fondTiles = {}; renderCarte(); setStatus("Fond supprimé (sur cette page)."); return; }
+    try { const t = await db.collection(`carte/fond_C${carteCont}/tuiles`).get(); for (const d of t.docs) await db.doc(`carte/fond_C${carteCont}/tuiles/${d.id}`).delete(); } catch {}
+    try { await db.doc(`carte/fond_C${carteCont}`).delete(); setStatus("Fond supprimé."); } catch(err){ setStatus("Suppression impossible : " + (err.message || err.code)); } };
   $("cImpCsv").addEventListener("change", async e => { let n = 0;
     for (const f of e.target.files){ const txt = await f.text(); for (const m of txt.matchAll(/\((\d{1,3}):(\d{1,3})\)/g)){ imp.own.add(ck(+m[1], +m[2])); n++; } }
     imp.res = null; $("cImpApply").disabled = true; impDraw();
