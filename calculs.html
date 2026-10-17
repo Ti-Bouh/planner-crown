@@ -63,6 +63,12 @@ a{color:var(--brass)}
 .seg button{border:none;background:transparent;padding:5px 12px;border-radius:6px;font-weight:600;font-size:13px;color:var(--muted)}
 .seg button[aria-selected="true"]{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
 .neg{color:var(--off);font-weight:600}
+.guide{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px 18px;margin:0;padding:0;list-style:none}
+.guide li{display:grid;gap:2px;min-width:0}
+.guide button{border:none;background:none;padding:0;font:inherit;font-weight:600;color:var(--brass);text-align:left;cursor:pointer;justify-self:start}
+.guide button:hover{text-decoration:underline}
+.guide span{font-size:13px;color:var(--muted);line-height:1.4}
+.guide li.on button{color:var(--ink)}
 #rvTable th{white-space:normal;vertical-align:bottom;line-height:1.25}
 .drop{border:2px dashed var(--line);border-radius:10px;padding:14px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;cursor:pointer;background:var(--bg);margin-bottom:12px}
 .drop:hover,.drop.over{border-color:var(--brass);background:var(--brass-soft)}
@@ -118,13 +124,25 @@ svg.chart text{font-family:var(--f-body);font-size:11px;fill:var(--muted)}
   <header>
     <div>
       <h1>Calculs</h1>
-      <p class="sub">Castle, Cabines et Raids : mêmes formules que les classeurs Crown, calculées en direct. <a class="back" href="./">← Planner</a></p>
+      <p class="sub">Castle, Cabines, Raids et Recrutement : mêmes formules que les classeurs Crown, calculées en direct. <a class="back" href="./">← Planner</a></p>
     </div>
     <div class="hright">
       <div class="me"><label class="me"><span class="lbl">Je suis</span><select id="meSel"><option value="">— choisir —</option></select></label></div>
       <span class="status" id="status">Connexion…</span>
     </div>
   </header>
+
+  <section class="panel" id="guideBox" aria-label="À quoi sert chaque onglet">
+    <div class="btns" style="justify-content:space-between;margin-bottom:10px"><b style="font-family:var(--f-display);font-size:1.15rem;letter-spacing:.03em">À quoi sert chaque onglet</b><button type="button" class="link" id="guideHide">Masquer</button></div>
+    <ul class="guide">
+      <li data-g="cite"><button type="button" data-goto="cite">Ma cité</button><span>Les réglages communs, saisis une fois : recherche, fer / pierre / bois par jour, plan de la cité. Les autres onglets s'en servent.</span></li>
+      <li data-g="castle"><button type="button" data-goto="castle">Castle</button><span>La meilleure répartition Arenas / Barracks / Cabines pour atteindre ton objectif de Vanquishers le plus vite, et sa simulation jour par jour.</span></li>
+      <li data-g="cabines"><button type="button" data-goto="cabines">Cabines</button><span>Le niveau et le nombre de Cabines pour construire toute la cité au niveau 10 le plus vite, puis le plan de démolition.</span></li>
+      <li data-g="raids"><button type="button" data-goto="raids">Raids</button><span>Combien de troupes envoyer sur une caverne, quel mélange Rangers / Triaires rapporte le plus, et le bilan de tes raids.</span></li>
+      <li data-g="recrut"><button type="button" data-goto="recrut">Recrutement</button><span>Colle un rapport de raid : combien de zerks ton fer paie à l'heure, et le niveau des Training Arenas pour recruter sans arrêt.</span></li>
+    </ul>
+  </section>
+  <p class="note" id="guideShow" hidden style="margin:-8px 0 0"><button type="button" class="link" style="padding:0">Afficher l'aide des onglets</button></p>
 
   <div class="views" role="tablist" aria-label="Outils">
     <div class="vgrp">
@@ -829,9 +847,14 @@ function subscribeRapports(){
 function renderAll(){ renderCite(); renderCab(); renderDem(); renderRaidsAll(); renderSim(); renderResume(); renderRecrut(); renderLien(); }
 
 /* ---------- vues ---------- */
-function showView(v){ if (!["cite","castle","cabines","raids","recrut"].includes(v)) v = "cite"; document.querySelectorAll(".vbtn").forEach(b => b.setAttribute("aria-selected", String(b.dataset.view === v)));
+function showView(v){ if (!["cite","castle","cabines","raids","recrut"].includes(v)) v = "cite";
+  document.querySelectorAll(".guide li").forEach(li => li.classList.toggle("on", li.dataset.g === v)); document.querySelectorAll(".vbtn").forEach(b => b.setAttribute("aria-selected", String(b.dataset.view === v)));
   ["cite","castle","cabines","raids","recrut"].forEach(k => $("view-" + k).hidden = k !== v); try { localStorage.setItem("calcView", v); } catch {}
   if (v === "castle" && !lastBest && !solving) solve(); }
+document.querySelector(".guide").addEventListener("click", e => { const b = e.target.closest("[data-goto]"); if (b) showView(b.dataset.goto); });
+function setGuide(show){ $("guideBox").hidden = !show; $("guideShow").hidden = show; try { localStorage.setItem("calcGuide", show ? "1" : "0"); } catch {} }
+$("guideHide").addEventListener("click", () => setGuide(false)); $("guideShow").addEventListener("click", () => setGuide(true));
+try { if (localStorage.getItem("calcGuide") === "0") setGuide(false); } catch {}
 document.querySelector(".views").addEventListener("click", e => { const b = e.target.closest("[data-view]"); if (b) showView(b.dataset.view); });
 
 /* ---------- enregistrement ---------- */
