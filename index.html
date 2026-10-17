@@ -1983,7 +1983,7 @@ function renderBarons(){
         <td>${pName(b.fiche)}</td><td class="mono">${b.date ? dDate(b.date) + " " : ""}${b.heure ? hhmm(b.heure) : (b.date ? "" : "—")}</td>
         <td><button type="button" class="stbtn ${BN_CLASS[st]}" data-bnst="${esc(b.id)}" ${ro ? "disabled" : ""} aria-label="Statut : ${BN_LABEL[st]}, cliquer pour changer">${BN_LABEL[st]}</button></td>
         <td>${esc(b.note||"")}</td>
-        <td style="white-space:nowrap">${ro ? "" : `<button class="link" data-bnedit="${esc(b.id)}">Modifier</button><button class="link danger" data-bndel="${esc(b.id)}">Supprimer</button>`}</td></tr>`; }).join("") + `</tbody>`;
+        <td style="white-space:nowrap">${ro ? `<button class="link" data-bnmap="${esc(b.id)}">Voir sur la carte</button>` : `<button class="link" data-bnmap="${esc(b.id)}">Voir sur la carte</button><button class="link" data-bnedit="${esc(b.id)}">Modifier</button><button class="link danger" data-bndel="${esc(b.id)}">Supprimer</button>`}</td></tr>`; }).join("") + `</tbody>`;
 }
 function resetBn(){ editBn = null; ["bn-x","bn-y","bn-date","bn-heure","bn-note"].forEach(id => $(id).value = ""); $("bn-warn").textContent = ""; $("bn-save").textContent = "Ajouter le spot"; $("bn-cancel").hidden = true; $("bnTitle").textContent = "Noter un baron envoyé"; }
 function bnCheck(){
@@ -2006,6 +2006,8 @@ $("bnForm").addEventListener("submit", async e => {
   } catch(err){ setStatus("Spot non enregistré : " + (err.message || err.code)); }
 });
 $("bnTable").addEventListener("click", async e => {
+  const mp = e.target.closest("[data-bnmap]");
+  if (mp){ const b = barons.find(x => x.id === mp.dataset.bnmap); if (!b) return; showView("carte"); window.scrollTo({top:0}); carteSelect(+b.x, +b.y); return; }
   const st = e.target.closest("[data-bnst]"), ed = e.target.closest("[data-bnedit]"), del = e.target.closest("[data-bndel]");
   if (st){ const b = barons.find(x => x.id === st.dataset.bnst); if (!b || !db) return;
     try { await db.doc("barons/" + b.id).update({statut:BN_NEXT[b.statut||"envoye"], maj:new Date().toISOString()}); } catch(err){ setStatus("Statut non enregistré : " + (err.message || err.code)); } return; }
@@ -2015,7 +2017,7 @@ $("bnTable").addEventListener("click", async e => {
   if (del) armDelete(del, async () => { try { await db.doc("barons/" + del.dataset.bndel).delete(); if (editBn === del.dataset.bndel) resetBn(); setStatus("Spot supprimé."); } catch(err){ setStatus("Suppression impossible : " + (err.message || err.code)); } });
 });
 function startBarons(){
-  db.collection("barons").onSnapshot(s => { barons = s.docs.map(d => ({id:d.id, ...d.data()})); if (curView === "barons") renderBarons(); }, () => {});
+  db.collection("barons").onSnapshot(s => { barons = s.docs.map(d => ({id:d.id, ...d.data()})); if (curView === "barons") renderBarons(); if (curView === "carte") renderCarte(); }, () => {});
 }
 
 function startDefense(){
@@ -2130,7 +2132,7 @@ function resaStatut(r, cm){ return cm[ck(r.x, r.y)] ? "fondee" : (r.statut || "r
     if (cx < 0 || cy < 0 || cx > 99 || cy > 99 || carteCont == null) return null; return {x:(carteCont % 10) * 100 + cx, y:Math.floor(carteCont / 10) * 100 + cy}; };
   cv.addEventListener("pointermove", ev => { const c = at(ev); if (!c){ $("cHover").textContent = "Survolez la carte pour voir les coordonnées."; return; }
     const k = ck(c.x, c.y), r = resa[k], t = terrain[k], ci = cityMap()[k], au = autres.find(a => a.x === c.x && a.y === c.y);
-    $("cHover").textContent = `${c.x}:${c.y}` + (t ? ` · ${TERR[t].n}` : "") + (ci ? ` · ville de ${ficheNom(ci.fid)} (${ci.name || ""})` : "") + (au ? ` · ${au.name || "autre ville"}` : "") + (r ? ` · réservée par ${ficheNom(r.fiche)} (${r.type})` : "");
+    $("cHover").textContent = `${c.x}:${c.y}` + (t ? ` · ${TERR[t].n}` : "") + (ci ? ` · ville de ${ficheNom(ci.fid)} (${ci.name || ""})` : "") + (au ? ` · ${au.name || "autre ville"}` : "") + (r ? ` · réservée par ${ficheNom(r.fiche)} (${r.type})` : "") + barons.filter(b => bnLive(b) && +b.x === c.x && +b.y === c.y).map(b => ` · baron de ${ficheNom(b.fiche)} en route`).join("");
     if (painting && carteMode === "terr") paint(c); });
   const wrap = $("cWrap"), pts = new Map(); let drag = null, pinch = null;
   cv.addEventListener("contextmenu", ev => ev.preventDefault());
@@ -2269,6 +2271,10 @@ function drawCarte(){
   for (let i = 0; i <= N; i++){ const w = i % 10 === 0 ? (fond ? 1 : 1.4) : (cCell >= (fond ? 14 : 9) ? .5 : 0); if (!w) continue; g.lineWidth = w;
     g.beginPath(); g.moveTo(lab + i * cCell + .5, lab); g.lineTo(lab + i * cCell + .5, W); g.stroke();
     g.beginPath(); g.moveTo(lab, lab + i * cCell + .5); g.lineTo(W, lab + i * cCell + .5); g.stroke(); }
+  barons.filter(bnLive).forEach(bn => { if (!inC(+bn.x, +bn.y)) return; const cx = px(+bn.x) + cCell / 2, cy = py(+bn.y) + cCell / 2, rr = Math.max(3, cCell * .42);
+    g.beginPath(); g.moveTo(cx, cy - rr); g.lineTo(cx + rr, cy); g.lineTo(cx, cy + rr); g.lineTo(cx - rr, cy); g.closePath();
+    g.fillStyle = pVar(bn.fiche); g.fill(); g.strokeStyle = "#fff"; g.lineWidth = Math.max(1, cCell / 14); g.stroke();
+    if (cCell >= 14){ g.fillStyle = "#fff"; g.font = `700 ${Math.floor(cCell * .42)}px "IBM Plex Sans", sans-serif`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("B", cx, cy + 1); } });
   if (rectSel){ const xa = Math.min(rectSel.a.x, rectSel.b.x), xb = Math.max(rectSel.a.x, rectSel.b.x), ya = Math.min(rectSel.a.y, rectSel.b.y), yb = Math.max(rectSel.a.y, rectSel.b.y);
     g.fillStyle = brush ? TERR[brush].c + "88" : "rgba(127,127,127,.35)"; g.fillRect(px(xa), py(ya), (xb - xa + 1) * cCell, (yb - ya + 1) * cCell);
     g.strokeStyle = cvar("--brass"); g.lineWidth = 2; g.setLineDash([5, 3]); g.strokeRect(px(xa), py(ya), (xb - xa + 1) * cCell, (yb - ya + 1) * cCell); g.setLineDash([]);
@@ -2283,7 +2289,7 @@ function renderCarte(){
   const cm = cityMap(), x0 = (carteCont % 10) * 100, y0 = Math.floor(carteCont / 10) * 100;
   const fl = hasFond() && $("cShowFond").checked;
   $("cLegend").innerHTML = fiches.map(f => true ? `<span><i class="csw" style="border:2px solid ${pCol(f.id)}"></i>${esc(f.nom)} : ville</span><span><i class="csw" style="border:2px dashed ${pCol(f.id)}"></i>${esc(f.nom)} : réservée</span>` : `<span><i class="csw" style="background:${pCol(f.id)}"></i>${esc(f.nom)} : ville</span><span><i class="csw" style="background:${pSoft(f.id)};border:2px solid ${pCol(f.id)}"></i>${esc(f.nom)} : réservée</span>`).join("")
-    + Object.entries(TERR).filter(([k]) => k !== "mer").map(([, t]) => `<span><i class="csw" style="background:${t.c}"></i>${t.n}</span>`).join("") + `<span><i class="csw" style="background:var(--keep)"></i>Autre joueur</span>`
+    + Object.entries(TERR).filter(([k]) => k !== "mer").map(([, t]) => `<span><i class="csw" style="background:${t.c}"></i>${t.n}</span>`).join("") + `<span><i class="csw" style="background:var(--keep)"></i>Autre joueur</span><span><i class="csw" style="background:var(--brass);transform:rotate(45deg) scale(.8)"></i>Baron en route (couleur du joueur)</span>`
 ;
   const rs = Object.values(resa).filter(r => r.x >= x0 && r.x < x0 + 100 && r.y >= y0 && r.y < y0 + 100).sort((a, b) => ficheNom(a.fiche).localeCompare(ficheNom(b.fiche)) || a.x - b.x || a.y - b.y);
   $("cList").innerHTML = rs.length ? rs.map(r => `<li data-x="${r.x}" data-y="${r.y}"><span><i class="csw" style="background:${pCol(r.fiche)}"></i> ${r.x}:${r.y} · ${esc(r.type)}${terrain[ck(r.x, r.y)] === "mer" ? " · maritime" : ""}</span><span class="lbl">${esc(ficheNom(r.fiche))}${resaStatut(r, cm) === "fondee" ? " · fondée" : ""}</span></li>`).join("") : `<li class="chint" style="cursor:default">Aucune réservation sur ce continent.</li>`;
@@ -2298,6 +2304,7 @@ function renderCarteCell(cm){
   else if (!ci && !au) h += `<span class="chint">Case terrestre</span>`;
   if (ci) h += `<span>Ville de ${pName(ci.fid)} : ${esc(ci.name || "")}${t === "mer" ? " · maritime" : ""}</span>`;
   if (au) h += `<span>Autre joueur : ${esc(au.name || "ville")}</span>`;
+  barons.filter(b => bnLive(b) && +b.x === x && +b.y === y).forEach(b => { h += `<span><strong>Baron en route</strong> : ${pName(b.fiche)}${b.date || b.heure ? ` · arrivée ${b.date ? dDate(b.date) + " " : ""}${b.heure ? hhmm(b.heure) : ""}` : ""}${b.note ? ` · ${esc(b.note)}` : ""}</span>`; });
   if (!r && !ci && !au) h += `<span><strong>Non réservée</strong></span>`;
   if (r) h += `<span><strong>${resaStatut(r, cm) === "fondee" ? "Fondée" : "Réservée"} par ${pName(r.fiche)}</strong> · ${esc(r.type)}</span>` + (r.note ? `<span class="lbl">${esc(r.note)}</span>` : "") + (r.date ? `<span class="lbl">le ${new Date(r.date).toLocaleDateString("fr-FR")}</span>` : "");
   h += `</div>`;
