@@ -610,7 +610,7 @@ function renderRecrut(){
       <label class="field"><span>Nom de la ville</span><input data-rv-k="nom" value="${esc(v.nom || "")}"></label>
       <label class="field"><span>Training Arenas posées</span><input data-rv-k="arenas" type="text" inputmode="decimal" data-num min="0" step="1" value="${esc(v.arenas ?? 5)}"></label>
       <label class="field"><span>Arena niveau 10</span><span class="chk"><input data-rv-k="arena10" type="checkbox" ${v.arena10 ? "checked" : ""}> 1 Arena au niveau 10</span></label>
-      <label class="field"><span>Pierre et bois</span><span class="chk"><input data-rv-k="chantier" type="checkbox" ${v.chantier ? "checked" : ""}> Chantier en cours : gardés pour construire</span></label>
+      <label class="field"><span>Pierre et bois</span><span class="chk"><input data-rv-k="chantier" type="checkbox" ${v.chantier ? "checked" : ""}> Chantier en cours</span><small>Gardés pour construire, pas raffinés.</small></label>
       <label class="field"><span>Surplus de fer gardé pour le raffinage (%)</span><input data-rv-k="surplus" type="text" inputmode="decimal" data-num min="0" max="100" step="1" value="${esc(Math.round((v.surplus ?? 0.1) * 1000) / 10)}"></label>
       <div class="field"><span>&nbsp;</span><button type="button" class="${rDelArm ? "danger primary" : "danger"}" id="rvDel">${rDelArm ? "Confirmer la suppression" : "Supprimer cette ville"}</button></div></div>`;
   if (!$("rvRes")) $("rvBody").innerHTML = `<div id="rvRes" style="display:grid;gap:16px"></div><div class="panel" id="rvRaids"></div>`;
