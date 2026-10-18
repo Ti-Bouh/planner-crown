@@ -108,60 +108,6 @@
     const I = F.map((_, k) => k ? F[k - 1] / 3 : 0), J = G.map((_, k) => k ? G[k - 1] / 3 : 0), Kd = Hc.map(h => h / 2);
     return { b, t, F, G, H: Hc, I, J, K: Kd };
   }
-  function cabParams(p) {
-    // p : {bonus, depart, paquet, arenas, barracks, autresH, pierreJour, boisJour}
-    const arenaH = sum(B.arenaT) / 3600, barH = sum(B.barT) / 3600, castleH = sum(B.castleT) / 3600, basH = sum(B.basT) / 3600;
-    return { arenaH, barH, castleH, basH,
-      travailH: p.arenas * arenaH + p.barracks * barH + castleH + basH + p.autresH,
-      bois: p.arenas * sum(B.arenaW) + sum(B.basW),
-      pierre: p.arenas * sum(B.arenaS) + p.barracks * sum(B.barS) + sum(B.castleS) + sum(B.basS) };
-  }
-  function cabRow(p, L, n, T, P) {
-    const C_ = T.b[L], Dsp = 1 + p.bonus + n * C_;
-    let E = 0;
-    for (let k = 1; k <= 10; k++) { if (k > L || k <= p.depart) continue;
-      for (let i = 0; i < n; i++) E += (T.t[k] / 3600) / (1 + p.bonus + n * T.b[k - 1] + i * (T.b[k] - T.b[k - 1])) / 24; }
-    const F = (P.travailH - (Math.min(n, p.barracks) * P.barH + Math.max(0, n - p.barracks) * P.arenaH)) / Dsp / 24;
-    let G = 0, Hh = 0;
-    for (let i = 0; i < n; i++) {
-      G += (T.H[L] / 2 / 3600) / (Dsp - i * C_) / 24;
-      const grpEnd = Math.min(p.paquet * (Math.floor(i / p.paquet) + 1), n);
-      Hh += (i < Math.max(0, n - p.barracks) ? P.arenaH : P.barH) / (Dsp - C_ * grpEnd) / 24;
-    }
-    const Itot = E + F + G + Hh;
-    const Jb = P.bois + n * (Math.max(0, T.F[L] - T.F[p.depart]) - T.I[L]);
-    const Kp = P.pierre + n * (Math.max(0, T.G[L] - T.G[p.depart]) - T.J[L]);
-    const Lb = n * (T.F[L] - T.I[L]), M = n * (T.G[L] - T.J[L]);
-    const tb = p.boisJour ? Jb / p.boisJour : 0, tp = p.pierreJour ? Kp / p.pierreJour : 0;
-    const N = Math.max(Itot, tb, tp);
-    const O = N === Itot ? "Construction" : (tp >= tb ? "Pierre" : "Bois");
-    return { niveau: L, n, bonusCab: C_, speed: Dsp, montee: E, principale: F, demolition: G, reconstruction: Hh, total: Itot,
-             boisLivrer: Jb, pierreLivrer: Kp, perteBois: Lb, pertePierre: M, delai: N, limitant: O };
-  }
-  function cabOptimise(p, tol) {
-    const T = cabTables(), P = cabParams(p), rows = [];
-    const nMax = Math.max(5, p.nMax || 60); // 60 = grille du classeur ; la page passe le nombre d'emplacements militaires
-    for (let L = 4; L <= 10; L++) for (let n = 5; n <= nMax; n += 5) rows.push(cabRow(p, L, n, T, P));
-    const minN = Math.min(...rows.map(r => r.delai));
-    let rec = null; for (const r of rows) { const v = r.delai <= minN + tol ? r.pertePierre : 1e15; if (!rec || v < rec.v) rec = { v, r }; }
-    let fast = null; for (const r of rows) if (!fast || r.delai < fast.delai) fast = r;
-    const perLevel = []; for (let L = 4; L <= 10; L++) { let b = null; for (const r of rows) if (r.niveau === L && (!b || r.delai < b.delai)) b = r; perLevel.push(b); }
-    return { rows, recommended: rec.r, fastest: fast, perLevel, params: P };
-  }
-
-  // Meilleur rapport temps / niveau : on monte d'un niveau tant que le suivant fait gagner au moins « seuil » jours ;
-  // au niveau retenu, on garde le plus petit nombre de Cabines à moins de « tol » jours du meilleur délai de ce niveau.
-  function cabRatio(o, seuil, tol) {
-    const niv = o.perLevel.map((b, i) => {
-      const prev = i ? o.perLevel[i - 1] : null, gain = prev ? prev.delai - b.delai : null, pierre = prev ? b.pertePierre - prev.pertePierre : null;
-      return { niveau: b.niveau, meilleur: b, gain, pierreEnPlus: pierre, pierreParJour: gain > 0 ? pierre / gain : null };
-    });
-    let k = 0; while (k + 1 < niv.length && niv[k + 1].gain >= seuil) k++;
-    const L = niv[k].niveau, rows = o.rows.filter(r => r.niveau === L), best = Math.min(...rows.map(r => r.delai));
-    const choix = rows.filter(r => r.delai <= best + tol).sort((a, b) => a.n - b.n)[0];
-    const suivant = niv[k + 1] || null;
-    return { niveaux: niv, niveau: L, choix, suivant, plusRapide: o.fastest };
-  }
 
   /* ================= CABINES : temps de construction de la cité complète ================= */
   // Bâtiments du plan, tous montés au niveau 10. Temps de base (s) de chaque bâtiment, du niveau 1 au niveau 10.
@@ -424,5 +370,5 @@
              zerksReelsH, excedentFer: j(excedentFer), raffinage };
   }
 
-  root.CrownEngine = { castleCombo, castleGrid, castleSolve, castleLoss, cabOptimise, cabRatio, citeTemps, citeOptimise, cabDemolition, cabParams, raidSim, journalRow, raidSynthese, recrutement, heures, lireRapport, unitStats, butinBase, defenseParPoint, TYPES };
+  root.CrownEngine = { castleCombo, castleGrid, castleSolve, castleLoss, citeTemps, citeOptimise, cabDemolition, raidSim, journalRow, raidSynthese, recrutement, heures, lireRapport, unitStats, butinBase, defenseParPoint, TYPES };
 })(typeof window !== "undefined" ? window : globalThis);
