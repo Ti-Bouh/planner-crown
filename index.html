@@ -272,6 +272,13 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
 .nowgrid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(300px,1fr);gap:16px;align-items:start}
 @media (max-width:960px){.nowgrid{grid-template-columns:1fr}}
 .nowside{display:grid;gap:16px;min-width:0}
+.sugadd{display:grid;gap:6px}
+.sugadd textarea,.sug textarea{width:100%;min-height:54px;resize:vertical;font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:transparent;color:inherit;box-sizing:border-box}
+.suglist{display:grid;gap:8px;margin-top:10px}
+.sug{border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:grid;gap:4px}
+.sug.done .sugtxt{text-decoration:line-through;color:var(--muted)}
+.sugtxt{white-space:pre-wrap;font-size:13.5px;overflow-wrap:anywhere}
+.sugmeta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;color:var(--muted)}
 .nlist{display:grid;gap:8px}
 .nitem{display:grid;gap:4px;padding:8px 10px;border-radius:6px;background:var(--bg);min-width:0}
 .nitem .nh{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;justify-content:space-between}
@@ -411,6 +418,14 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
         <section class="panel" aria-label="Binôme">
           <div class="toolbar"><h2 style="margin:0">Binôme</h2><button type="button" class="link" data-goto="binome">Détail →</button></div>
           <div id="nowTeam"></div>
+        </section>
+        <section class="panel" aria-label="Suggestions pour le site">
+          <div class="toolbar"><h2 style="margin:0">Suggestions pour le site</h2><label class="chk"><input type="checkbox" id="sug-done"> Voir les faites</label></div>
+          <div class="sugadd">
+            <textarea id="sug-txt" maxlength="1000" placeholder="Une idée pour améliorer le site ? Écris-la ici, elle est gardée pour vous deux."></textarea>
+            <div><button type="button" class="primary" id="sug-add">Ajouter</button></div>
+          </div>
+          <div class="suglist" id="sugList"></div>
         </section>
       </div>
     </div>
@@ -2157,6 +2172,51 @@ function startBarons(){
   db.collection("barons").onSnapshot(s => { barons = s.docs.map(d => ({id:d.id, ...d.data()})); if (curView === "barons") renderBarons(); if (curView === "carte") renderCarte(); }, () => {});
 }
 
+/* ---------- suggestions pour le site (collection partagée « suggestions ») ---------- */
+let suggestions = [], editSug = null;
+function renderSug(){
+  if (!$("sugList")) return;
+  if (editSug && $("sugList").contains(document.activeElement)) return;
+  const showDone = $("sug-done").checked;
+  const list = suggestions.filter(x => showDone || x.statut !== "fait").sort((a,b) => (a.statut === "fait") - (b.statut === "fait") || (b.creeLe||"").localeCompare(a.creeLe||""));
+  const nDone = suggestions.filter(x => x.statut === "fait").length;
+  $("sugList").innerHTML = !db ? `<p class="empty">Registre indisponible ici.</p>`
+    : !list.length ? `<p class="empty">${nDone && !showDone ? `Tout est fait (${nDone}).` : "Aucune suggestion pour l'instant."}</p>`
+    : list.map(x => { const done = x.statut === "fait";
+      const body = editSug === x.id
+        ? `<textarea data-sugedit="${esc(x.id)}" maxlength="1000">${esc(x.texte)}</textarea><div class="sugmeta"><button type="button" class="primary" data-sugsave="${esc(x.id)}">Enregistrer</button><button type="button" class="link" data-sugcancel="1">Annuler</button></div>`
+        : `<div class="sugtxt">${esc(x.texte)}</div>`;
+      return `<div class="sug${done ? " done" : ""}">${body}
+        ${editSug === x.id ? "" : `<div class="sugmeta">${x.fiche ? pName(x.fiche) : ""}<span>${x.creeLe ? new Date(x.creeLe).toLocaleDateString("fr-FR") : ""}</span>
+          <button type="button" class="link" data-sugst="${esc(x.id)}">${done ? "rouvrir" : "marquer fait"}</button>
+          <button type="button" class="link" data-sugmod="${esc(x.id)}">modifier</button>
+          <button type="button" class="link danger" data-sugdel="${esc(x.id)}">suppr.</button></div>`}
+      </div>`; }).join("");
+}
+$("sug-done").addEventListener("change", renderSug);
+$("sug-add").addEventListener("click", async () => {
+  const t = $("sug-txt").value.trim(); if (!t || !db) return;
+  try { await db.collection("suggestions").add({texte:t, fiche:moi || "", statut:"afaire", creeLe:new Date().toISOString()}); $("sug-txt").value = ""; setStatus("Suggestion ajoutée."); }
+  catch(err){ setStatus("Suggestion non enregistrée : " + (err.message||err.code)); }
+});
+$("sugList").addEventListener("click", async e => {
+  const b = e.target.closest("button"); if (!b || !db) return;
+  if (b.dataset.sugcancel){ editSug = null; renderSug(); return; }
+  if (b.dataset.sugmod){ editSug = b.dataset.sugmod; renderSug(); const ta = document.querySelector(`[data-sugedit="${CSS.escape(editSug)}"]`); if (ta) ta.focus(); return; }
+  if (b.dataset.sugsave){ const id = b.dataset.sugsave, ta = document.querySelector(`[data-sugedit="${CSS.escape(id)}"]`), t = ta ? ta.value.trim() : "";
+    if (!t) return;
+    try { await db.doc("suggestions/" + id).update({texte:t, maj:new Date().toISOString()}); editSug = null; renderSug(); setStatus("Suggestion modifiée."); }
+    catch(err){ setStatus("Modification non enregistrée : " + (err.message||err.code)); } return; }
+  if (b.dataset.sugst){ const x = suggestions.find(y => y.id === b.dataset.sugst); if (!x) return;
+    try { await db.doc("suggestions/" + x.id).update({statut: x.statut === "fait" ? "afaire" : "fait", maj:new Date().toISOString()}); }
+    catch(err){ setStatus("Changement non enregistré : " + (err.message||err.code)); } return; }
+  if (b.dataset.sugdel) return armDelete(b, async () => { try { await db.doc("suggestions/" + b.dataset.sugdel).delete(); setStatus("Suggestion supprimée."); } catch(err){ setStatus("Suppression impossible : " + (err.message||err.code)); } });
+});
+function startSuggestions(){
+  db.collection("suggestions").onSnapshot(s => { suggestions = s.docs.map(d => ({id:d.id, ...d.data()})); renderSug(); },
+    err => { $("sugList").innerHTML = `<p class="empty">Suggestions indisponibles : ${esc(err.message||err.code)}</p>`; });
+}
+
 function startDefense(){
   db.collection("menaces").onSnapshot(s => { menaces = s.docs.map(d => ({id:d.id, ...d.data()})); renderDefense(); }, () => {});
   db.collection("renforts").onSnapshot(s => { renforts = s.docs.map(d => ({id:d.id, ...d.data()})); renderDefense(); }, () => {});
@@ -2716,7 +2776,7 @@ buildCompo(); buildForm(); buildTsGrid(); resetForm(); fillUnitSelect(""); rende
   db.doc("reglages/poidsTs").onSnapshot(d => { tsW = {...TS_DEFAULT, ...((d.exists && d.data().poids) || {})}; buildTsGrid(); render(); renderBinome(); renderDefense(); }, () => {});
   db.doc("reglages/objectif").onSnapshot(d => { if (d.exists){ objectif = {pct:+d.data().pct||50, ts:+d.data().ts||null};
     if (document.activeElement?.id !== "obj-pct") $("obj-pct").value = objectif.pct; if (document.activeElement?.id !== "obj-ts") $("obj-ts").value = objectif.ts || ""; renderBinome(); } }, () => {});
-  startAttaques(); startDefense(); startBarons(); startCarte();
+  startAttaques(); startDefense(); startBarons(); startCarte(); startSuggestions();
   db.collection("fiches").orderBy("creeLe").onSnapshot(snap => {
     fiches = snap.docs.map(d => ({id:d.id, nom:d.data().nom || d.id, importVilles:d.data().importVilles || "", importTroupes:d.data().importTroupes || ""}));
     renderAge();
