@@ -34,7 +34,7 @@ de l'artifact : il écraserait ces changements.
 
 ### Défense : def conseillée
 Dans « Signaler une menace », la composition de l'attaque (facultative : Vanquisher, Cavalier, Sorcière, Druide, Bélier, Scorpion, Navire) est enregistrée dans `menaces/{id}.compo`.
-La carte de la menace affiche alors une **def conseillée** et une **alternative** : défense moyenne de chaque unité face au mélange d'attaque, nombre pour égaler l'attaque, coût de recrutement, et la liste des villes qui ont l'unité disponible (nom, joueur, nombre, trajet), de la plus proche à la plus loin.
+La carte de la menace affiche alors une **def conseillée** et une **alternative** : défense moyenne de chaque unité face au mélange d'attaque, nombre pour égaler l'attaque et la liste des villes qui ont l'unité (nom, joueur, trajet), de la plus proche à la plus loin.
 Classement : unités disponibles d'abord, puis défense par ressource dépensée (pas de limite de place en renfort). L'ajout de renfort présélectionne l'unité conseillée.
 Données (`DEF_STATS`, `OFF_ATK` dans `index.html`) : wiki Crown of the Gods, valeurs de base. Ranger à compléter.
 

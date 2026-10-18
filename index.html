@@ -1867,8 +1867,8 @@ function freeDef(u){ /* unités disponibles (en ville, non engagées) dans toute
 }
 function villesTxt(r){
   if (!r.villes.length) return `<span class="msub">aucune ville : à recruter</span>`;
-  const MAX = 6, list = r.villes.slice(0, MAX).map(v => `<div class="vdispo">${esc(v.c.name)} <span class="msub">(${pName(v.fid)})</span> · <span class="mono">${fmt(v.free)}</span> · <span class="mono">${dureeTxt(v.d * r.st.vit)}</span></div>`).join("");
-  return list + (r.villes.length > MAX ? `<div class="msub">+ ${r.villes.length - MAX} autre(s) ville(s)</div>` : "") + `<div class="msub">Total : <span class="mono">${fmt(r.villes.reduce((n,v) => n + v.free, 0))}</span></div>`;
+  const MAX = 6, list = r.villes.slice(0, MAX).map(v => `<div class="vdispo">${esc(v.c.name)} <span class="msub">(${pName(v.fid)})</span> · <span class="mono">${dureeTxt(v.d * r.st.vit)}</span></div>`).join("");
+  return list + (r.villes.length > MAX ? `<div class="msub">+ ${r.villes.length - MAX} autre(s) ville(s)</div>` : "");
 }
 function dureeTxt(min){ const h = Math.floor(min/60), mm = Math.round(min%60); return h ? `${h} h ${String(mm).padStart(2,"0")}` : `${mm} min`; }
 function recoDef(m){
@@ -1883,15 +1883,13 @@ function recoDef(m){
   }).sort((a,b) => (b.dispo.n > 0) - (a.dispo.n > 0) || b.ratio - a.ratio);   /* d'abord ce qu'on a en ville, puis le meilleur rendement */
   const mix = parts.map((v,i) => v ? `${ATK_TYPES[i]} ${Math.round(v/tot*100)} %` : "").filter(Boolean).join(" · ");
   const [r1, r2] = rows;
-  const manque = r1 && r1.dispo.n < r1.nb;
   return `<div class="reco"><h4>Def conseillée</h4>
     <p class="rnote">Attaque estimée : <b>${fmt(tot)}</b> points (${mix}).</p>
-    <div class="scroll"><table class="rftab"><thead><tr><th>Unité</th><th>Déf. moyenne / unité</th><th>≈ Pour égaler l'attaque</th><th>Coût de recrutement</th><th>Disponibles (ville · nombre · trajet)</th></tr></thead><tbody>
+    <div class="scroll"><table class="rftab"><thead><tr><th>Unité</th><th>Déf. moyenne / unité</th><th>≈ Pour égaler l'attaque</th><th>Villes qui en ont (trajet)</th></tr></thead><tbody>
     ${rows.map((r,i) => `<tr class="${i===0?"r1":""}"><td><b>${r.st.nom}</b>${i===0?`<span class="tag">Conseillée</span>`:i===1?`<span class="tag alt">Alternative</span>`:""}</td>
-      <td class="mono">${r.eff.toFixed(1)}</td><td class="mono">${fmt(r.nb)}</td><td class="mono">${fmt(r.nb * r.st.cout)}</td>
-      <td>${villesTxt(r)}</td></tr>`).join("")}
+      <td class="mono">${r.eff.toFixed(1)}</td><td class="mono">${fmt(r.nb)}</td><td>${villesTxt(r)}</td></tr>`).join("")}
     </tbody></table></div>
-    <p class="rnote">${manque ? `Pas assez de ${r1.st.nom} disponibles (${fmt(r1.dispo.n)} sur ${fmt(r1.nb)}) : complète avec ${r2 ? r2.st.nom : "une autre unité"}. ` : ""}Classement : d'abord les unités que vous avez en ville, puis la défense obtenue par ressource dépensée (on peut empiler autant de def qu'on veut sur une ville, donc ce sont les ressources qui comptent, pas les places). « Pour égaler l'attaque » est un repère (défense totale = attaque totale), pas une prévision du combat : murs, tours et recherches n'y sont pas. Coût de recrutement = bois + fer + or pour recruter ce nombre d'unités (ce qu'il faudrait remettre si tout tombe). Villes triées de la plus proche à la plus loin ; trajets aux vitesses de base. Ranger non classé : ses défenses manquent.</p>
+    <p class="rnote">Classement : d'abord les unités présentes dans vos villes, puis la défense obtenue par ressource dépensée (on peut empiler autant de def qu'on veut sur une ville, donc ce sont les ressources qui comptent, pas les places). « Pour égaler l'attaque » est un repère (défense totale = attaque totale), pas une prévision du combat : murs, tours et recherches n'y sont pas. Villes : celles où l'import des troupes en indique en ville, triées de la plus proche à la plus loin ; trajets aux vitesses de base. Ranger non classé : ses défenses manquent.</p>
   </div>`;
 }
 function buildCompo(){
