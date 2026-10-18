@@ -299,6 +299,14 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
 .rftab th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:500;text-align:left;padding:5px 8px;border-bottom:1px solid var(--line)}
 .rftab td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
 .rftab tr.mine td:first-child{box-shadow:inset 3px 0 var(--brass)}
+.reco{display:grid;gap:6px;border-top:1px dashed var(--line);padding-top:10px}
+.reco h4{margin:0;font-size:13px}
+.reco .rnote{font-size:12px;color:var(--muted);margin:0}
+.reco tr.r1 td{background:var(--def-soft)}
+.reco .tag{display:inline-block;font-size:11px;font-weight:600;padding:1px 7px;border-radius:999px;margin-left:6px;background:var(--c-def);color:#fff}
+.reco .tag.alt{background:var(--keep);}
+.compo{display:flex;flex-wrap:wrap;gap:8px}
+.compo .field{flex:0 1 118px}
 .mactions{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 @media (prefers-reduced-motion:no-preference){.bar span{transition:width .3s ease}}
 /* ---------- carte des réservations ---------- */
@@ -593,6 +601,10 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
           <label class="field w-sel" style="flex-basis:170px"><span class="lbl">TS de def voulu</span><input id="m-ts" type="number" min="0" step="1000" placeholder="facultatif"></label>
           <label class="field w-name"><span class="lbl">Note</span><input id="m-note" maxlength="80"></label>
         </div>
+        <details class="row" id="m-compoBox" style="display:block">
+          <summary class="lbl" style="cursor:pointer">Composition de l'attaque (facultatif) : sert à proposer la def à envoyer</summary>
+          <div class="compo" id="m-compo" style="margin-top:6px"></div>
+        </details>
         <div class="btns"><button type="submit" class="primary" id="m-save">Signaler la menace</button><button type="button" id="m-cancel" hidden>Annuler</button></div>
       </form>
     </details>
@@ -1824,6 +1836,63 @@ $("meSel").addEventListener("change", e => { moi = e.target.value; try { localSt
 /* ---------- vue défense ---------- */
 const DEF_UNITS = TROOPS.def;
 let menaces = [], renforts = [], editMen = null, openRf = null;
+
+/* ---- Def conseillée (données : wiki Crown of the Gods, valeurs de base sans recherche) ----
+   d = défense contre [infanterie, cavalerie, mystique, artillerie] ; cout = ressources + or (or compté 1) ; vit = minutes par case */
+const ATK_TYPES = ["infanterie","cavalerie","mystique","artillerie"];
+const OFF_ATK = {Vanquisher:{t:0,a:50}, Horseman:{t:1,a:90}, Sorcerer:{t:2,a:70}, Druid:{t:2,a:120}, Ram:{t:3,a:50}, Scorpion:{t:3,a:150}, Warship:{t:3,a:12000}};
+const OFF_LABEL = {Vanquisher:"Vanquisher (zerk)", Horseman:"Cavalier", Sorcerer:"Sorcière", Druid:"Druide", Ram:"Bélier", Scorpion:"Scorpion", Warship:"Navire de guerre"};
+const DEF_STATS = {
+  Triari:   {d:[30,50,20,15],       cout:180,   vit:20, nom:"Triaire"},
+  Priestess:{d:[20,30,50,15],       cout:190,   vit:20, nom:"Priestess"},
+  Arbalist: {d:[40,90,30,40],       cout:350,   vit:10, nom:"Arbalétrier"},
+  Praetor:  {d:[50,20,90,40],       cout:360,   vit:10, nom:"Praetor"},
+  Ballista: {d:[200,100,200,400],   cout:1000,  vit:30, nom:"Baliste"},
+  Stinger:  {d:[4500,4500,2000,6000], cout:12000, vit:5, nom:"Stinger", mer:true}
+  /* Ranger : défenses absentes du wiki, à ajouter ici dès qu'on a sa fiche en jeu */
+};
+function compoAtk(m){
+  const parts = [0,0,0,0]; const c = m.compo || {};
+  for (const u in OFF_ATK) parts[OFF_ATK[u].t] += (+c[u]||0) * OFF_ATK[u].a;
+  return parts;
+}
+function freeDef(u){ /* unités disponibles (en ville, non engagées) dans toutes les fiches, + ville la plus proche */
+  let n = 0; const villes = [];
+  for (const f of fiches) for (const c of (allCities[f.id]||[])){
+    const free = Math.max(0, (+((c.units||{})[u]||{}).home||0) - committed(f.id, c.id, u));
+    if (free > 0){ n += free; villes.push(c); }
+  }
+  return {n, villes};
+}
+function dureeTxt(min){ const h = Math.floor(min/60), mm = Math.round(min%60); return h ? `${h} h ${String(mm).padStart(2,"0")}` : `${mm} min`; }
+function recoDef(m){
+  const parts = compoAtk(m), tot = parts.reduce((a,b) => a+b, 0);
+  if (!tot) return "";
+  const pos = menPos(m), tgt = menCity(m);
+  const rows = Object.entries(DEF_STATS).filter(([,st]) => m.type === "mer" || !st.mer).map(([u, st]) => {
+    const eff = st.d.reduce((n, d, i) => n + d * parts[i] / tot, 0);       /* défense moyenne face à ce mélange */
+    const nb = Math.ceil(tot / eff), dispo = freeDef(u);
+    const near = dispo.villes.filter(c => !(tgt && c.id === tgt.id)).map(c => dist(c, pos)).sort((a,b) => a-b)[0];
+    return {u, st, eff, nb, ratio: eff / st.cout, dispo, near};
+  }).sort((a,b) => (b.dispo.n > 0) - (a.dispo.n > 0) || b.ratio - a.ratio);   /* d'abord ce qu'on a en ville, puis le meilleur rendement */
+  const mix = parts.map((v,i) => v ? `${ATK_TYPES[i]} ${Math.round(v/tot*100)} %` : "").filter(Boolean).join(" · ");
+  const [r1, r2] = rows;
+  const manque = r1 && r1.dispo.n < r1.nb;
+  return `<div class="reco"><h4>Def conseillée</h4>
+    <p class="rnote">Attaque estimée : <b>${fmt(tot)}</b> points (${mix}).</p>
+    <div class="scroll"><table class="rftab"><thead><tr><th>Unité</th><th>Déf. moyenne / unité</th><th>≈ Pour égaler l'attaque</th><th>Coût de ce nombre</th><th>Dispo (2 fiches)</th><th>Trajet depuis la plus proche</th></tr></thead><tbody>
+    ${rows.map((r,i) => `<tr class="${i===0?"r1":""}"><td><b>${r.st.nom}</b>${i===0?`<span class="tag">Conseillée</span>`:i===1?`<span class="tag alt">Alternative</span>`:""}</td>
+      <td class="mono">${r.eff.toFixed(1)}</td><td class="mono">${fmt(r.nb)}</td><td class="mono">${fmt(r.nb * r.st.cout)}</td>
+      <td class="mono">${r.dispo.n ? fmt(r.dispo.n) : "à recruter"}</td><td class="mono">${r.near != null ? dureeTxt(r.near * r.st.vit) + ` (${r.near.toFixed(1)} c.)` : "—"}</td></tr>`).join("")}
+    </tbody></table></div>
+    <p class="rnote">${manque ? `Pas assez de ${r1.st.nom} disponibles (${fmt(r1.dispo.n)} sur ${fmt(r1.nb)}) : complète avec ${r2 ? r2.st.nom : "une autre unité"}. ` : ""}Classement : d'abord les unités que vous avez en ville, puis la défense obtenue par ressource dépensée (on peut empiler autant de def qu'on veut sur une ville, donc ce sont les ressources qui comptent, pas les places). « Pour égaler l'attaque » est un repère (défense totale = attaque totale), pas une prévision du combat : murs, tours et recherches n'y sont pas. Trajets aux vitesses de base. Ranger non classé : ses défenses manquent.</p>
+  </div>`;
+}
+function buildCompo(){
+  $("m-compo").innerHTML = Object.keys(OFF_ATK).map(u => `<label class="field"><span class="lbl">${OFF_LABEL[u]}</span><input type="number" min="0" step="100" data-compo="${u}"></label>`).join("");
+}
+function readCompo(){ const o = {}; document.querySelectorAll("[data-compo]").forEach(i => { const v = +i.value||0; if (v > 0) o[i.dataset.compo] = v; }); return o; }
+function fillCompo(c){ document.querySelectorAll("[data-compo]").forEach(i => { i.value = (c||{})[i.dataset.compo] || ""; }); $("m-compoBox").open = !!c && Object.keys(c).length > 0; }
 const dDate = d => { if (!d) return ""; const [y,m,j] = d.split("-"); return `${j}/${m}`; };
 const impactKey = m => (m.date||"") + "T" + normT(m.heure||"");
 function menCity(m){ return m.fiche ? cityByRef(m.fiche, m.villeId) : null; }
@@ -1851,7 +1920,7 @@ function fillMenVilles(sel){
   if (sel) $("m-ville").value = sel;
   $("m-autre").hidden = $("m-ville").value !== "autre";
 }
-function resetMen(){ editMen = null; $("menForm").reset(); fillMenVilles(""); $("m-save").textContent = "Signaler la menace"; $("m-cancel").hidden = true; $("menTitle").textContent = "Signaler une menace"; }
+function resetMen(){ editMen = null; $("menForm").reset(); fillCompo(null); fillMenVilles(""); $("m-save").textContent = "Signaler la menace"; $("m-cancel").hidden = true; $("menTitle").textContent = "Signaler une menace"; }
 
 function renderDefense(){
   if (!$("view-defense")) return;
@@ -1881,6 +1950,7 @@ function renderDefense(){
           <div class="mactions"><span class="mimpact">Impact ${dDate(m.date)} ${hhmm(m.heure)}</span><button type="button" class="link" data-mdone="${esc(m.id)}">${done ? "rouvrir" : "terminer"}</button><button type="button" class="link" data-medit="${esc(m.id)}">modifier</button><button type="button" class="link danger" data-mdel="${esc(m.id)}">suppr.</button></div></div>
         ${m.attaque || m.note || (c && c.wall != null) ? `<div class="msub">${[m.attaque ? "Attaque : " + esc(m.attaque) : "", c && c.wall != null ? "mur " + c.wall : "", m.note ? esc(m.note) : ""].filter(Boolean).join(" · ")}</div>` : ""}
         ${cov}
+        ${done ? "" : recoDef(m)}
         ${rows ? `<div class="scroll"><table class="rftab"><thead><tr><th>Joueur</th><th>Depuis</th><th>Troupes</th><th>TS</th><th>Distance</th><th>Arrivée</th><th>Statut</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : ""}
         ${done ? "" : `<div><button type="button" data-rfadd="${esc(m.id)}" aria-expanded="${openRf===m.id}">${openRf===m.id ? "Fermer l'ajout de renfort" : "+ Ajouter un renfort"}</button></div>`}
       </article>`; }).join("");
@@ -1920,7 +1990,9 @@ function fillRfUnits(m){
   const avail = opts.filter(o => o.home > 0);
   const show = avail.length ? avail : opts;
   $("r-unite").innerHTML = show.map(o => `<option value="${o.u}">${o.u}${c?.units ? ` (${fmt(o.free)} dispo / ${fmt(o.home)} en ville)` : ""}</option>`).join("");
-  const first = avail.sort((a,b) => b.free*(+tsW[b.u]||0) - a.free*(+tsW[a.u]||0))[0];
+  const tot = compoAtk(m).reduce((a,b) => a+b, 0);
+  const rank = u => { const st = DEF_STATS[u]; if (!tot || !st) return 0; const p = compoAtk(m); return st.d.reduce((n,d,i) => n + d*p[i]/tot, 0) / st.cout; };
+  const first = avail.filter(o => o.free > 0).sort((a,b) => tot ? rank(b.u) - rank(a.u) : b.free*(+tsW[b.u]||0) - a.free*(+tsW[a.u]||0))[0] || avail[0];
   if (first) $("r-unite").value = first.u;
   setRfDefault(); warnRf(m);
 }
@@ -1957,7 +2029,7 @@ $("m-cancel").addEventListener("click", resetMen);
 $("menForm").addEventListener("submit", async e => {
   e.preventDefault(); if (!db) return;
   const v = $("m-ville").value; if (!v){ setStatus("Choisis la ville menacée."); return; }
-  const base = {date:$("m-date").value, heure:normT($("m-heure").value), type:$("m-type").value, attaque:$("m-att").value.trim(), tsVoulu:+$("m-ts").value||0, note:$("m-note").value.trim()};
+  const base = {date:$("m-date").value, heure:normT($("m-heure").value), type:$("m-type").value, attaque:$("m-att").value.trim(), tsVoulu:+$("m-ts").value||0, note:$("m-note").value.trim(), compo:readCompo()};
   if (v === "autre"){ if (!$("m-x").value || !$("m-y").value){ setStatus("Indique les coordonnées de la ville alliée."); return; }
     Object.assign(base, {fiche:"", villeId:"", nom:$("m-nom").value.trim(), x:+$("m-x").value, y:+$("m-y").value}); }
   else { const [fid, vid] = v.split("|"); Object.assign(base, {fiche:fid, villeId:vid, nom:"", x:null, y:null}); }
@@ -1981,7 +2053,7 @@ $("menList").addEventListener("click", async e => {
     try { await db.doc("menaces/" + m.id).update({statut: m.statut === "terminee" ? "ouverte" : "terminee"}); if (openRf === m.id) openRf = null; } catch(err){ setStatus("Changement non enregistré : " + (err.message||err.code)); } return; }
   if (b.dataset.medit){ const m = menaces.find(x => x.id === b.dataset.medit); if (!m) return; editMen = m.id;
     fillMenVilles(m.fiche ? m.fiche + "|" + m.villeId : "autre");
-    $("m-date").value = m.date||""; $("m-heure").value = normT(m.heure); $("m-type").value = m.type||"terre"; $("m-att").value = m.attaque||""; $("m-ts").value = m.tsVoulu||""; $("m-note").value = m.note||"";
+    $("m-date").value = m.date||""; $("m-heure").value = normT(m.heure); $("m-type").value = m.type||"terre"; $("m-att").value = m.attaque||""; $("m-ts").value = m.tsVoulu||""; $("m-note").value = m.note||""; fillCompo(m.compo);
     $("m-nom").value = m.nom||""; $("m-x").value = m.x ?? ""; $("m-y").value = m.y ?? "";
     $("m-save").textContent = "Enregistrer la menace"; $("m-cancel").hidden = false; $("menTitle").textContent = "Modifier la menace"; $("menPanel").open = true; $("menPanel").scrollIntoView({block:"nearest"}); return; }
   if (b.dataset.mdel) return armDelete(b, async () => { const id = b.dataset.mdel;
@@ -2632,7 +2704,7 @@ function renderAge(){
 setInterval(renderAge, 60000);
 
 /* ---------- boot ---------- */
-buildForm(); buildTsGrid(); resetForm(); fillUnitSelect(""); render(); renderTabs(); renderBinome(); renderAttaques(); renderDefense(); renderNow();
+buildCompo(); buildForm(); buildTsGrid(); resetForm(); fillUnitSelect(""); render(); renderTabs(); renderBinome(); renderAttaques(); renderDefense(); renderNow();
 (async () => {
   try { db = await window.claude?.use?.("db"); } catch { db = null; }
   if (!db){ setStatus("Registre indisponible ici : ouvre la page depuis claude.ai, connectée."); return; }

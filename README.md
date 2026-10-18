@@ -31,3 +31,10 @@ menu déroulant par ressource dans le registre, alertes de ville retirées, âge
 raccourcis sur Maintenant, modification d'une ville sous sa ligne (suppression dans le formulaire),
 Attaques en étapes 1-2-3 et notifications visibles. **Ne pas relancer `build.py`** sur l'ancienne source
 de l'artifact : il écraserait ces changements.
+
+### Défense : def conseillée
+Dans « Signaler une menace », la composition de l'attaque (facultative : Vanquisher, Cavalier, Sorcière, Druide, Bélier, Scorpion, Navire) est enregistrée dans `menaces/{id}.compo`.
+La carte de la menace affiche alors une **def conseillée** et une **alternative** : défense moyenne de chaque unité face au mélange d'attaque, nombre pour égaler l'attaque, coût, unités disponibles dans les deux fiches, trajet depuis la ville la plus proche.
+Classement : unités disponibles d'abord, puis défense par ressource dépensée (pas de limite de place en renfort). L'ajout de renfort présélectionne l'unité conseillée.
+Données (`DEF_STATS`, `OFF_ATK` dans `index.html`) : wiki Crown of the Gods, valeurs de base. Ranger à compléter.
+
