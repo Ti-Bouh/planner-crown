@@ -41,3 +41,9 @@ Données (`DEF_STATS`, `OFF_ATK` dans `index.html`) : wiki Crown of the Gods, va
 
 ### Maintenant : suggestions pour le site
 Encart « Suggestions pour le site » dans l'onglet Maintenant, sous « Mes ordres » : on écrit une idée, elle est enregistrée pour les deux joueurs (collection Firestore `suggestions` : texte, fiche, statut `afaire`/`fait`, creeLe, maj). Chaque suggestion peut être modifiée, marquée faite (puis rouverte) ou supprimée ; les faites sont masquées sauf avec « Voir les faites ».
+
+### Recherches et fortifications
+- **Mes villes › Recherches de combat** : bonus « Combat Strength » (%) de chaque unité, par fiche (`fiches/{fiche}.recherches`).
+- **Fiche d'une ville › Fortifications** : niveau du mur (repris de l'import des troupes) et postes de Rangers / Triaires (nombre et niveau, `villes/{id}.postes`).
+- La def conseillée compte, pour la ville menacée : le mur (unités terrestres), les recherches de son propriétaire et les unités doublées par les postes (30 au niveau 1 à 2 000 au niveau 10 par poste).
+
