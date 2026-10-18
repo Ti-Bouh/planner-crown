@@ -439,10 +439,10 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
   <div class="view" id="view-fiche" hidden>
   <details class="panel" id="rechPanel">
     <summary id="rechTitle">Recherches et foi</summary>
-    <p class="note">Valables pour toutes les villes de la fiche affichée. Les recherches de combat et la foi sont comptées dans la def conseillée.</p>
+    <p class="note">Recherches et durabilité : propres à chaque joueur, pour toutes ses villes. Foi : commune à l'alliance, la même pour vous deux. Recherches de combat et foi sont comptées dans la def conseillée.</p>
     <h3 class="rgh">Recherches de combat par troupe</h3>
     <div class="wgrid" id="rechGrid"></div>
-    <h3 class="rgh">Foi des dieux</h3>
+    <h3 class="rgh">Foi des dieux <span class="msub">(commune à l'alliance : saisie une fois pour vous deux)</span></h3>
     <div class="wgrid" id="foiGrid"></div>
     <h3 class="rgh">Durabilité <span class="msub">(résistance au siège, pas comptée dans la def conseillée)</span></h3>
     <div class="wgrid" id="durGrid"></div>
@@ -1285,15 +1285,15 @@ const RES_PCT = [0, 1, 3, 6, 10, 15, 20, 25, 30, 35, 40, 45, 50];
 const DIEUX = [["naera","Naera"],["vexemis","Vexemis"],["cyndros","Cyndros"],["ylanna","Ylanna"]];
 const DIEU_UNITE = {Ranger:"naera", Triari:"naera", Priestess:"naera", Arbalist:"naera", Praetor:"naera", Ballista:"naera",
   Vanquisher:"vexemis", Sorcerer:"vexemis", Horseman:"vexemis", Druid:"vexemis", Ram:"cyndros", Scorpion:"cyndros", Warship:"cyndros", Stinger:"ylanna"};
-function bonusRech(f, u){   /* bonus total en % pour l'unité u d'une fiche */
-  if (!f) return 0;
-  const niv = Math.max(0, Math.min(12, +((f.recherches||{})[u]) || 0)), foi = Math.max(0, Math.min(100, +((f.foi||{})[DIEU_UNITE[u]]) || 0));
+let foiAlliance = {};   /* foi des dieux : commune à l'alliance, document reglages/foi */
+function bonusRech(f, u){   /* bonus total en % pour l'unité u : recherche du joueur (si connu) + foi de l'alliance */
+  const niv = f ? Math.max(0, Math.min(12, +((f.recherches||{})[u]) || 0)) : 0, foi = Math.max(0, Math.min(100, +foiAlliance[DIEU_UNITE[u]] || 0));
   return RES_PCT[niv] + foi * 0.5;
 }
 function renderRech(){
   if (!$("rechGrid")) return;
   if ($("rechPanel").contains(document.activeElement)) return;
-  const f = fiches.find(x => x.id === currentFiche), r = (f && f.recherches) || {}, fo = (f && f.foi) || {};
+  const f = fiches.find(x => x.id === currentFiche), r = (f && f.recherches) || {}, fo = foiAlliance;
   $("rechTitle").textContent = f ? `Recherches et foi (${f.nom})` : "Recherches et foi";
   $("foiGrid").innerHTML = DIEUX.map(([k,l]) => `<label class="field"><span class="lbl">${l} (%)</span><input type="number" min="0" max="100" step="1" data-foi="${k}" value="${fo[k] || ""}" placeholder="0"></label>`).join("");
   $("durGrid").innerHTML = [["batiments","Bâtiments"],["fortifs","Fortifications"]].map(([k,l]) => `<label class="field"><span class="lbl">${l}</span><select data-dur="${k}">${RES_PCT.map((pc, n) => `<option value="${n}"${(+((f && f.durabilite)||{})[k]||0) === n ? " selected" : ""}>niv. ${n} · +${pc} %</option>`).join("")}</select></label>`).join("");
@@ -1305,7 +1305,7 @@ $("rechSave").addEventListener("click", async () => {
   document.querySelectorAll("[data-dur]").forEach(i => { const v = +i.value || 0; if (v) du[i.dataset.dur] = v; });
   document.querySelectorAll("[data-rech]").forEach(i => { const v = +i.value || 0; if (v) r[i.dataset.rech] = v; });
   document.querySelectorAll("[data-foi]").forEach(i => { const v = Math.max(0, Math.min(100, +i.value || 0)); if (v) fo[i.dataset.foi] = v; });
-  try { await db.doc("fiches/" + currentFiche).update({recherches:r, foi:fo, durabilite:du}); setStatus("Recherches enregistrées."); }
+  try { await db.doc("fiches/" + currentFiche).update({recherches:r, durabilite:du}); await db.doc("reglages/foi").set({foi:fo, maj:new Date().toISOString()}); setStatus("Recherches et foi enregistrées."); }
   catch(err){ setStatus("Recherches non enregistrées : " + (err.message||err.code)); }
 });
 function buildTsGrid(){
@@ -1957,7 +1957,7 @@ function recoDef(m){
   if (!tot) return "";
   const pos = menPos(m), tgt = menCity(m);
   const wl = tgt && tgt.wall != null ? Math.max(0, Math.min(10, Math.round(+tgt.wall||0))) : null, wb = wl != null ? WALL_BONUS[wl] : 0;
-  const owner = tgt ? fiches.find(f => f.id === m.fiche) : null, compte = owner && (Object.keys(owner.recherches||{}).length || Object.keys(owner.foi||{}).length);
+  const owner = tgt ? fiches.find(f => f.id === m.fiche) : null, compte = owner && Object.keys(owner.recherches||{}).length, foiOk = Object.keys(foiAlliance).length;
   const rows = Object.entries(DEF_STATS).filter(([,st]) => m.type === "mer" || !st.mer).map(([u, st]) => {
     const eff = st.d.reduce((n, d, i) => n + d * parts[i] / tot, 0);       /* défense moyenne face à ce mélange */
     const v = eff * (1 + (st.mer ? 0 : wb)) * (1 + bonusRech(owner, u) / 100);   /* le mur ne renforce que les unités terrestres */
@@ -1969,7 +1969,7 @@ function recoDef(m){
   const mix = parts.map((v,i) => v ? `${ATK_TYPES[i]} ${Math.round(v/tot*100)} %` : "").filter(Boolean).join(" · ");
   return `<div class="reco"><h4>Def conseillée</h4>
     <p class="rnote">Attaque estimée : <b>${fmt(tot)}</b> points (${mix}). ${wl != null ? `Mur niveau ${wl} : <b>+${Math.round(wb*100)} %</b> de défense pour les unités terrestres.` : "Niveau du mur inconnu : non compté."}
-      ${owner ? (compte ? `Recherches et foi de ${esc(owner.nom)} comptées.` : `Pas de recherches saisies pour ${esc(owner.nom)}.`) : "Ville alliée : recherches non comptées."}
+      ${owner ? (compte ? `Recherches de ${esc(owner.nom)} comptées.` : `Pas de recherches saisies pour ${esc(owner.nom)}.`) : "Ville alliée : recherches non comptées."} ${foiOk ? "Foi de l'alliance comptée." : ""}
       ${["Ranger","Triari"].map(u => postCap(tgt, u) ? `${fmt(postCap(tgt, u))} ${DEF_STATS[u].nom}s comptent double (postes).` : "").filter(Boolean).join(" ")}</p>
     <div class="scroll"><table class="rftab"><thead><tr><th>Unité</th><th>Défense par unité</th><th>≈ Pour égaler l'attaque</th><th>Villes qui en ont (trajet)</th></tr></thead><tbody>
     ${rows.map((r,i) => `<tr class="${i===0?"r1":""}"><td><b>${r.st.nom}</b>${i===0?`<span class="tag">Conseillée</span>`:i===1?`<span class="tag alt">Alternative</span>`:""}</td>
@@ -2845,11 +2845,12 @@ buildCompo(); buildForm(); buildTsGrid(); resetForm(); fillUnitSelect(""); rende
   if (!db){ setStatus("Registre indisponible ici : ouvre la page depuis claude.ai, connectée."); return; }
   (async () => { try { const u = await window.claude?.use?.("user"); if (u){ const c = await u.can("data.write"); if (c === false || c === true) canWrite = c; } } catch {} renderRO(); })();
   db.doc("reglages/poidsTs").onSnapshot(d => { tsW = {...TS_DEFAULT, ...((d.exists && d.data().poids) || {})}; buildTsGrid(); render(); renderBinome(); renderDefense(); }, () => {});
+  db.doc("reglages/foi").onSnapshot(d => { foiAlliance = (d.exists && d.data().foi) || {}; renderRech(); renderDefense(); }, () => {});
   db.doc("reglages/objectif").onSnapshot(d => { if (d.exists){ objectif = {pct:+d.data().pct||50, ts:+d.data().ts||null};
     if (document.activeElement?.id !== "obj-pct") $("obj-pct").value = objectif.pct; if (document.activeElement?.id !== "obj-ts") $("obj-ts").value = objectif.ts || ""; renderBinome(); } }, () => {});
   startAttaques(); startDefense(); startBarons(); startCarte(); startSuggestions();
   db.collection("fiches").orderBy("creeLe").onSnapshot(snap => {
-    fiches = snap.docs.map(d => ({id:d.id, nom:d.data().nom || d.id, importVilles:d.data().importVilles || "", importTroupes:d.data().importTroupes || "", recherches:d.data().recherches || {}, foi:d.data().foi || {}, durabilite:d.data().durabilite || {}}));
+    fiches = snap.docs.map(d => ({id:d.id, nom:d.data().nom || d.id, importVilles:d.data().importVilles || "", importTroupes:d.data().importTroupes || "", recherches:d.data().recherches || {}, durabilite:d.data().durabilite || {}}));
     renderAge(); renderRech(); renderDefense();
     let want = currentFiche; if (!want){ try { want = moi || localStorage.getItem("ficheActive"); } catch {} }
     renderMe();
