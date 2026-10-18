@@ -108,6 +108,13 @@ table.reg{border-collapse:collapse;width:100%;min-width:980px;font-size:13px}
 #rechPanel{margin-bottom:16px}
 #rechPanel .rgh{font-size:13px;font-weight:600;margin:14px 0 0}
 #rechPanel .wgrid{margin-top:6px}
+.seuil{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink);opacity:.55}
+.seuil.fort{background:var(--off)}
+.seuils{position:relative;height:16px;font-size:11px;color:var(--muted)}
+.seuils span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.seuils span:last-child{transform:translateX(-100%)}
+.plan{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-top:10px;display:grid;gap:6px}
+.plan.ok{background:var(--def-soft)}
 .reco .base{font-size:11px;color:var(--muted);margin-left:6px}
 #rechGrid .field select,#durGrid .field select,#foiGrid .field input{width:100%;min-width:0;box-sizing:border-box}
 .wgrid input{width:100%}
@@ -1953,29 +1960,84 @@ function villesTxt(r){
   return list + (r.villes.length > MAX ? `<div class="msub">+ ${r.villes.length - MAX} autre(s) ville(s)</div>` : "");
 }
 function dureeTxt(min){ const h = Math.floor(min/60), mm = Math.round(min%60); return h ? `${h} h ${String(mm).padStart(2,"0")}` : `${mm} min`; }
-function recoDef(m){
+/* Analyse d'une menace : attaque, défense réelle (sur place + renforts) et plan de renfort.
+   Formule de combat (script GFunky) : chaque défenseur oppose sa défense contre chaque type, pondérée par la part de ce type dans l'attaque.
+   R = attaque / défense : R = 1 → échange à 50/50 en assaut ; R ≤ 0,25 → l'attaque est détruite. */
+const SEUIL_ECRASER = 4;
+const unitsFor = (N, cap) => N + Math.min(N, cap);   /* unités comptées, postes compris */
+function defAnalyse(m){
   const parts = compoAtk(m), tot = parts.reduce((a,b) => a+b, 0);
-  if (!tot) return "";
+  if (!tot) return null;
   const pos = menPos(m), tgt = menCity(m);
   const wl = tgt && tgt.wall != null ? Math.max(0, Math.min(10, Math.round(+tgt.wall||0))) : null, wb = wl != null ? WALL_BONUS[wl] : 0;
   const owner = tgt ? fiches.find(f => f.id === m.fiche) : null, compte = owner && Object.values(owner.recherches||{}).some(v => +v > 0), foiOk = Object.keys(foiAlliance).length;
+  const live = renforts.filter(r => r.menaceId === m.id && rfLive(r));
   const rows = Object.entries(DEF_STATS).filter(([,st]) => m.type === "mer" || !st.mer).map(([u, st]) => {
     const eff = st.d.reduce((n, d, i) => n + d * parts[i] / tot, 0);       /* défense moyenne face à ce mélange */
     const v = eff * (1 + (st.mer ? 0 : wb)) * (1 + bonusRech(owner, u) / 100);   /* le mur ne renforce que les unités terrestres */
     const cap = postCap(tgt, u);                                             /* les « cap » premières unités comptent double */
-    const nb = tot <= 2 * cap * v ? Math.ceil(tot / (2 * v)) : Math.ceil(tot / v - cap), dispo = freeDef(u);
-    const villes = dispo.villes.filter(v => !(tgt && v.c.id === tgt.id)).map(v => ({...v, d: dist(v.c, pos)})).sort((a,b) => a.d - b.d);
-    return {u, st, eff, v, nb, ratio: eff / st.cout, dispo, villes};
+    const need = T => T <= 2 * cap * v ? Math.ceil(T / (2 * v)) : Math.ceil(T / v - cap);
+    const nb = need(tot), nb4 = need(SEUIL_ECRASER * tot), dispo = freeDef(u);
+    const villes = dispo.villes.filter(x => !(tgt && x.c.id === tgt.id)).map(x => ({...x, d: dist(x.c, pos)})).sort((a,b) => a.d - b.d);
+    const home = tgt ? +((tgt.units||{})[u]||{}).home || 0 : 0, rf = live.filter(r => r.unite === u).reduce((n, r) => n + (+r.nombre||0), 0);
+    return {u, st, eff, v, cap, nb, nb4, ratio: eff / st.cout, dispo, villes, N: home + rf};
   }).sort((a,b) => (b.dispo.n > 0) - (a.dispo.n > 0) || b.ratio - a.ratio);   /* d'abord ce qu'on a en ville, puis le meilleur rendement */
+  const defNow = rows.reduce((n, r) => n + r.v * unitsFor(r.N, r.cap), 0);
+  /* plan : on comble ce qui manque pour égaler l'attaque, unité conseillée d'abord, villes les plus proches d'abord, en écartant celles qui partiraient trop tard */
+  const impact = m.date && m.heure ? new Date(`${m.date}T${normT(m.heure)}`) : null, now = Date.now();
+  let manque = tot - defNow; const plan = [];
+  for (const r of rows){
+    if (manque <= 0) break;
+    let N = r.N;
+    for (const x of r.villes){
+      if (manque <= 0) break;
+      const trajet = x.d * r.st.vit, depart = impact ? new Date(impact - trajet * 60000) : null;
+      if (depart && depart < now) continue;
+      let k = 0; const base = r.v * unitsFor(N, r.cap);
+      const gain = n => r.v * unitsFor(N + n, r.cap) - base;
+      if (gain(x.free) <= manque) k = x.free; else { let lo = 0, hi = x.free; while (lo < hi){ const mid = (lo + hi) >> 1; if (gain(mid) >= manque) hi = mid; else lo = mid + 1; } k = lo; }
+      if (k <= 0) continue;
+      plan.push({r, x, k, trajet, depart}); manque -= gain(k); N += k;
+    }
+  }
+  const tard = rows.flatMap(r => r.villes.map(x => ({r, x, depart: impact ? new Date(impact - x.d * r.st.vit * 60000) : null}))).filter(o => o.depart && o.depart < now);
+  return {parts, tot, pos, tgt, wl, wb, owner, compte, foiOk, rows, defNow, plan, reste: Math.max(0, manque), tard};
+}
+const hm = d => d.toLocaleString("fr-FR", {weekday:"short", hour:"2-digit", minute:"2-digit"});
+function planTxt(m, A){
+  if (A.defNow >= A.tot) return `<div class="plan ok"><b>L'attaque est déjà égalée</b> avec la def sur place et les renforts prévus. Pour l'écraser, il manque ${fmt(Math.max(0, SEUIL_ECRASER * A.tot - A.defNow))} points de défense.</div>`;
+  if (!A.plan.length) return `<div class="plan"><b>Plan de renfort :</b> aucune ville ne peut arriver à temps avec des troupes disponibles.</div>`;
+  return `<div class="plan"><b>Plan de renfort proposé</b> <span class="msub">pour égaler l'attaque</span>
+    <table class="rftab"><thead><tr><th>Depuis</th><th>Troupes</th><th>Trajet</th><th>Partir avant</th></tr></thead><tbody>
+    ${A.plan.map(o => `<tr><td>${esc(o.x.c.name)} <span class="msub">(${pName(o.x.fid)})</span></td><td>${o.r.st.nom} × <span class="mono">${fmt(o.k)}</span></td><td class="mono">${dureeTxt(o.trajet)}</td><td class="mono">${o.depart ? hm(o.depart) : "—"}</td></tr>`).join("")}
+    </tbody></table>
+    ${A.reste > 0 ? `<p class="warn" style="margin:6px 0 0">Même avec tout ce plan, il manque ${fmt(A.reste)} points : recrutez ou demandez de l'aide à l'alliance.</p>` : ""}
+    ${A.tard.length ? `<p class="msub" style="margin:6px 0 0">${A.tard.length} ville(s) écartée(s) : elles partiraient trop tard.</p>` : ""}
+    <div class="btns" style="margin-top:8px"><button type="button" class="primary" data-plan="${esc(m.id)}">Créer ces ${A.plan.length} renfort(s)</button></div></div>`;
+}
+function couvTxt(m){
+  const A = defAnalyse(m); if (!A) return "";
+  const ratio = A.defNow / A.tot, max = SEUIL_ECRASER * A.tot * 1.05;
+  const etat = ratio >= SEUIL_ECRASER ? ["p-ok","Écrasée"] : ratio >= 1 ? ["p-ok","Tenue"] : ["p-ko","À couvrir"];
+  return `<div class="cov"><div class="covtxt">Défense face à cette attaque : <b>${fmt(A.defNow)}</b> points · <b>${Math.round(ratio*100)} %</b> de l'attaque
+      <span class="pill ${etat[0]}" style="margin-left:6px">${etat[1]}</span></div>
+    <div class="bar" style="position:relative"><span style="width:${Math.min(100, A.defNow/max*100)}%;background:var(--c-def)"></span>
+      <i class="seuil" style="left:${A.tot/max*100}%" title="Égaler l'attaque"></i><i class="seuil fort" style="left:${SEUIL_ECRASER*A.tot/max*100}%" title="Écraser l'attaque"></i></div>
+    <div class="seuils"><span style="left:${A.tot/max*100}%">égaler · ${fmt(A.tot)}</span><span style="left:${SEUIL_ECRASER*A.tot/max*100}%">écraser · ${fmt(SEUIL_ECRASER*A.tot)}</span></div></div>`;
+}
+function recoDef(m){
+  const A = defAnalyse(m); if (!A) return "";
+  const {parts, tot, tgt, wl, wb, owner, compte, foiOk, rows} = A;
   const mix = parts.map((v,i) => v ? `${ATK_TYPES[i]} ${Math.round(v/tot*100)} %` : "").filter(Boolean).join(" · ");
   return `<div class="reco"><h4>Def conseillée</h4>
     <p class="rnote">Attaque estimée : <b>${fmt(tot)}</b> points (${mix}). ${wl != null ? `Mur niveau ${wl} : <b>+${Math.round(wb*100)} %</b> de défense pour les unités terrestres.` : "Niveau du mur inconnu : non compté."}
       ${owner ? (compte ? `Recherches de ${esc(owner.nom)} comptées.` : `Pas de recherches saisies pour ${esc(owner.nom)}.`) : "Ville alliée : recherches non comptées."} ${foiOk ? "Foi de l'alliance comptée." : ""}
       ${["Ranger","Triari"].map(u => postCap(tgt, u) ? `${fmt(postCap(tgt, u))} ${DEF_STATS[u].nom}s comptent double (postes).` : "").filter(Boolean).join(" ")}</p>
-    <div class="scroll"><table class="rftab"><thead><tr><th>Unité</th><th>Défense par unité</th><th>≈ Pour égaler l'attaque</th><th>Villes qui en ont (trajet)</th></tr></thead><tbody>
+    <div class="scroll"><table class="rftab"><thead><tr><th>Unité</th><th>Défense par unité</th><th>≈ Pour égaler</th><th>≈ Pour écraser</th><th>Villes qui en ont (trajet)</th></tr></thead><tbody>
     ${rows.map((r,i) => `<tr class="${i===0?"r1":""}"><td><b>${r.st.nom}</b>${i===0?`<span class="tag">Conseillée</span>`:i===1?`<span class="tag alt">Alternative</span>`:""}</td>
-      <td class="mono">${r.v.toFixed(1)}${Math.abs(r.v - r.eff) > 0.05 ? `<span class="base">base ${r.eff.toFixed(1)}</span>` : ""}</td><td class="mono">${fmt(r.nb)}</td><td>${villesTxt(r)}</td></tr>`).join("")}
+      <td class="mono">${r.v.toFixed(1)}${Math.abs(r.v - r.eff) > 0.05 ? `<span class="base">base ${r.eff.toFixed(1)}</span>` : ""}</td><td class="mono">${fmt(r.nb)}</td><td class="mono">${fmt(r.nb4)}</td><td>${villesTxt(r)}</td></tr>`).join("")}
     </tbody></table></div>
+    ${planTxt(m, A)}
     <p class="rnote" title="Classement : d'abord les unités présentes dans vos villes, puis la défense obtenue par ressource dépensée (on peut empiler autant de def qu'on veut). « Pour égaler l'attaque » = défense totale égale à l'attaque : en assaut, chaque camp perd environ la moitié. Défense par unité = bonus compris (mur, recherches, foi). Les postes et l'arrondi peuvent faire varier le nombre. Pas comptés : recherches de l'attaquant, protection de nuit. Trajets aux vitesses de base.">Classées par troupes disponibles puis rendement. « Pour égaler » = échange à 50/50 en assaut. Détail au survol.</p>
   </div>`;
 }
@@ -2001,6 +2063,8 @@ function menStats(m){
   const list = renforts.filter(r => r.menaceId === m.id && rfLive(r));
   const surPlace = homeDefTs(menCity(m)), engage = list.reduce((n, r) => n + rfTs(r), 0);
   const voulu = +m.tsVoulu || 0, total = surPlace + engage;
+  const A = typeof defAnalyse === "function" ? defAnalyse(m) : null;   /* composition connue : couverture réelle (défense ≥ attaque) */
+  if (A) return {list, surPlace, engage, total, voulu, couverte: A.defNow >= A.tot};
   return {list, surPlace, engage, total, voulu, couverte: voulu ? total >= voulu : null};
 }
 
@@ -2040,7 +2104,7 @@ function renderDefense(){
         <div class="mhead"><div class="mtitle"><b>${menLabel(m)}</b><span class="mono"><span class="cont">C${continentOf(pos.x,pos.y) ?? "?"}</span>${pos.x}:${pos.y}</span>${pill}<span class="pill ${m.type==="mer"?"m-mer":"m-terre"}">${m.type==="mer"?"⚓ Maritime":"⛰ Terrestre"}</span></div>
           <div class="mactions"><span class="mimpact">Impact ${dDate(m.date)} ${hhmm(m.heure)}</span><button type="button" class="link" data-mdone="${esc(m.id)}">${done ? "rouvrir" : "terminer"}</button><button type="button" class="link" data-medit="${esc(m.id)}">modifier</button><button type="button" class="link danger" data-mdel="${esc(m.id)}">suppr.</button></div></div>
         ${m.attaque || m.note || (c && c.wall != null) ? `<div class="msub">${[m.attaque ? "Attaque : " + esc(m.attaque) : "", c && c.wall != null ? "mur " + c.wall : "", m.note ? esc(m.note) : ""].filter(Boolean).join(" · ")}</div>` : ""}
-        ${cov}
+        ${compoAtk(m).some(x => x) ? couvTxt(m) : cov}
         ${done ? "" : recoDef(m)}
         ${rows ? `<div class="scroll"><table class="rftab"><thead><tr><th>Joueur</th><th>Depuis</th><th>Troupes</th><th>TS</th><th>Distance</th><th>Arrivée</th><th>Statut</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : ""}
         ${done ? "" : `<div><button type="button" data-rfadd="${esc(m.id)}" aria-expanded="${openRf===m.id}">${openRf===m.id ? "Fermer l'ajout de renfort" : "+ Ajouter un renfort"}</button></div>`}
@@ -2139,6 +2203,9 @@ $("myRfTable").addEventListener("click", e => { const b = e.target.closest("[dat
 $("menList").addEventListener("click", async e => {
   const b = e.target.closest("button"); if (!b || !db) return;
   if (b.dataset.rfst) return cycleRf(b.dataset.rfst);
+  if (b.dataset.plan){ const m = menaces.find(x => x.id === b.dataset.plan), A = m && defAnalyse(m); if (!A) return; b.disabled = true;
+    try { for (const o of A.plan) await db.collection("renforts").add({menaceId:m.id, fiche:o.x.fid, villeId:o.x.c.id, unite:o.r.u, nombre:o.k, heure:"", statut:"prevu", maj:new Date().toISOString()});
+      setStatus(`${A.plan.length} renfort(s) créé(s).`); } catch(err){ setStatus("Renforts non enregistrés : " + (err.message||err.code)); b.disabled = false; } return; }
   if (b.dataset.rfadd){ openRf = openRf === b.dataset.rfadd ? null : b.dataset.rfadd; $("rfEditor").dataset.m = ""; renderDefense(); if (openRf) $("rfEditor").scrollIntoView({block:"nearest"}); return; }
   if (b.dataset.mdone){ const m = menaces.find(x => x.id === b.dataset.mdone); if (!m) return;
     try { await db.doc("menaces/" + m.id).update({statut: m.statut === "terminee" ? "ouverte" : "terminee"}); if (openRf === m.id) openRf = null; } catch(err){ setStatus("Changement non enregistré : " + (err.message||err.code)); } return; }
