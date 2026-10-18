@@ -445,14 +445,17 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
 
   <div class="view" id="view-fiche" hidden>
   <details class="panel" id="rechPanel">
-    <summary id="rechTitle">Recherches et foi</summary>
-    <p class="note">Recherches et durabilité : propres à chaque joueur, pour toutes ses villes. Foi : commune à l'alliance, la même pour vous deux. Recherches de combat et foi sont comptées dans la def conseillée.</p>
-    <h3 class="rgh">Recherches de combat par troupe</h3>
-    <div class="wgrid" id="rechGrid"></div>
-    <h3 class="rgh">Foi des dieux <span class="msub">(commune à l'alliance : saisie une fois pour vous deux)</span></h3>
-    <div class="wgrid" id="foiGrid"></div>
-    <h3 class="rgh">Durabilité <span class="msub">(résistance au siège, pas comptée dans la def conseillée)</span></h3>
-    <div class="wgrid" id="durGrid"></div>
+    <summary id="rechTitle">Recherches</summary>
+    <p class="note" id="rechNote"></p>
+    <div id="rechJoueur">
+      <h3 class="rgh">Recherches de combat par troupe</h3>
+      <div class="wgrid" id="rechGrid"></div>
+      <h3 class="rgh">Durabilité <span class="msub">(résistance au siège, pas comptée dans la def conseillée)</span></h3>
+      <div class="wgrid" id="durGrid"></div>
+    </div>
+    <div id="rechTous">
+      <div class="wgrid" id="foiGrid"></div>
+    </div>
     <div class="btns" style="margin-top:12px"><button type="button" class="primary" id="rechSave">Enregistrer</button></div>
   </details>
 
@@ -1299,21 +1302,31 @@ function bonusRech(f, u){   /* bonus total en % pour l'unité u : recherche du j
 }
 function renderRech(){
   if (!$("rechGrid")) return;
-  if ($("rechGrid").dataset.fiche === (currentFiche || "") && $("rechPanel").contains(document.activeElement) && document.activeElement.matches("input,select")) return;
-  $("rechGrid").dataset.fiche = currentFiche || "";
+  const tous = isAll(), cle = tous ? "__all" : (currentFiche || "");
+  if ($("rechGrid").dataset.fiche === cle && $("rechPanel").contains(document.activeElement) && document.activeElement.matches("input,select")) return;
+  $("rechGrid").dataset.fiche = cle;
   const f = fiches.find(x => x.id === currentFiche), r = (f && f.recherches) || {}, fo = foiAlliance;
-  $("rechTitle").textContent = f ? `Recherches et foi (${f.nom})` : "Recherches et foi";
+  $("rechJoueur").hidden = tous; $("rechTous").hidden = !tous;
+  $("rechTitle").textContent = tous ? "Foi des dieux (commune à vous deux)" : f ? `Recherches de ${f.nom}` : "Recherches";
+  $("rechNote").textContent = tous ? "La foi est commune à l'alliance : elle est saisie ici, une fois pour vous deux, et comptée dans la def conseillée."
+    : "Propres à ce joueur, valables pour toutes ses villes. Les recherches de combat sont comptées dans la def conseillée. La foi des dieux se saisit dans l'onglet « Tous ».";
   $("foiGrid").innerHTML = DIEUX.map(([k,l]) => `<label class="field"><span class="lbl">${l} (%)</span><input type="number" min="0" max="100" step="1" data-foi="${k}" value="${fo[k] || ""}" placeholder="0"></label>`).join("");
   $("durGrid").innerHTML = [["batiments","Bâtiments"],["fortifs","Fortifications"]].map(([k,l]) => `<label class="field"><span class="lbl">${l}</span><select data-dur="${k}">${RES_PCT.map((pc, n) => `<option value="${n}"${(+((f && f.durabilite)||{})[k]||0) === n ? " selected" : ""}>niv. ${n} · +${pc} %</option>`).join("")}</select></label>`).join("");
   $("rechGrid").innerHTML = RECH_UNITS.map(u => `<label class="field"><span class="lbl">${UNIT_FR[u] || u}</span><select data-rech="${u}">${RES_PCT.map((pc, n) => `<option value="${n}"${(+r[u]||0) === n ? " selected" : ""}>niv. ${n} · +${pc} %</option>`).join("")}</select></label>`).join("");
 }
 $("rechSave").addEventListener("click", async () => {
-  if (!db || !currentFiche){ setStatus("Choisis ou crée une fiche d'abord."); return; }
-  const r = {}, fo = {}, du = {};
+  if (!db){ setStatus("Registre indisponible ici."); return; }
+  if (isAll()){   /* onglet Tous : seulement la foi, commune */
+    const fo = {}; document.querySelectorAll("[data-foi]").forEach(i => { const v = Math.max(0, Math.min(100, +i.value || 0)); if (v) fo[i.dataset.foi] = v; });
+    try { await db.doc("reglages/foi").set({foi:fo, maj:new Date().toISOString()}); setStatus("Foi enregistrée."); }
+    catch(err){ setStatus("Foi non enregistrée : " + (err.message||err.code)); }
+    return;
+  }
+  if (!currentFiche){ setStatus("Choisis ou crée une fiche d'abord."); return; }
+  const r = {}, du = {};
   document.querySelectorAll("[data-dur]").forEach(i => { du[i.dataset.dur] = +i.value || 0; });   /* zéros compris : la base fusionne les mises à jour */
   document.querySelectorAll("[data-rech]").forEach(i => { r[i.dataset.rech] = +i.value || 0; });
-  document.querySelectorAll("[data-foi]").forEach(i => { const v = Math.max(0, Math.min(100, +i.value || 0)); if (v) fo[i.dataset.foi] = v; });
-  try { await db.doc("fiches/" + currentFiche).update({recherches:r, durabilite:du}); await db.doc("reglages/foi").set({foi:fo, maj:new Date().toISOString()}); setStatus("Recherches et foi enregistrées."); }
+  try { await db.doc("fiches/" + currentFiche).update({recherches:r, durabilite:du}); setStatus("Recherches enregistrées."); }
   catch(err){ setStatus("Recherches non enregistrées : " + (err.message||err.code)); }
 });
 function buildTsGrid(){
@@ -1470,7 +1483,7 @@ function selectFiche(id){
 }
 $("ficheTabs").addEventListener("click", e => { const b = e.target.closest("[data-fiche]"); if (!b) return;
   viewAll = b.dataset.fiche === "__all"; try { localStorage.setItem("villesTous", viewAll ? "1" : "0"); } catch {}
-  if (!viewAll) selectFiche(b.dataset.fiche); render(); renderTabs(); });
+  if (!viewAll) selectFiche(b.dataset.fiche); render(); renderTabs(); renderRech(); });
 let canWrite = null;
 function nfMsg(t, ok){ $("nf-msg").textContent = t; $("nf-msg").className = "fmsg " + (ok ? "ok" : "ko"); }
 function renderRO(){ $("roBanner").hidden = canWrite !== false; try { renderPlayers(); } catch {} }
