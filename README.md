@@ -51,7 +51,7 @@ Encart « Suggestions pour le site » dans l'onglet Maintenant, sous « Mes ordr
 ### Défense : couverture réelle et plan de renfort
 Quand la composition de l'attaque est connue, la carte de la menace mesure la défense en points face à cette attaque (sur place + renforts, avec mur, recherches, foi et postes), avec deux repères : égaler (= attaque, échange à 50/50 en assaut) et écraser (4 × l'attaque). La pastille et le compteur « Couvertes » en découlent. La def conseillée ajoute la colonne « Pour écraser » et un plan de renfort (unité conseillée d'abord, villes les plus proches d'abord, villes trop tardives écartées d'après l'heure d'impact et l'heure de l'ordinateur), créé en un clic.
 
-## Calculs : simplification (octobre 2026)
+## Début de serveur (calculs.html) : simplification (octobre 2026)
 
 Un seul champ par réglage : « Fer envoyé par jour » et « Démolies par groupes de » se règlent dans Ma cité
 (Castle et Démolition affichent un rappel cliquable) ; le niveau de départ des Cabines ne se règle que dans Cabines.
@@ -59,7 +59,7 @@ Castle : clic sur une ligne des 10 meilleures pour la simuler. Raids : ★ dans 
 des tuiles « Si … te limitent ». Corrections : saisie du formulaire de raid gardée quand un réglage change,
 tableau Unités (bonus de recherche) affiché, courbe Castle prolongée jusqu'à l'objectif.
 
-## Calculs : fusions (octobre 2026)
+## Début de serveur (calculs.html) : fusions (octobre 2026)
 
 - Saisie unique des raids : le formulaire de Recrutement (ou une capture) alimente aussi le Journal des raids
   (caverne, niveau, % du donjon, non transporté ajoutés au formulaire) ; le Journal n'a plus de formulaire propre.
@@ -68,3 +68,7 @@ tableau Unités (bonus de recherche) affiché, courbe Castle prolongée jusqu'à
 - Démolition : suit par défaut l'optimum de Cabines (Cabines démolies et Cabines qui restent : paramètre `gardees`
   de `cabDemolition`) ; « Un autre cas » pour tester ses propres valeurs.
 - Simulateur de raid : peut suivre les troupes à la maison de la ville ouverte dans Recrutement (`rTroupesSrc`).
+
+## Nom de la page
+
+La page `calculs.html` s'appelle « Début de serveur » (titre, bouton du planner, messages). L'adresse reste calculs.html.
