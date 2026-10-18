@@ -106,6 +106,9 @@ table.reg{border-collapse:collapse;width:100%;min-width:980px;font-size:13px}
 .refnote{font-size:11.5px;color:var(--muted);white-space:nowrap}
 .wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-top:12px}
 #rechPanel{margin-bottom:16px}
+#rechPanel .rgh{font-size:13px;font-weight:600;margin:14px 0 0}
+#rechPanel .wgrid{margin-top:6px}
+.reco .base{font-size:11px;color:var(--muted);margin-left:6px}
 #rechGrid .field select,#durGrid .field select,#foiGrid .field input{width:100%;min-width:0;box-sizing:border-box}
 .wgrid input{width:100%}
 .drop{display:block;border:1.5px dashed var(--line);border-radius:8px;padding:18px 14px;text-align:center;cursor:pointer;color:var(--muted);margin-top:10px}
@@ -435,13 +438,15 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
 
   <div class="view" id="view-fiche" hidden>
   <details class="panel" id="rechPanel">
-    <summary id="rechTitle">Recherches de combat des troupes</summary>
-    <p class="note">Pour chaque troupe, le niveau de sa recherche de combat (0 à 12) et la foi de vos dieux (0 à 100 %). Ils valent pour toutes les villes de la fiche affichée et sont comptés dans la def conseillée.</p>
-    <div class="wgrid" id="foiGrid"></div>
-    <div class="wgrid" id="durGrid"></div>
-    <p class="note" style="margin:6px 0 0">Durabilité des bâtiments et des fortifications : elle augmente leur résistance aux engins de siège, pas la défense des troupes. Elle n'entre donc pas dans la def conseillée.</p>
+    <summary id="rechTitle">Recherches et foi</summary>
+    <p class="note">Valables pour toutes les villes de la fiche affichée. Les recherches de combat et la foi sont comptées dans la def conseillée.</p>
+    <h3 class="rgh">Recherches de combat par troupe</h3>
     <div class="wgrid" id="rechGrid"></div>
-    <div class="btns" style="margin-top:12px"><button type="button" class="primary" id="rechSave">Enregistrer les recherches</button></div>
+    <h3 class="rgh">Foi des dieux</h3>
+    <div class="wgrid" id="foiGrid"></div>
+    <h3 class="rgh">Durabilité <span class="msub">(résistance au siège, pas comptée dans la def conseillée)</span></h3>
+    <div class="wgrid" id="durGrid"></div>
+    <div class="btns" style="margin-top:12px"><button type="button" class="primary" id="rechSave">Enregistrer</button></div>
   </details>
 
   <section class="grid" aria-label="Synthèse">
@@ -1274,6 +1279,8 @@ function toast(t){
 
 const RECH_UNITS = [...TROOPS.def.filter(u => u !== "Guard"), ...TROOPS.off];
 /* Recherche de combat : % par niveau 0 à 12 ; foi : +0,5 % par point (max 100), selon le dieu de l'unité (scripts de joueurs GFunky / Dfunky) */
+const UNIT_FR = {Ranger:"Ranger", Triari:"Triaire", Priestess:"Priestess", Arbalist:"Arbalétrier", Praetor:"Praetor", Ballista:"Baliste", Stinger:"Stinger",
+  Vanquisher:"Vanquisher", Sorcerer:"Sorcière", Horseman:"Cavalier", Druid:"Druide", Ram:"Bélier", Scorpion:"Scorpion", Warship:"Navire de guerre"};
 const RES_PCT = [0, 1, 3, 6, 10, 15, 20, 25, 30, 35, 40, 45, 50];
 const DIEUX = [["naera","Naera"],["vexemis","Vexemis"],["cyndros","Cyndros"],["ylanna","Ylanna"]];
 const DIEU_UNITE = {Ranger:"naera", Triari:"naera", Priestess:"naera", Arbalist:"naera", Praetor:"naera", Ballista:"naera",
@@ -1287,10 +1294,10 @@ function renderRech(){
   if (!$("rechGrid")) return;
   if ($("rechPanel").contains(document.activeElement)) return;
   const f = fiches.find(x => x.id === currentFiche), r = (f && f.recherches) || {}, fo = (f && f.foi) || {};
-  $("rechTitle").textContent = f ? `Recherches de combat des troupes (${f.nom})` : "Recherches de combat des troupes";
-  $("foiGrid").innerHTML = DIEUX.map(([k,l]) => `<label class="field"><span class="lbl">Foi ${l} (%)</span><input type="number" min="0" max="100" step="1" data-foi="${k}" value="${fo[k] || ""}" placeholder="0"></label>`).join("");
-  $("durGrid").innerHTML = [["batiments","Durabilité bâtiments"],["fortifs","Durabilité fortifications"]].map(([k,l]) => `<label class="field"><span class="lbl">${l}</span><select data-dur="${k}">${RES_PCT.map((pc, n) => `<option value="${n}"${(+((f && f.durabilite)||{})[k]||0) === n ? " selected" : ""}>niv. ${n} · +${pc} %</option>`).join("")}</select></label>`).join("");
-  $("rechGrid").innerHTML = RECH_UNITS.map(u => `<label class="field"><span class="lbl">${u}</span><select data-rech="${u}">${RES_PCT.map((pc, n) => `<option value="${n}"${(+r[u]||0) === n ? " selected" : ""}>niv. ${n} · +${pc} %</option>`).join("")}</select></label>`).join("");
+  $("rechTitle").textContent = f ? `Recherches et foi (${f.nom})` : "Recherches et foi";
+  $("foiGrid").innerHTML = DIEUX.map(([k,l]) => `<label class="field"><span class="lbl">${l} (%)</span><input type="number" min="0" max="100" step="1" data-foi="${k}" value="${fo[k] || ""}" placeholder="0"></label>`).join("");
+  $("durGrid").innerHTML = [["batiments","Bâtiments"],["fortifs","Fortifications"]].map(([k,l]) => `<label class="field"><span class="lbl">${l}</span><select data-dur="${k}">${RES_PCT.map((pc, n) => `<option value="${n}"${(+((f && f.durabilite)||{})[k]||0) === n ? " selected" : ""}>niv. ${n} · +${pc} %</option>`).join("")}</select></label>`).join("");
+  $("rechGrid").innerHTML = RECH_UNITS.map(u => `<label class="field"><span class="lbl">${UNIT_FR[u] || u}</span><select data-rech="${u}">${RES_PCT.map((pc, n) => `<option value="${n}"${(+r[u]||0) === n ? " selected" : ""}>niv. ${n} · +${pc} %</option>`).join("")}</select></label>`).join("");
 }
 $("rechSave").addEventListener("click", async () => {
   if (!db || !currentFiche){ setStatus("Choisis ou crée une fiche d'abord."); return; }
@@ -1957,18 +1964,18 @@ function recoDef(m){
     const cap = postCap(tgt, u);                                             /* les « cap » premières unités comptent double */
     const nb = tot <= 2 * cap * v ? Math.ceil(tot / (2 * v)) : Math.ceil(tot / v - cap), dispo = freeDef(u);
     const villes = dispo.villes.filter(v => !(tgt && v.c.id === tgt.id)).map(v => ({...v, d: dist(v.c, pos)})).sort((a,b) => a.d - b.d);
-    return {u, st, eff, nb, ratio: eff / st.cout, dispo, villes};
+    return {u, st, eff, v, nb, ratio: eff / st.cout, dispo, villes};
   }).sort((a,b) => (b.dispo.n > 0) - (a.dispo.n > 0) || b.ratio - a.ratio);   /* d'abord ce qu'on a en ville, puis le meilleur rendement */
   const mix = parts.map((v,i) => v ? `${ATK_TYPES[i]} ${Math.round(v/tot*100)} %` : "").filter(Boolean).join(" · ");
   return `<div class="reco"><h4>Def conseillée</h4>
     <p class="rnote">Attaque estimée : <b>${fmt(tot)}</b> points (${mix}). ${wl != null ? `Mur niveau ${wl} : <b>+${Math.round(wb*100)} %</b> de défense pour les unités terrestres.` : "Niveau du mur inconnu : non compté."}
       ${owner ? (compte ? `Recherches et foi de ${esc(owner.nom)} comptées.` : `Pas de recherches saisies pour ${esc(owner.nom)}.`) : "Ville alliée : recherches non comptées."}
       ${["Ranger","Triari"].map(u => postCap(tgt, u) ? `${fmt(postCap(tgt, u))} ${DEF_STATS[u].nom}s comptent double (postes).` : "").filter(Boolean).join(" ")}</p>
-    <div class="scroll"><table class="rftab"><thead><tr><th>Unité</th><th>Déf. moyenne / unité</th><th>≈ Pour égaler l'attaque</th><th>Villes qui en ont (trajet)</th></tr></thead><tbody>
+    <div class="scroll"><table class="rftab"><thead><tr><th>Unité</th><th>Défense par unité</th><th>≈ Pour égaler l'attaque</th><th>Villes qui en ont (trajet)</th></tr></thead><tbody>
     ${rows.map((r,i) => `<tr class="${i===0?"r1":""}"><td><b>${r.st.nom}</b>${i===0?`<span class="tag">Conseillée</span>`:i===1?`<span class="tag alt">Alternative</span>`:""}</td>
-      <td class="mono">${r.eff.toFixed(1)}</td><td class="mono">${fmt(r.nb)}</td><td>${villesTxt(r)}</td></tr>`).join("")}
+      <td class="mono">${r.v.toFixed(1)}${Math.abs(r.v - r.eff) > 0.05 ? `<span class="base">base ${r.eff.toFixed(1)}</span>` : ""}</td><td class="mono">${fmt(r.nb)}</td><td>${villesTxt(r)}</td></tr>`).join("")}
     </tbody></table></div>
-    <p class="rnote">Classement : d'abord les unités présentes dans vos villes, puis la défense obtenue par ressource dépensée (on peut empiler autant de def qu'on veut sur une ville, donc ce sont les ressources qui comptent, pas les places). « Pour égaler l'attaque » est un repère (défense totale = attaque totale), pas une prévision du combat : mur, recherches et postes de la ville menacée y sont, pas les recherches de l'attaquant ni la protection de nuit. Villes : celles où l'import des troupes en indique en ville, triées de la plus proche à la plus loin ; trajets aux vitesses de base.</p>
+    <p class="rnote" title="Classement : d'abord les unités présentes dans vos villes, puis la défense obtenue par ressource dépensée (on peut empiler autant de def qu'on veut). « Pour égaler l'attaque » = défense totale égale à l'attaque : en assaut, chaque camp perd environ la moitié. Défense par unité = bonus compris (mur, recherches, foi). Les postes et l'arrondi peuvent faire varier le nombre. Pas comptés : recherches de l'attaquant, protection de nuit. Trajets aux vitesses de base.">Classées par troupes disponibles puis rendement. « Pour égaler » = échange à 50/50 en assaut. Détail au survol.</p>
   </div>`;
 }
 function buildCompo(){
