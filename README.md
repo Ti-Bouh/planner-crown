@@ -58,3 +58,13 @@ Un seul champ par réglage : « Fer envoyé par jour » et « Démolies par grou
 Castle : clic sur une ligne des 10 meilleures pour la simuler. Raids : ★ dans le tableau Unité seule à la place
 des tuiles « Si … te limitent ». Corrections : saisie du formulaire de raid gardée quand un réglage change,
 tableau Unités (bonus de recherche) affiché, courbe Castle prolongée jusqu'à l'objectif.
+
+## Calculs : fusions (octobre 2026)
+
+- Saisie unique des raids : le formulaire de Recrutement (ou une capture) alimente aussi le Journal des raids
+  (caverne, niveau, % du donjon, non transporté ajoutés au formulaire) ; le Journal n'a plus de formulaire propre.
+- Plan de la cité saisi une seule fois dans Ma cité (Barracks, Arenas, Académies, Marchés, Entrepôts, Tours, Castle) ;
+  « Emplacements de la cité » retiré, Cabines garde la Basilica de départ et le niveau des Cabines déjà posées.
+- Démolition : suit par défaut l'optimum de Cabines (Cabines démolies et Cabines qui restent : paramètre `gardees`
+  de `cabDemolition`) ; « Un autre cas » pour tester ses propres valeurs.
+- Simulateur de raid : peut suivre les troupes à la maison de la ville ouverte dans Recrutement (`rTroupesSrc`).

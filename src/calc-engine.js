@@ -169,14 +169,14 @@
     return { sans, rows, maxN, niveaux: niv, niveau: L, choix, suivant: niv[k + 1] || null, plusRapide: fast };
   }
   function cabDemolition(p) {
-    // p : {n, niveau, groupe, bonus, remplacer ('Barracks'|'Training Arena'), vise, overrides: {g: type}}
+    // p : {n, niveau, groupe, bonus, remplacer ('Barracks'|'Training Arena'), vise, overrides: {g: type}, gardees : Cabines qui restent (facultatif)}
     const T = cabTables(), L = p.niveau, b = T.b[L], dem = T.K[L], rb = T.I[L], rp = T.J[L];
     const upTo = arr => sum(arr.slice(0, p.vise));
     const barT = upTo(B.barT), arT = upTo(B.arenaT), barS = upTo(B.barS), arW = upTo(B.arenaW), arS = upTo(B.arenaS);
-    const groups = []; let cum = 0;
+    const groups = [], k0 = +p.gardees || 0; let cum = 0;
     for (let g = 1; (g - 1) * p.groupe < p.n; g++) {
       const size = Math.min(p.groupe, p.n - (g - 1) * p.groupe), type = (p.overrides && p.overrides[g]) || p.remplacer;
-      const rest = p.n - (g - 1) * p.groupe, E = 1 + p.bonus + rest * b;
+      const rest = p.n - (g - 1) * p.groupe, E = 1 + p.bonus + (rest + k0) * b;
       let F = 0; for (let i = 0; i < size; i++) F += dem / (E - i * b); F /= 86400;
       const G = E - size * b, Hh = size * (type === "Training Arena" ? arT : barT) / G / 86400;
       cum += F + Hh;
@@ -184,7 +184,7 @@
         rembBois: size * rb, rembPierre: size * rp, coutBois: size * (type === "Training Arena" ? arW : 0), coutPierre: size * (type === "Training Arena" ? arS : barS) });
     }
     const tot = k => sum(groups.map(x => x[k]));
-    return { groups, bonusCab: b, demBase: dem, speedDepart: 1 + p.bonus + p.n * b, speedFin: 1 + p.bonus,
+    return { groups, bonusCab: b, demBase: dem, speedDepart: 1 + p.bonus + (p.n + k0) * b, speedFin: 1 + p.bonus + k0 * b,
              totalDemolition: tot("demolition"), totalReconstruction: tot("reconstruction"), total: tot("temps"),
              rembBois: tot("rembBois"), rembPierre: tot("rembPierre"), coutBois: tot("coutBois"), coutPierre: tot("coutPierre") };
   }
