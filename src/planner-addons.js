@@ -1,5 +1,5 @@
 /* Planner Crown — ajouts du site hébergé (injectés par build.py, indépendants de la source de l'artifact).
-   Coller (Ctrl+V) une capture de rapport de raid n'importe où dans le planner l'ouvre dans Calculs › Recrutement. */
+   Coller (Ctrl+V) une capture de rapport de raid n'importe où dans le planner l'ouvre dans Début de serveur › Recrutement. */
 (function(){
   function toast(msg){
     let t = document.getElementById("capToast");
@@ -16,10 +16,10 @@
     e.preventDefault();
     const rd = new FileReader();
     rd.onload = async () => {
-      toast("Capture reçue : ouverture de Calculs › Recrutement…");
+      toast("Capture reçue : ouverture de Début de serveur › Recrutement…");
       let url = rd.result;
       try { sessionStorage.setItem("calcCapture", url); }
-      catch { url = await enJpeg(url); try { sessionStorage.setItem("calcCapture", url || ""); } catch { toast("Capture trop lourde : colle-la directement dans Calculs › Recrutement."); return; } }
+      catch { url = await enJpeg(url); try { sessionStorage.setItem("calcCapture", url || ""); } catch { toast("Capture trop lourde : colle-la directement dans Début de serveur › Recrutement."); return; } }
       location.href = "calculs.html#recrutement";
     };
     rd.readAsDataURL(it.getAsFile());
