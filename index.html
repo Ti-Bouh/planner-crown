@@ -1853,19 +1853,19 @@ $("meSel").addEventListener("change", e => { moi = e.target.value; try { localSt
 const DEF_UNITS = TROOPS.def;
 let menaces = [], renforts = [], editMen = null, openRf = null;
 
-/* ---- Def conseillée (données : wiki Crown of the Gods, valeurs de base sans recherche) ----
+/* ---- Def conseillée (données : wiki Crown of the Gods et fiche du Ranger, valeurs de base sans recherche) ----
    d = défense contre [infanterie, cavalerie, mystique, artillerie] ; cout = ressources + or (or compté 1) ; vit = minutes par case */
 const ATK_TYPES = ["infanterie","cavalerie","mystique","artillerie"];
 const OFF_ATK = {Vanquisher:{t:0,a:50}, Horseman:{t:1,a:90}, Sorcerer:{t:2,a:70}, Druid:{t:2,a:120}, Ram:{t:3,a:50}, Scorpion:{t:3,a:150}, Warship:{t:3,a:12000}};
 const OFF_LABEL = {Vanquisher:"Vanquisher (zerk)", Horseman:"Cavalier", Sorcerer:"Sorcière", Druid:"Druide", Ram:"Bélier", Scorpion:"Scorpion", Warship:"Navire de guerre"};
 const DEF_STATS = {
+  Ranger:   {d:[40,10,25,15],       cout:160,   vit:20, nom:"Ranger"},
   Triari:   {d:[30,50,20,15],       cout:180,   vit:20, nom:"Triaire"},
   Priestess:{d:[20,30,50,15],       cout:190,   vit:20, nom:"Priestess"},
   Arbalist: {d:[40,90,30,40],       cout:350,   vit:10, nom:"Arbalétrier"},
   Praetor:  {d:[50,20,90,40],       cout:360,   vit:10, nom:"Praetor"},
   Ballista: {d:[200,100,200,400],   cout:1000,  vit:30, nom:"Baliste"},
   Stinger:  {d:[4500,4500,2000,6000], cout:12000, vit:5, nom:"Stinger", mer:true}
-  /* Ranger : défenses absentes du wiki, à ajouter ici dès qu'on a sa fiche en jeu */
 };
 function compoAtk(m){
   const parts = [0,0,0,0]; const c = m.compo || {};
@@ -1903,7 +1903,7 @@ function recoDef(m){
     ${rows.map((r,i) => `<tr class="${i===0?"r1":""}"><td><b>${r.st.nom}</b>${i===0?`<span class="tag">Conseillée</span>`:i===1?`<span class="tag alt">Alternative</span>`:""}</td>
       <td class="mono">${r.eff.toFixed(1)}</td><td class="mono">${fmt(r.nb)}</td><td>${villesTxt(r)}</td></tr>`).join("")}
     </tbody></table></div>
-    <p class="rnote">Classement : d'abord les unités présentes dans vos villes, puis la défense obtenue par ressource dépensée (on peut empiler autant de def qu'on veut sur une ville, donc ce sont les ressources qui comptent, pas les places). « Pour égaler l'attaque » est un repère (défense totale = attaque totale), pas une prévision du combat : murs, tours et recherches n'y sont pas. Villes : celles où l'import des troupes en indique en ville, triées de la plus proche à la plus loin ; trajets aux vitesses de base. Ranger non classé : ses défenses manquent.</p>
+    <p class="rnote">Classement : d'abord les unités présentes dans vos villes, puis la défense obtenue par ressource dépensée (on peut empiler autant de def qu'on veut sur une ville, donc ce sont les ressources qui comptent, pas les places). « Pour égaler l'attaque » est un repère (défense totale = attaque totale), pas une prévision du combat : murs, tours et recherches n'y sont pas. Villes : celles où l'import des troupes en indique en ville, triées de la plus proche à la plus loin ; trajets aux vitesses de base.</p>
   </div>`;
 }
 function buildCompo(){
