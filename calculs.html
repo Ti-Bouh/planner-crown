@@ -56,7 +56,8 @@ a{color:var(--brass)}
 .field input,.field select,.field button{font:inherit;height:36px;padding:0 9px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);width:100%;min-width:0}
 .field button.primary{background:var(--brass);border-color:var(--brass);color:var(--panel);font-weight:600;width:auto;padding:0 14px;justify-self:start}
 .pair{display:flex;gap:6px;min-width:0}
-.chk{display:flex;align-items:center;gap:8px;height:36px;font-size:14px;color:var(--ink)}
+.chk{display:flex;align-items:center;gap:8px;min-height:36px;font-size:14px;color:var(--ink)}
+.chk input{flex:none}
 .field .chk input{width:18px;height:18px;padding:0;accent-color:var(--brass)}
 .seg{display:flex;gap:2px;background:var(--keep-soft);padding:3px;border-radius:8px;flex-wrap:wrap}
 .seg button{border:none;background:transparent;padding:5px 12px;border-radius:6px;font-weight:600;font-size:13px;color:var(--muted)}
@@ -74,6 +75,10 @@ details.avance[open] > summary{margin-bottom:8px}
 .field input.lu{border-color:var(--ref)}
 #rvTable td{padding:5px 3px}
 #rvTable input[data-num]{text-align:right}
+td.top{font-weight:700;color:var(--brass)}
+tr.clic{cursor:pointer}tr.clic:hover>td{background:var(--keep-soft)}
+.rappel{font:inherit;text-align:left;min-height:36px;padding:7px 10px;border:1px dashed var(--line);border-radius:6px;background:transparent;color:var(--ink);cursor:pointer;font-weight:600}
+.rappel:hover{border-color:var(--brass)}
 .field input.calc{background:transparent;border-style:dashed;color:var(--muted)}
 .field small{font-size:11px;color:var(--muted)}
 input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--brass);outline-offset:1px}
@@ -162,16 +167,12 @@ svg.chart text{font-family:var(--f-body);font-size:11px;fill:var(--muted)}
         <label class="field"><span>Training Arenas du plan</span><input data-k="arenas" type="text" inputmode="decimal" data-num min="0" step="1"></label>
         <label class="field"><span>Barracks du plan</span><input data-k="barracks" type="text" inputmode="decimal" data-num min="0" step="1"></label>
         <label class="field"><span>Autres bâtiments (calcul)</span><input class="calc" id="autresBat" readonly tabindex="-1"></label>
-        <label class="field"><span>Niveau actuel des Cabines</span><input data-k="cabDepart" type="text" inputmode="decimal" data-num min="0" max="10" step="1"></label>
       </div>
       <details class="avance"><summary>Réglages avancés</summary><div class="form">
         <label class="field"><span>Autres bonus de vitesse de construction (%)</span><input data-k="autresBonus" type="text" inputmode="decimal" data-num step="1" min="0"><small>Objets, événements… en plus de la recherche.</small></label>
       </div></details>
     </div>
-    <div class="grid">
-      <div class="panel"><h2>Contrôles</h2><div class="ctrl" id="controles"></div></div>
-      <div class="panel"><h2>En bref</h2><div id="resume" class="ctrl"></div></div>
-    </div>
+    <div class="panel"><h2>En bref</h2><div class="ctrl" id="controles"></div><div id="resume" class="ctrl" style="margin-top:8px"></div></div>
   </section>
 
   <!-- ================= CASTLE ================= -->
@@ -180,7 +181,7 @@ svg.chart text{font-family:var(--f-body);font-size:11px;fill:var(--muted)}
       <h2>Solveur – meilleure combinaison Arenas / Barracks / Cabines</h2>
       <div class="form">
         <label class="field"><span>Objectif (zerks)</span><input data-k="objectif" type="text" inputmode="decimal" data-num min="1" step="1000"></label>
-        <label class="field"><span>Fer envoyé par jour</span><input data-k="ferJour" type="text" inputmode="decimal" data-num min="0" step="10000" placeholder="vide = sans limite"><small>Même réglage que Ma cité.</small></label>
+        <div class="field"><span>Fer envoyé par jour</span><button type="button" class="rappel" data-rappel="ferJour" data-goto="cite"></button><small>Réglé dans Ma cité (clique pour le modifier).</small></div>
         <label class="field"><span>Stockage de fer de la cité</span><input data-k="stockage" type="text" inputmode="decimal" data-num min="0" step="1000"></label>
       </div>
       <div class="btns" style="margin-top:12px"><button type="button" class="primary" id="solveBtn">Calculer</button><span class="status" id="solveInfo"></span></div>
@@ -203,7 +204,7 @@ svg.chart text{font-family:var(--f-body);font-size:11px;fill:var(--muted)}
         <label class="field"><span>Cabines</span><input id="simN" type="text" inputmode="decimal" data-num min="0" step="1"></label>
         <label class="field"><span>Niveau des Cabines</span><select id="simL"></select></label>
       </div>
-      <div class="btns" style="margin-top:10px"><button type="button" class="link" id="simFromBest">Reprendre la meilleure combinaison</button></div>
+      <div class="btns" style="margin-top:10px"><button type="button" id="simFromBest">↺ Reprendre la meilleure combinaison</button></div>
       <div id="simOut"></div>
     </div>
   </section>
@@ -224,7 +225,7 @@ svg.chart text{font-family:var(--f-body);font-size:11px;fill:var(--muted)}
         <label class="field"><span>Entrepôts</span><input data-k="planEntrepots" type="text" inputmode="decimal" data-num min="0" step="1"></label>
         <label class="field"><span>Tours de sorcier</span><input data-k="planTours" type="text" inputmode="decimal" data-num min="0" step="1"></label>
         <label class="field"><span>Castle</span><input data-k="planCastles" type="text" inputmode="decimal" data-num min="0" step="1"></label>
-        <label class="field"><span>Cabines déjà au niveau</span><input data-k="cabDepart" type="text" inputmode="decimal" data-num min="0" max="10" step="1"><small>0 si aucune Cabine posée (même réglage que Ma cité).</small></label>
+        <label class="field"><span>Cabines déjà au niveau</span><input data-k="cabDepart" type="text" inputmode="decimal" data-num min="0" max="10" step="1"><small>0 si aucune Cabine posée.</small></label>
         <label class="field"><span>Total du plan</span><input class="calc" id="planTotal" readonly tabindex="-1"><small id="planInfo"></small></label>
       </div>
       <details class="avance"><summary>Réglages avancés</summary>
@@ -239,7 +240,7 @@ svg.chart text{font-family:var(--f-body);font-size:11px;fill:var(--muted)}
       <div class="form">
         <label class="field"><span>Nombre de Cabines à démolir</span><input data-k="testCabines" type="text" inputmode="decimal" data-num min="0" step="1"></label>
         <label class="field"><span>Niveau des Cabines</span><select data-k="testNiveau"></select></label>
-        <label class="field"><span>Démolies par groupes de</span><input data-k="groupes" type="text" inputmode="decimal" data-num min="1" step="1"><small>Même réglage que Ma cité.</small></label>
+        <div class="field"><span>Démolies par groupes de</span><button type="button" class="rappel" data-rappel="groupes" data-goto="cite"></button><small>Réglé dans Ma cité (clique pour le modifier).</small></div>
       </div>
       <details class="avance"><summary>Réglages avancés</summary>
       <div class="form">
@@ -340,7 +341,7 @@ const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp
 
 /* ---------- réglages par défaut (valeurs des classeurs Crown) ---------- */
 const DEF = { res:0, autresBonus:0, groupes:5, ferJour:1000000, pierreJour:150000, boisJour:"", objectif:176000, stockage:575000,
-  emplacements:94, arenas:26, barracks:65, cabDepart:0, autresH:20, testArenas:40, testCabines:50, testNiveau:8,
+  emplacements:94, arenas:26, barracks:65, cabDepart:0, testCabines:50, testNiveau:8,
   solvNaMin:20, solvNaMax:60, solvNaPas:2, solvCabPas:2, solvNiv:"4-10", solvFixe:"libre", tolerance:0.5, seuilNiveau:0.5, basDepart:8, planAcademies:1, planForums:2, planEntrepots:2, planTours:1, planCastles:1, demRemplacer:"Barracks", demVise:10,
   lienVille:"", rCave:"Forêt", rNiveau:6, rPct:0.69, rMarge:1, rCoef:0.1, rValeurOr:1, rDispo:8000, tDispo:3000, sType:"Forêt", sNiveau:6, sPctMin:0, sPctMax:1,
   bonusUnites:{}, demTypes:{} };
@@ -421,11 +422,9 @@ async function solve(){
     if (!r.best.length){ $("solveOut").innerHTML = `<p class="warn">Aucune combinaison n'atteint l'objectif : le Castle est trop petit (pas assez de Barracks).</p>`; }
     else {
       const b = r.best[0];
-      $("solveOut").innerHTML = `<p class="big">${b.na} Training Arenas, ${b.nb} Barracks, ${b.n} Cabines niveau ${b.l}</p>
-        <div class="kpis"><div><span class="lbl">Objectif atteint en</span><b>${n1(b.days)} <small>jours</small></b></div><div><span class="lbl">Construction terminée</span><b>${n1(b.end)} <small>jours</small></b></div>
-        <div><span class="lbl">Capacité du Castle</span><b>${n0(b.cap)}</b></div><div><span class="lbl">Pierre perdue (Cabines)</span><b>${n0(b.loss)}</b></div></div>
-        <h3>Les 10 meilleures</h3><div class="scroll"><table class="t"><thead><tr><th>Rang</th><th>Arenas</th><th>Barracks</th><th>Cabines</th><th>Niveau</th><th>Objectif (j)</th><th>Construction (j)</th><th>Pierre perdue</th><th></th></tr></thead><tbody>
-        ${r.best.map((x, i) => `<tr class="${i ? "" : "best"}"><td>${i + 1}</td><td>${x.na}</td><td>${x.nb}</td><td>${x.n}</td><td>${x.l}</td><td>${n2(x.days)}</td><td>${n2(x.end)}</td><td>${n0(x.loss)}</td><td><button type="button" class="link" data-sim="${x.na},${x.n},${x.l}">Simuler</button></td></tr>`).join("")}
+      $("solveOut").innerHTML = `<p class="big">${b.na} Training Arenas, ${b.nb} Barracks, ${b.n} Cabines niveau ${b.l} <small style="font-size:.6em;color:var(--muted)">→ objectif en ${n1(b.days)} jours</small></p>
+        <h3>Les 10 meilleures <small style="font-weight:400;text-transform:none;letter-spacing:0">· clique une ligne pour la simuler ci-dessous</small></h3><div class="scroll"><table class="t"><thead><tr><th>Rang</th><th>Arenas</th><th>Barracks</th><th>Cabines</th><th>Niveau</th><th>Objectif (j)</th><th>Construction (j)</th><th>Pierre perdue</th></tr></thead><tbody>
+        ${r.best.map((x, i) => `<tr class="${i ? "" : "best"} clic" data-sim="${x.na},${x.n},${x.l}" title="Simuler cette combinaison"><td>${i + 1}</td><td>${x.na}</td><td>${x.nb}</td><td>${x.n}</td><td>${x.l}</td><td>${n2(x.days)}</td><td>${n2(x.end)}</td><td>${n0(x.loss)}</td></tr>`).join("")}
         </tbody></table></div><p class="note">À durée égale, on garde la combinaison qui perd le moins de pierre, puis la plus rapide à construire.</p>`;
       if (!$("simNa").value) setSim(b.na, b.n, b.l);
     }
@@ -446,6 +445,9 @@ function renderSim(){
   const ok = r.cap >= base.goal;
   const pts = []; const tEnd = Math.max(isFinite(r.days) ? r.days : r.end, r.end), step = tEnd / 60;
   let j = 0; for (let k = 0; k <= 60; k++){ const t = k * step * 86400; while (j < r.trace.length - 1 && r.trace[j + 1].K <= t) j++; const s = r.trace[j]; if (t <= r.end * 86400 + 1) pts.push([k * step, s.O, s.M]); }
+  // après la fin de la construction, la courbe va jusqu'au jour où l'objectif est atteint
+  if (ok && isFinite(r.days) && pts.length && r.days > pts[pts.length - 1][0] + 1e-9){
+    if (pts[pts.length - 1][0] < r.end) pts.push([r.end, r.trEnd, r.cap]); pts.push([r.days, base.goal, r.cap]); }
   $("simOut").innerHTML = `${lim}<div class="kpis" style="margin-top:12px">
       <div><span class="lbl">Objectif atteint en</span><b>${ok ? n1(r.days) + " <small>jours</small>" : "—"}</b></div>
       <div><span class="lbl">Construction terminée</span><b>${n1(r.end)} <small>jours</small></b></div>
@@ -469,7 +471,7 @@ function chart(pts, goal){
   return `<div style="margin-top:12px"><span class="note"><span class="sw" style="background:var(--brass)"></span>Zerks <span class="sw" style="background:var(--def);margin-left:12px"></span>Capacité <span class="sw" style="background:var(--off);margin-left:12px"></span>Objectif</span>
    <svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Zerks et capacité au fil des jours">
    ${ticks.map(t => `<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)"/><text x="${L - 6}" y="${y(t) + 4}" text-anchor="end">${n0(t / 1000)} k</text>`).join("")}
-   ${[0, .25, .5, .75, 1].map(f => `<text x="${x(f * xm)}" y="${H - 10}" text-anchor="middle">${n1(f * xm)} j</text>`).join("")}
+   ${[0, .25, .5, .75, 1].map(f => `<text x="${x(f * xm)}" y="${H - 10}" text-anchor="${f === 0 ? "start" : f === 1 ? "end" : "middle"}">${n1(f * xm)} j</text>`).join("")}
    <line x1="${L}" x2="${W - R}" y1="${y(goal)}" y2="${y(goal)}" stroke="var(--off)" stroke-dasharray="4 4"/>
    <path d="${line(2)}" fill="none" stroke="var(--def)" stroke-width="2"/><path d="${line(1)}" fill="none" stroke="var(--brass)" stroke-width="2.5"/></svg></div>`;
 }
@@ -490,15 +492,16 @@ function renderCab(){
   const bestN = Math.min(...q.rows.filter(r => r.niveau === q.niveau).map(r => r.total));
   const pourquoi = nx ? (nx.gain > 0 ? `Monter au niveau ${nx.niveau} ne ferait gagner que ${n2(nx.gain)} jour.` : `Le niveau ${nx.niveau} serait plus lent (${n2(-nx.gain)} jour de plus) : ses Cabines sont trop longues à monter.`) : `C'est le niveau maximum.`;
   const counts = [...new Set(q.rows.map(x => x.n))], lv = [...new Set(q.rows.map(x => x.niveau))];
+  const memeN = q.niveaux.every(x => x.meilleur.n === q.niveaux[0].meilleur.n) ? q.niveaux[0].meilleur.n : null;
   $("cabOut").innerHTML = `<div class="kpis" style="margin-top:14px"><div><span class="lbl">Niveau optimal</span><b style="font-size:2rem">${q.niveau}</b></div>
       <div><span class="lbl">Nombre optimal</span><b style="font-size:2rem">${c.n} <small>Cabines</small></b></div>
       <div><span class="lbl">Cité terminée en</span><b style="font-size:2rem">${n1(c.total)} <small>jours</small></b></div>
       <div><span class="lbl">Sans Cabines</span><b style="font-size:2rem">${n0(sans ? sans.total : NaN)} <small>jours</small></b></div></div>
     <p style="margin:10px 0 0">${pourquoi} Au niveau ${q.niveau}, ${c.n} Cabines suffisent : aller jusqu'à ${q.rows.filter(r => r.niveau === q.niveau).reduce((a, r) => r.total < a.total ? r : a).n} ne ferait gagner que ${n2(c.total - bestN)} jour.</p>
     <p class="note">Déroulé : Cabines ${n1(c.montee)} j · Basilica jusqu'au niveau 10 ${n1(c.basilica)} j · bâtiments à pleine vitesse (${n0(c.vitesse * 100)} %) ${n1(c.principal)} j · démolition de ${c.demolies} Cabine${c.demolies > 1 ? "s" : ""} et pose des derniers bâtiments ${n1(c.demolition + c.reconstruction)} j${c.gardees ? ` · ${c.gardees} Cabine${c.gardees > 1 ? "s" : ""} restent (place libre)` : ""}. Pierre des Cabines : ${n0(c.coutPierre)}${f.niveau !== q.niveau || f.n !== c.n ? ` · solution la plus rapide : niveau ${f.niveau} × ${f.n} Cabines, ${n1(f.total)} j` : ""}.</p>
-    <h3>Ce que rapporte chaque niveau</h3><div class="scroll"><table class="t"><thead><tr><th>Niveau</th><th>Meilleur délai (j)</th><th>avec</th><th>Gain sur le niveau précédent</th><th>Pierre des Cabines</th><th>Pierre par jour gagné</th></tr></thead><tbody>
-    ${q.niveaux.map(x => `<tr class="${x.niveau === q.niveau ? "best" : ""}"><td>${x.niveau}</td><td>${n1(x.meilleur.total)}</td><td>${x.meilleur.n} Cabines</td><td class="${x.gain == null ? "" : x.gain >= seuil ? "good" : "neg"}">${x.gain == null ? "—" : (x.gain >= 0 ? "−" : "+") + n2(Math.abs(x.gain)) + " j"}</td><td>${n0(x.meilleur.coutPierre)}</td><td>${x.pierreParJour == null ? "—" : n0(x.pierreParJour)}</td></tr>`).join("")}</tbody></table></div>
-    <p class="note">En vert : le niveau fait gagner au moins ${n1(seuil)} jour. En rouge : gain trop faible ou temps perdu. La pierre est donnée pour information : elle n'entre pas dans le choix. Nombres testés : de 5 à ${q.maxN} Cabines (10 par niveau de Basilica au départ). Temps : crown_batiment.xlsx et fiches officielles (Académie, Forum).</p>
+    <h3>Ce que rapporte chaque niveau</h3><div class="scroll"><table class="t"><thead><tr><th>Niveau</th><th>Meilleur délai (j)</th>${memeN ? "" : "<th>avec</th>"}<th>Gain sur le niveau précédent</th><th>Pierre des Cabines</th><th>Pierre par jour gagné</th></tr></thead><tbody>
+    ${q.niveaux.map(x => `<tr class="${x.niveau === q.niveau ? "best" : ""}"><td>${x.niveau}</td><td>${n1(x.meilleur.total)}</td>${memeN ? "" : `<td>${x.meilleur.n} Cabines</td>`}<td class="${x.gain == null ? "" : x.gain >= seuil ? "good" : "neg"}">${x.gain == null ? "—" : (x.gain >= 0 ? "−" : "+") + n2(Math.abs(x.gain)) + " j"}</td><td>${n0(x.meilleur.coutPierre)}</td><td>${x.pierreParJour == null ? "—" : n0(x.pierreParJour)}</td></tr>`).join("")}</tbody></table></div>
+    <p class="note">En vert : le niveau fait gagner au moins ${n1(seuil)} jour. En rouge : gain trop faible ou temps perdu. La pierre est donnée pour information : elle n'entre pas dans le choix.${memeN ? ` Meilleur délai de chaque niveau : avec ${memeN} Cabines.` : ""} Nombres testés : de 5 à ${q.maxN} Cabines (10 par niveau de Basilica au départ). Temps : crown_batiment.xlsx et fiches officielles (Académie, Forum).</p>
     ${(() => { const r45 = E.citeTemps(P, Math.min(45, q.maxN), 4); if (!r45) return "";
       return `<div class="panel" style="margin-top:12px;background:var(--bg)"><b>Note : temps ou pierre ?</b>
       <p style="margin:6px 0 0">Ce calcul ne compte que le <b>temps</b>. Il ne voit pas la pierre, et monte donc en niveau. Le choix « ${r45.n} Cabines niveau 4 » répondait à une autre question : <b>quand la pierre livrée te limite</b>. Le niveau 4 est le moins cher en pierre (1 100 par Cabine, contre 15 250 au niveau 8).</p>
@@ -534,15 +537,16 @@ function renderRaid(){
   const bestRow = (rows, k) => rows.reduce((a, b) => b[k] > a[k] ? b : a, rows[0]);
   const seul = r.seul.filter(x => x.envoyer != null), bs = bestRow(seul, "profit");
   const A = r.modeA, B = r.modeB;
-  $("raidOut").innerHTML = `<div class="kpis" style="margin-top:12px"><div><span class="lbl">Butin hors or prédit</span><b>${n0(r.butin)}</b></div><div><span class="lbl">Or prédit</span><b>${n0(r.or)}</b></div>
-      <div><span class="lbl">Si les cavernes te limitent</span><b style="font-size:1.05rem">${esc(r.best.cavernes)}</b></div><div><span class="lbl">Si tes troupes te limitent</span><b style="font-size:1.05rem">${esc(r.best.troupes)}</b></div><div><span class="lbl">Si tes places te limitent</span><b style="font-size:1.05rem">${esc(r.best.places)}</b></div></div>
+  $("raidOut").innerHTML = `<div class="kpis" style="margin-top:12px"><div><span class="lbl">Butin hors or prédit</span><b>${n0(r.butin)}</b></div><div><span class="lbl">Or prédit</span><b>${n0(r.or)}</b></div></div>
     <p style="margin:10px 0 0">${st}</p>
     <h3>Avec tes troupes (Rangers / Triaires)</h3>
     <div class="grid"><div class="panel hl"><b>A. Un raid, le plus rentable</b><p style="margin:6px 0">${n0(A.rangers)} rangers + ${n0(A.triaires)} triaires (${esc(A.ratio)}) · pertes ${pc(A.taux)} · profit ${n0(A.profit)}</p>
       <p class="note ${A.stockOK ? "" : "warn"}" style="margin:0">${A.stockOK ? "OK : il te reste " + n0(A.resteR) + " rangers et " + n0(A.resteT) + " triaires." : "Pas assez de triaires : il en manque " + n0(A.manqueT) + " (ou vise une caverne au % plus haut / niveau plus bas)."}</p></div>
-      ${B ? `<div class="panel"><b>B. Tout ton stock en raids identiques</b><p style="margin:6px 0">${n0(B.nbRaids)} raids de ${n0(B.rangers)} rangers + ${n0(B.triaires)} triaires (stock ${esc(B.ratioStock)}) · pertes ${pc(B.taux)} · profit ${n0(B.profit)} par raid</p><p class="note" style="margin:0">Profit total : <b>${n0(B.total)}</b> contre ${n0(A.profit)} en mode A. Le mode B ne vaut que si tu as assez de cavernes à portée.</p></div>` : ""}</div>
-    <h3>Unité seule</h3><div class="scroll"><table class="t"><thead><tr><th>Unité</th><th class="l">Type</th><th>À envoyer</th><th>Pertes</th><th>Taux</th><th>Valeur pertes</th><th>Profit net</th><th>Valeur armée</th><th>Profit / armée</th><th>Profit / place</th></tr></thead><tbody>
-    ${seul.map(x => `<tr class="${x === bs ? "best" : ""}"><td>${esc(x.nom)}</td><td class="l">${esc(x.type)}</td><td>${n0(x.envoyer)}</td><td>${n0(x.pertes)}</td><td>${pc(x.taux)}</td><td>${n0(x.valeurPertes)}</td><td>${n0(x.profit)}</td><td>${n0(x.valeurArmee)}</td><td>${pc(x.profitArmee)}</td><td>${n1(x.profitPlace)}</td></tr>`).join("")}</tbody></table></div>
+      ${B ? `<div class="panel"><b>B. Tout ton stock en raids identiques</b><p style="margin:6px 0">${n0(B.nbRaids)} raid${B.nbRaids > 1 ? "s" : ""} de ${n0(B.rangers)} rangers + ${n0(B.triaires)} triaires (stock ${esc(B.ratioStock)}) · pertes ${pc(B.taux)} · profit ${n0(B.profit)} par raid</p><p class="note" style="margin:0">Profit total : <b>${n0(B.total)}</b> contre ${n0(A.profit)} en mode A. Le mode B ne vaut que si tu as assez de cavernes à portée.</p></div>` : ""}</div>
+    <h3>Unité seule</h3><div class="scroll"><table class="t"><thead><tr><th>Unité</th><th class="l">Type</th><th>À envoyer</th><th>Pertes</th><th>Taux</th><th>Valeur pertes</th><th title="Le meilleur si les cavernes te limitent">Profit net</th><th>Valeur armée</th><th title="Le meilleur si tes troupes te limitent">Profit / armée</th><th title="Le meilleur si tes places te limitent">Profit / place</th></tr></thead><tbody>
+    ${seul.map(x => { const top = (k, t) => x.nom === r.best[k] ? `<td class="top">★ ${t}</td>` : `<td>${t}</td>`;
+      return `<tr class="${x === bs ? "best" : ""}"><td>${esc(x.nom)}</td><td class="l">${esc(x.type)}</td><td>${n0(x.envoyer)}</td><td>${n0(x.pertes)}</td><td>${pc(x.taux)}</td><td>${n0(x.valeurPertes)}</td>${top("cavernes", n0(x.profit))}<td>${n0(x.valeurArmee)}</td>${top("troupes", pc(x.profitArmee))}${top("places", n1(x.profitPlace))}</tr>`; }).join("")}</tbody></table></div>
+    <p class="note" style="margin-top:4px">★ = la meilleure unité selon ce qui te limite : <b>Profit net</b> si ce sont les cavernes (${esc(r.best.cavernes)}), <b>Profit / armée</b> si ce sont tes troupes (${esc(r.best.troupes)}), <b>Profit / place</b> si ce sont tes places (${esc(r.best.places)}).</p>
     <h3>Mélanges Ranger : Triaire</h3><div class="scroll"><table class="t"><thead><tr><th>Ratio</th><th>Rangers</th><th>Triaires</th><th>Taux</th><th>Valeur pertes</th><th>Profit net</th><th>Valeur armée</th><th>Profit / armée</th><th>Profit / place</th></tr></thead><tbody>
     ${r.mix.map(x => `<tr><td>${esc(x.ratio)}</td><td>${n0(x.rangers)}</td><td>${n0(x.triaires)}</td><td>${pc(x.taux)}</td><td>${n0(x.valeurPertes)}</td><td>${n0(x.profit)}</td><td>${n0(x.valeurArmee)}</td><td>${pc(x.profitArmee)}</td><td>${n1(x.profitPlace)}</td></tr>`).join("")}</tbody></table></div>
     <p class="note">« À envoyer » couvre tout le butin après les pertes du raid (× la marge). Pertes = coefficient × défense des monstres / ton attaque, calé sur des raids d'infanterie en forêt 6 : à confirmer pour la cavalerie et la mystique.</p>`;
@@ -647,8 +651,27 @@ function renderRecrutRes(){
     tr.querySelector(".c-fh").textContent = l.cycle ? n0(l.heure.ferNet) : "—"; tr.querySelector(".c-z").textContent = n0(Math.floor(l.zerksRaid)); });
 }
 const hms = h => { const t = Math.round(h * 3600), x = n => String(n).padStart(2, "0"); return Math.floor(t / 3600) + ":" + x(Math.floor(t % 3600 / 60)) + ":" + x(t % 60); };
+function rrEtat(v){ // ce qui est en cours de saisie dans le formulaire de raid, pour le garder quand la page se redessine
+  const f = $("rrForm"); if (!f || f.dataset.ville !== v.id) return null;
+  const a = document.activeElement;
+  return { champs: [...f.elements].filter(x => x.name).map(x => [x.name, x.value, x.className]), maj: !$("rrMajBox").hidden, majTxt: $("rrMaj").textContent, majId: $("rrMaj").dataset.id || "",
+    focus: a && f.contains(a) ? a.name : null, sel: a && f.contains(a) && "selectionStart" in a ? [a.selectionStart, a.selectionEnd] : null };
+}
+function rrRestaure(etat){
+  const f = $("rrForm"); if (!etat || !f) return;
+  etat.champs.forEach(([n, val, cls]) => { const x = f.querySelector(`[name="${n}"]`); if (x){ x.value = val; x.className = cls; } });
+  f.querySelectorAll("[data-rt-only]").forEach(x => x.hidden = f.querySelector('[name="armee"]').value === "zerks");
+  $("rrMajBox").hidden = !etat.maj; $("rrMaj").textContent = etat.majTxt; if (etat.majId) $("rrMaj").dataset.id = etat.majId;
+  if (etat.focus){ const x = f.querySelector(`[name="${etat.focus}"]`); if (x){ x.focus({preventScroll: true}); if (etat.sel) try { x.setSelectionRange(...etat.sel); } catch {} } }
+}
+function rrVider(){ // après un ajout réussi : formulaire vide, armée gardée
+  const f = $("rrForm"); if (!f) return; const armee = f.querySelector('[name="armee"]').value;
+  f.reset(); f.querySelector('[name="armee"]').value = armee; f.querySelectorAll("input").forEach(x => x.classList.remove("lu", "verif"));
+  f.querySelectorAll('input[type="hidden"]').forEach(x => x.value = ""); $("rrMajBox").hidden = true;
+}
 function renderRecrutRaids(){
   const v = curVille(); if (!v) return;
+  const etat = rrEtat(v);
   $("rvRaids").innerHTML = `<h2>Raids en cours de ${esc(v.nom || "la ville")}</h2>
     <p class="note" style="margin:0 0 10px">Une ligne = une armée qui raide en boucle : ressources ramenées par un raid (« Carried »), pertes (« Expended ») et trajet aller (h:mm:ss, comme dans le jeu). Quand tes troupes augmentent, modifie directement les chiffres dans le tableau, ou relis une nouvelle capture.</p>
     <div class="drop" id="rrDrop" tabindex="0" role="button" aria-label="Lire une capture de rapport"><span style="font-size:22px" aria-hidden="true">📷</span><span><b>Lire une capture de rapport</b><br><span class="note" style="margin:0">Clique pour choisir l'image, glisse-la ici ou colle-la (Ctrl+V). La lecture se fait dans ton navigateur.</span></span><input type="file" id="rrFile" accept="image/*" hidden></div>
@@ -676,6 +699,7 @@ function renderRecrutRaids(){
         ${RR_COLS.map(([k, , t]) => `<td><input data-rr-id="${esc(x.id)}" data-rr-k="${k}" ${t === "number" ? 'type="text" inputmode="decimal" data-num' : 'placeholder="h:mm:ss"'} value="${esc(t === "number" ? fmtIn(rrVal(x, k) === "" ? "" : +rrVal(x, k)) : rrVal(x, k))}" style="width:${k === "trajet" ? 70 : 66}px;min-width:0"></td>`).join("")}
         <td class="c-cycle"></td><td class="c-rj"></td><td class="c-fh"></td><td class="c-z"></td><td><button type="button" class="link danger" data-rr-del="${esc(x.id)}">Supprimer</button></td></tr>`).join("")}
       </tbody></table></div>` : ""}`;
+  $("rrForm").dataset.ville = v.id; rrRestaure(etat);
   if (capMem) capMsg(capMem[0], capMem[1]);
   renderRecrutRes();
 }
@@ -719,8 +743,8 @@ document.addEventListener("submit", async e => { if (e.target.id !== "rrForm") r
   if (E.heures(r.trajet) == null){ const tr = e.target.querySelector('[name="trajet"]'); tr.classList.add("verif"); tr.focus();
     capMsg(`<span class="warn">⏱ ${r.trajet ? "Trajet illisible" : "Il me manque le temps de trajet aller"}</span> : écris-le en h:mm:ss (par exemple 02:45:30) pour que je calcule le fer à l'heure.`, "warn"); return; }
   const jr = await versJournal(r);
-  if (isLocal(rVille)){ rRapports.push({id: "local" + Date.now(), ...r}); renderRecrutRaids(); setStatus("Raid ajouté (non enregistré : choisis ta fiche)"); capMsg(jr); return; }
-  try { await db.collection(`${rvPath()}/${rVille}/rapports`).add(r); setStatus("Raid enregistré"); capMsg(`<span class="ok">Raid ajouté au Recrutement.</span> ` + jr); } catch (err){ setStatus("Raid non enregistré : " + (err.message || err.code)); } });
+  if (isLocal(rVille)){ rRapports.push({id: "local" + Date.now(), ...r}); rrVider(); rrLu = null; renderRecrutRaids(); setStatus("Raid ajouté (non enregistré : choisis ta fiche)"); capMsg(jr); return; }
+  try { await db.collection(`${rvPath()}/${rVille}/rapports`).add(r); rrVider(); rrLu = null; setStatus("Raid enregistré"); capMsg(`<span class="ok">Raid ajouté au Recrutement.</span> ` + jr); } catch (err){ setStatus("Raid non enregistré : " + (err.message || err.code)); } });
 
 // Un rapport alimente aussi le Journal des raids (onglet Raids) : armées Rangers / Triaires uniquement
 const RR_TEXTE = new Set(["date", "trajet", "armee", "caverne", "rapportDate"]);
@@ -858,7 +882,7 @@ function renderLien(){
     : !x ? '<span class="warn">Ville introuvable dans le Recrutement.</span>'
     : !x.r.n ? '<span class="warn">Aucun raid avec trajet dans cette ville.</span>'
     : `Nets des pertes, à l'heure × 24 (${x.r.n} armée${x.r.n > 1 ? "s" : ""}). Fer : sans les ${n0((x.v.surplus ?? 0.1) * 100)} % de raffinage.`;
-  document.querySelectorAll('#view-castle [data-k="ferJour"],#view-cite [data-k="ferJour"],#view-cite [data-k="pierreJour"],#view-cite [data-k="boisJour"],#view-cabines [data-k="pierreJour"],#view-cabines [data-k="boisJour"]')
+  document.querySelectorAll('#view-cite [data-k="ferJour"],#view-cite [data-k="pierreJour"],#view-cite [data-k="boisJour"],#view-cabines [data-k="pierreJour"],#view-cabines [data-k="boisJour"]')
     .forEach(el => { el.readOnly = !!S.lienVille; el.classList.toggle("calc", !!S.lienVille); el.title = S.lienVille ? "Repris des raids (onglet Recrutement) — choisis « Saisie manuelle » pour modifier" : ""; });
 }
 document.addEventListener("change", e => { if (e.target.id !== "lienSel") return; S.lienVille = e.target.value; subscribeLien(); renderAll(); scheduleSave(); });
@@ -914,7 +938,13 @@ function subscribeRapports(){
     err => setStatus("Lecture des raids impossible : " + (err.message || err.code)));
 }
 
-function renderAll(){ renderPVilles(); renderCite(); renderCab(); renderDem(); renderRaidsAll(); renderSim(); renderResume(); renderRecrut(); renderLien(); }
+function renderRappels(){
+  document.querySelectorAll("[data-rappel]").forEach(b => { const k = b.dataset.rappel, v = S[k];
+    b.textContent = k === "ferJour" ? (v === "" || v == null ? "sans limite" : n0(+v) + " / jour") : k === "groupes" ? n0(Math.max(1, num(v, 1))) + " Cabines" : (v ?? ""); });
+}
+document.addEventListener("click", e => { const b = e.target.closest("[data-goto]"); if (!b) return; showView(b.dataset.goto);
+  const f = document.querySelector(`#view-${b.dataset.goto} [data-k="${b.dataset.rappel}"]`); if (f){ f.scrollIntoView({block:"center"}); f.focus(); } });
+function renderAll(){ renderRappels(); renderPVilles(); renderCite(); renderCab(); renderDem(); renderRaidsAll(); if (!document.activeElement || !document.activeElement.closest("#unitsOut")) renderUnits(); renderSim(); renderResume(); renderRecrut(); renderLien(); }
 
 /* ---------- vues ---------- */
 const GUIDE = {
