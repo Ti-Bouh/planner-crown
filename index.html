@@ -105,6 +105,11 @@ table.reg{border-collapse:collapse;width:100%;min-width:980px;font-size:13px}
 .rsel.r-afaire{border-style:dashed;background-color:transparent}
 .refnote{font-size:11.5px;color:var(--muted);white-space:nowrap}
 .wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-top:12px}
+#rechPanel{margin-bottom:16px}
+#rechPanel .rgh{font-size:13px;font-weight:600;margin:14px 0 0}
+#rechPanel .wgrid{margin-top:6px}
+.reco .base{font-size:11px;color:var(--muted);margin-left:6px}
+#rechGrid .field select,#durGrid .field select,#foiGrid .field input{width:100%;min-width:0;box-sizing:border-box}
 .wgrid input{width:100%}
 .drop{display:block;border:1.5px dashed var(--line);border-radius:8px;padding:18px 14px;text-align:center;cursor:pointer;color:var(--muted);margin-top:10px}
 .drop b{color:var(--ink)}
@@ -432,6 +437,18 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
   </div>
 
   <div class="view" id="view-fiche" hidden>
+  <details class="panel" id="rechPanel">
+    <summary id="rechTitle">Recherches et foi</summary>
+    <p class="note">Recherches et durabilité : propres à chaque joueur, pour toutes ses villes. Foi : commune à l'alliance, la même pour vous deux. Recherches de combat et foi sont comptées dans la def conseillée.</p>
+    <h3 class="rgh">Recherches de combat par troupe</h3>
+    <div class="wgrid" id="rechGrid"></div>
+    <h3 class="rgh">Foi des dieux <span class="msub">(commune à l'alliance : saisie une fois pour vous deux)</span></h3>
+    <div class="wgrid" id="foiGrid"></div>
+    <h3 class="rgh">Durabilité <span class="msub">(résistance au siège, pas comptée dans la def conseillée)</span></h3>
+    <div class="wgrid" id="durGrid"></div>
+    <div class="btns" style="margin-top:12px"><button type="button" class="primary" id="rechSave">Enregistrer</button></div>
+  </details>
+
   <section class="grid" aria-label="Synthèse">
     <div class="panel">
       <h2>Répartition off / def</h2>
@@ -481,6 +498,7 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
     </div>
     <div class="empty" id="emptyState">Aucune ville pour l'instant. Va dans Outils pour importer tes CSV du jeu ou ajouter une ville.</div>
   </section>
+
   </div>
 
   <div class="view" id="view-binome" hidden>
@@ -791,6 +809,16 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
           </select></label>
       </div>
       <fieldset><legend>Troupes</legend><div class="groups" id="troopChips"></div></fieldset>
+      <fieldset><legend>Fortifications</legend>
+        <div class="row">
+          <label class="field w-num" style="flex-basis:110px"><span class="lbl">Mur (niveau)</span><input id="f-wall" type="number" min="0" max="10" step="1" placeholder="0"></label>
+          <label class="field w-num" style="flex-basis:150px"><span class="lbl">Postes de Rangers (nombre)</span><input id="f-rp-n" type="number" min="0" step="1" placeholder="0"></label>
+          <label class="field w-num" style="flex-basis:150px"><span class="lbl">Postes de Rangers (niveau)</span><input id="f-rp-l" type="number" min="0" max="10" step="1" placeholder="0"></label>
+          <label class="field w-num" style="flex-basis:150px"><span class="lbl">Postes de Triaires (nombre)</span><input id="f-tp-n" type="number" min="0" step="1" placeholder="0"></label>
+          <label class="field w-num" style="flex-basis:150px"><span class="lbl">Postes de Triaires (niveau)</span><input id="f-tp-l" type="number" min="0" max="10" step="1" placeholder="0"></label>
+        </div>
+        <p class="note" style="margin:6px 0 0">Le niveau du mur est repris de l'export des troupes à chaque import. Les postes sont à saisir ici : si plusieurs postes n'ont pas le même niveau, mets le niveau le plus courant.</p>
+      </fieldset>
       <fieldset><legend>Ressources</legend>
         <div class="resrow" id="resSelects"></div>
         <div class="row" style="margin-top:10px">
@@ -1081,6 +1109,8 @@ function startEdit(id, fid){
   $("f-castle").value = c.castle ? "1" : "0"; $("f-milieu").value = milieuOf(c); $("f-role").value = c.role || "auto";
   document.querySelectorAll("#troopChips input").forEach(i => i.checked = (c.troops||[]).includes(i.value));
   RES.forEach(([k]) => $("f-res-"+k).value = (c.res||{})[k] || "afaire");
+  const po = c.postes || {};
+  $("f-wall").value = c.wall ?? ""; $("f-rp-n").value = po.ranger?.n || ""; $("f-rp-l").value = po.ranger?.niv || ""; $("f-tp-n").value = po.triari?.n || ""; $("f-tp-l").value = po.triari?.niv || "";
   fillHubSelect(c.hubId);
   $("formTitle").textContent = "Modifier : " + c.name; $("saveBtn").textContent = "Enregistrer les modifications"; $("cancelBtn").hidden = false;
   $("delZone").hidden = false;
@@ -1211,8 +1241,10 @@ $("cityForm").addEventListener("submit", async e => {
     castle: $("f-castle").value === "1", milieu: $("f-milieu").value, role: $("f-role").value,
     troops: [...document.querySelectorAll("#troopChips input:checked")].map(i => i.value),
     res: Object.fromEntries(RES.map(([k]) => [k, $("f-res-"+k).value])),
-    hubId: $("f-hub").value || "", updatedAt: new Date().toISOString()
+    hubId: $("f-hub").value || "", updatedAt: new Date().toISOString(),
+    postes: {ranger:{n:+$("f-rp-n").value||0, niv:Math.min(10, +$("f-rp-l").value||0)}, triari:{n:+$("f-tp-n").value||0, niv:Math.min(10, +$("f-tp-l").value||0)}}
   };
+  if ($("f-wall").value !== "") data.wall = Math.max(0, Math.min(10, +$("f-wall").value||0));
   $("saveBtn").disabled = true;
   try {
     if (editingId) await col().doc(editingId).update(data);
@@ -1245,6 +1277,37 @@ function toast(t){
   if (kind !== "err") setTimeout(() => el.remove(), kind === "ok" ? 3500 : 6000);
 }
 
+const RECH_UNITS = [...TROOPS.def.filter(u => u !== "Guard"), ...TROOPS.off];
+/* Recherche de combat : % par niveau 0 à 12 ; foi : +0,5 % par point (max 100), selon le dieu de l'unité (scripts de joueurs GFunky / Dfunky) */
+const UNIT_FR = {Ranger:"Ranger", Triari:"Triaire", Priestess:"Priestess", Arbalist:"Arbalétrier", Praetor:"Praetor", Ballista:"Baliste", Stinger:"Stinger",
+  Vanquisher:"Vanquisher", Sorcerer:"Sorcière", Horseman:"Cavalier", Druid:"Druide", Ram:"Bélier", Scorpion:"Scorpion", Warship:"Navire de guerre"};
+const RES_PCT = [0, 1, 3, 6, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+const DIEUX = [["naera","Naera"],["vexemis","Vexemis"],["cyndros","Cyndros"],["ylanna","Ylanna"]];
+const DIEU_UNITE = {Ranger:"naera", Triari:"naera", Priestess:"naera", Arbalist:"naera", Praetor:"naera", Ballista:"naera",
+  Vanquisher:"vexemis", Sorcerer:"vexemis", Horseman:"vexemis", Druid:"vexemis", Ram:"cyndros", Scorpion:"cyndros", Warship:"cyndros", Stinger:"ylanna"};
+let foiAlliance = {};   /* foi des dieux : commune à l'alliance, document reglages/foi */
+function bonusRech(f, u){   /* bonus total en % pour l'unité u : recherche du joueur (si connu) + foi de l'alliance */
+  const niv = f ? Math.max(0, Math.min(12, +((f.recherches||{})[u]) || 0)) : 0, foi = Math.max(0, Math.min(100, +foiAlliance[DIEU_UNITE[u]] || 0));
+  return RES_PCT[niv] + foi * 0.5;
+}
+function renderRech(){
+  if (!$("rechGrid")) return;
+  if ($("rechPanel").contains(document.activeElement)) return;
+  const f = fiches.find(x => x.id === currentFiche), r = (f && f.recherches) || {}, fo = foiAlliance;
+  $("rechTitle").textContent = f ? `Recherches et foi (${f.nom})` : "Recherches et foi";
+  $("foiGrid").innerHTML = DIEUX.map(([k,l]) => `<label class="field"><span class="lbl">${l} (%)</span><input type="number" min="0" max="100" step="1" data-foi="${k}" value="${fo[k] || ""}" placeholder="0"></label>`).join("");
+  $("durGrid").innerHTML = [["batiments","Bâtiments"],["fortifs","Fortifications"]].map(([k,l]) => `<label class="field"><span class="lbl">${l}</span><select data-dur="${k}">${RES_PCT.map((pc, n) => `<option value="${n}"${(+((f && f.durabilite)||{})[k]||0) === n ? " selected" : ""}>niv. ${n} · +${pc} %</option>`).join("")}</select></label>`).join("");
+  $("rechGrid").innerHTML = RECH_UNITS.map(u => `<label class="field"><span class="lbl">${UNIT_FR[u] || u}</span><select data-rech="${u}">${RES_PCT.map((pc, n) => `<option value="${n}"${(+r[u]||0) === n ? " selected" : ""}>niv. ${n} · +${pc} %</option>`).join("")}</select></label>`).join("");
+}
+$("rechSave").addEventListener("click", async () => {
+  if (!db || !currentFiche){ setStatus("Choisis ou crée une fiche d'abord."); return; }
+  const r = {}, fo = {}, du = {};
+  document.querySelectorAll("[data-dur]").forEach(i => { const v = +i.value || 0; if (v) du[i.dataset.dur] = v; });
+  document.querySelectorAll("[data-rech]").forEach(i => { const v = +i.value || 0; if (v) r[i.dataset.rech] = v; });
+  document.querySelectorAll("[data-foi]").forEach(i => { const v = Math.max(0, Math.min(100, +i.value || 0)); if (v) fo[i.dataset.foi] = v; });
+  try { await db.doc("fiches/" + currentFiche).update({recherches:r, durabilite:du}); await db.doc("reglages/foi").set({foi:fo, maj:new Date().toISOString()}); setStatus("Recherches et foi enregistrées."); }
+  catch(err){ setStatus("Recherches non enregistrées : " + (err.message||err.code)); }
+});
 function buildTsGrid(){
   $("tsGrid").innerHTML = Object.keys(TS_DEFAULT).map(t => `<label class="field"><span class="lbl">${t}</span><input type="number" min="0" step="1" id="w-${t}" value="${tsW[t]}"></label>`).join("");
 }
@@ -1388,7 +1451,7 @@ function selectFiche(id){
   if (id === currentFiche && unsubVilles) return;
   currentFiche = id; try { localStorage.setItem("ficheActive", id); } catch {}
   if (unsubVilles){ unsubVilles(); unsubVilles = null; }
-  cities = []; resetForm(); pendingImport = null; $("impPreview").hidden = true; render(); renderTabs();
+  cities = []; resetForm(); pendingImport = null; $("impPreview").hidden = true; render(); renderTabs(); renderRech();
   if (!id) return;
   setStatus("Chargement de la fiche…");
   unsubVilles = col().onSnapshot(snap => {
@@ -1868,6 +1931,8 @@ const DEF_STATS = {
   Stinger:  {d:[4500,4500,2000,6000], cout:12000, vit:5, nom:"Stinger", mer:true}
 };
 const WALL_BONUS = [0, .01, .03, .06, .10, .15, .20, .26, .33, .41, .50];   /* City Wall niveau 0 à 10 : bonus de défense des unités terrestres (fiche du bâtiment) */
+const POST_CAP = [0, 30, 60, 120, 200, 320, 480, 700, 1000, 1400, 2000];   /* Ranger Post / Triari Post : unités doublées par poste selon le niveau */
+function postCap(c, u){ const k = u === "Ranger" ? "ranger" : u === "Triari" ? "triari" : null, p = k && c && c.postes && c.postes[k]; return p ? (+p.n||0) * POST_CAP[Math.max(0, Math.min(10, +p.niv||0))] : 0; }
 function compoAtk(m){
   const parts = [0,0,0,0]; const c = m.compo || {};
   for (const u in OFF_ATK) parts[OFF_ATK[u].t] += (+c[u]||0) * OFF_ATK[u].a;
@@ -1892,20 +1957,25 @@ function recoDef(m){
   if (!tot) return "";
   const pos = menPos(m), tgt = menCity(m);
   const wl = tgt && tgt.wall != null ? Math.max(0, Math.min(10, Math.round(+tgt.wall||0))) : null, wb = wl != null ? WALL_BONUS[wl] : 0;
+  const owner = tgt ? fiches.find(f => f.id === m.fiche) : null, compte = owner && Object.keys(owner.recherches||{}).length, foiOk = Object.keys(foiAlliance).length;
   const rows = Object.entries(DEF_STATS).filter(([,st]) => m.type === "mer" || !st.mer).map(([u, st]) => {
     const eff = st.d.reduce((n, d, i) => n + d * parts[i] / tot, 0);       /* défense moyenne face à ce mélange */
-    const nb = Math.ceil(tot / (eff * (1 + (st.mer ? 0 : wb)))), dispo = freeDef(u);   /* le mur ne renforce que les unités terrestres */
+    const v = eff * (1 + (st.mer ? 0 : wb)) * (1 + bonusRech(owner, u) / 100);   /* le mur ne renforce que les unités terrestres */
+    const cap = postCap(tgt, u);                                             /* les « cap » premières unités comptent double */
+    const nb = tot <= 2 * cap * v ? Math.ceil(tot / (2 * v)) : Math.ceil(tot / v - cap), dispo = freeDef(u);
     const villes = dispo.villes.filter(v => !(tgt && v.c.id === tgt.id)).map(v => ({...v, d: dist(v.c, pos)})).sort((a,b) => a.d - b.d);
-    return {u, st, eff, nb, ratio: eff / st.cout, dispo, villes};
+    return {u, st, eff, v, nb, ratio: eff / st.cout, dispo, villes};
   }).sort((a,b) => (b.dispo.n > 0) - (a.dispo.n > 0) || b.ratio - a.ratio);   /* d'abord ce qu'on a en ville, puis le meilleur rendement */
   const mix = parts.map((v,i) => v ? `${ATK_TYPES[i]} ${Math.round(v/tot*100)} %` : "").filter(Boolean).join(" · ");
   return `<div class="reco"><h4>Def conseillée</h4>
-    <p class="rnote">Attaque estimée : <b>${fmt(tot)}</b> points (${mix}). ${wl != null ? `Mur niveau ${wl} : <b>+${Math.round(wb*100)} %</b> de défense pour les unités terrestres, compté dans « pour égaler l'attaque ».` : "Niveau du mur inconnu : non compté."}</p>
-    <div class="scroll"><table class="rftab"><thead><tr><th>Unité</th><th>Déf. moyenne / unité</th><th>≈ Pour égaler l'attaque</th><th>Villes qui en ont (trajet)</th></tr></thead><tbody>
+    <p class="rnote">Attaque estimée : <b>${fmt(tot)}</b> points (${mix}). ${wl != null ? `Mur niveau ${wl} : <b>+${Math.round(wb*100)} %</b> de défense pour les unités terrestres.` : "Niveau du mur inconnu : non compté."}
+      ${owner ? (compte ? `Recherches de ${esc(owner.nom)} comptées.` : `Pas de recherches saisies pour ${esc(owner.nom)}.`) : "Ville alliée : recherches non comptées."} ${foiOk ? "Foi de l'alliance comptée." : ""}
+      ${["Ranger","Triari"].map(u => postCap(tgt, u) ? `${fmt(postCap(tgt, u))} ${DEF_STATS[u].nom}s comptent double (postes).` : "").filter(Boolean).join(" ")}</p>
+    <div class="scroll"><table class="rftab"><thead><tr><th>Unité</th><th>Défense par unité</th><th>≈ Pour égaler l'attaque</th><th>Villes qui en ont (trajet)</th></tr></thead><tbody>
     ${rows.map((r,i) => `<tr class="${i===0?"r1":""}"><td><b>${r.st.nom}</b>${i===0?`<span class="tag">Conseillée</span>`:i===1?`<span class="tag alt">Alternative</span>`:""}</td>
-      <td class="mono">${r.eff.toFixed(1)}</td><td class="mono">${fmt(r.nb)}</td><td>${villesTxt(r)}</td></tr>`).join("")}
+      <td class="mono">${r.v.toFixed(1)}${Math.abs(r.v - r.eff) > 0.05 ? `<span class="base">base ${r.eff.toFixed(1)}</span>` : ""}</td><td class="mono">${fmt(r.nb)}</td><td>${villesTxt(r)}</td></tr>`).join("")}
     </tbody></table></div>
-    <p class="rnote">Classement : d'abord les unités présentes dans vos villes, puis la défense obtenue par ressource dépensée (on peut empiler autant de def qu'on veut sur une ville, donc ce sont les ressources qui comptent, pas les places). « Pour égaler l'attaque » est un repère (défense totale = attaque totale), pas une prévision du combat : les recherches n'y sont pas, ni les postes de Rangers et de Triaires (+100 % pour un nombre limité d'unités). Villes : celles où l'import des troupes en indique en ville, triées de la plus proche à la plus loin ; trajets aux vitesses de base.</p>
+    <p class="rnote" title="Classement : d'abord les unités présentes dans vos villes, puis la défense obtenue par ressource dépensée (on peut empiler autant de def qu'on veut). « Pour égaler l'attaque » = défense totale égale à l'attaque : en assaut, chaque camp perd environ la moitié. Défense par unité = bonus compris (mur, recherches, foi). Les postes et l'arrondi peuvent faire varier le nombre. Pas comptés : recherches de l'attaquant, protection de nuit. Trajets aux vitesses de base.">Classées par troupes disponibles puis rendement. « Pour égaler » = échange à 50/50 en assaut. Détail au survol.</p>
   </div>`;
 }
 function buildCompo(){
@@ -2775,12 +2845,13 @@ buildCompo(); buildForm(); buildTsGrid(); resetForm(); fillUnitSelect(""); rende
   if (!db){ setStatus("Registre indisponible ici : ouvre la page depuis claude.ai, connectée."); return; }
   (async () => { try { const u = await window.claude?.use?.("user"); if (u){ const c = await u.can("data.write"); if (c === false || c === true) canWrite = c; } } catch {} renderRO(); })();
   db.doc("reglages/poidsTs").onSnapshot(d => { tsW = {...TS_DEFAULT, ...((d.exists && d.data().poids) || {})}; buildTsGrid(); render(); renderBinome(); renderDefense(); }, () => {});
+  db.doc("reglages/foi").onSnapshot(d => { foiAlliance = (d.exists && d.data().foi) || {}; renderRech(); renderDefense(); }, () => {});
   db.doc("reglages/objectif").onSnapshot(d => { if (d.exists){ objectif = {pct:+d.data().pct||50, ts:+d.data().ts||null};
     if (document.activeElement?.id !== "obj-pct") $("obj-pct").value = objectif.pct; if (document.activeElement?.id !== "obj-ts") $("obj-ts").value = objectif.ts || ""; renderBinome(); } }, () => {});
   startAttaques(); startDefense(); startBarons(); startCarte(); startSuggestions();
   db.collection("fiches").orderBy("creeLe").onSnapshot(snap => {
-    fiches = snap.docs.map(d => ({id:d.id, nom:d.data().nom || d.id, importVilles:d.data().importVilles || "", importTroupes:d.data().importTroupes || ""}));
-    renderAge();
+    fiches = snap.docs.map(d => ({id:d.id, nom:d.data().nom || d.id, importVilles:d.data().importVilles || "", importTroupes:d.data().importTroupes || "", recherches:d.data().recherches || {}, durabilite:d.data().durabilite || {}}));
+    renderAge(); renderRech(); renderDefense();
     let want = currentFiche; if (!want){ try { want = moi || localStorage.getItem("ficheActive"); } catch {} }
     renderMe();
     if (!fiches.some(f => f.id === want)) want = fiches[0]?.id || null;
