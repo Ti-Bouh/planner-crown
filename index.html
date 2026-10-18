@@ -1292,7 +1292,8 @@ function bonusRech(f, u){   /* bonus total en % pour l'unité u : recherche du j
 }
 function renderRech(){
   if (!$("rechGrid")) return;
-  if ($("rechPanel").contains(document.activeElement)) return;
+  if ($("rechGrid").dataset.fiche === (currentFiche || "") && $("rechPanel").contains(document.activeElement) && document.activeElement.matches("input,select")) return;
+  $("rechGrid").dataset.fiche = currentFiche || "";
   const f = fiches.find(x => x.id === currentFiche), r = (f && f.recherches) || {}, fo = foiAlliance;
   $("rechTitle").textContent = f ? `Recherches et foi (${f.nom})` : "Recherches et foi";
   $("foiGrid").innerHTML = DIEUX.map(([k,l]) => `<label class="field"><span class="lbl">${l} (%)</span><input type="number" min="0" max="100" step="1" data-foi="${k}" value="${fo[k] || ""}" placeholder="0"></label>`).join("");
@@ -1302,8 +1303,8 @@ function renderRech(){
 $("rechSave").addEventListener("click", async () => {
   if (!db || !currentFiche){ setStatus("Choisis ou crée une fiche d'abord."); return; }
   const r = {}, fo = {}, du = {};
-  document.querySelectorAll("[data-dur]").forEach(i => { const v = +i.value || 0; if (v) du[i.dataset.dur] = v; });
-  document.querySelectorAll("[data-rech]").forEach(i => { const v = +i.value || 0; if (v) r[i.dataset.rech] = v; });
+  document.querySelectorAll("[data-dur]").forEach(i => { du[i.dataset.dur] = +i.value || 0; });   /* zéros compris : la base fusionne les mises à jour */
+  document.querySelectorAll("[data-rech]").forEach(i => { r[i.dataset.rech] = +i.value || 0; });
   document.querySelectorAll("[data-foi]").forEach(i => { const v = Math.max(0, Math.min(100, +i.value || 0)); if (v) fo[i.dataset.foi] = v; });
   try { await db.doc("fiches/" + currentFiche).update({recherches:r, durabilite:du}); await db.doc("reglages/foi").set({foi:fo, maj:new Date().toISOString()}); setStatus("Recherches et foi enregistrées."); }
   catch(err){ setStatus("Recherches non enregistrées : " + (err.message||err.code)); }
@@ -1957,7 +1958,7 @@ function recoDef(m){
   if (!tot) return "";
   const pos = menPos(m), tgt = menCity(m);
   const wl = tgt && tgt.wall != null ? Math.max(0, Math.min(10, Math.round(+tgt.wall||0))) : null, wb = wl != null ? WALL_BONUS[wl] : 0;
-  const owner = tgt ? fiches.find(f => f.id === m.fiche) : null, compte = owner && Object.keys(owner.recherches||{}).length, foiOk = Object.keys(foiAlliance).length;
+  const owner = tgt ? fiches.find(f => f.id === m.fiche) : null, compte = owner && Object.values(owner.recherches||{}).some(v => +v > 0), foiOk = Object.keys(foiAlliance).length;
   const rows = Object.entries(DEF_STATS).filter(([,st]) => m.type === "mer" || !st.mer).map(([u, st]) => {
     const eff = st.d.reduce((n, d, i) => n + d * parts[i] / tot, 0);       /* défense moyenne face à ce mélange */
     const v = eff * (1 + (st.mer ? 0 : wb)) * (1 + bonusRech(owner, u) / 100);   /* le mur ne renforce que les unités terrestres */
@@ -1981,8 +1982,8 @@ function recoDef(m){
 function buildCompo(){
   $("m-compo").innerHTML = Object.keys(OFF_ATK).map(u => `<label class="field"><span class="lbl">${OFF_LABEL[u]}</span><input type="number" min="0" step="100" data-compo="${u}"></label>`).join("");
 }
-function readCompo(){ const o = {}; document.querySelectorAll("[data-compo]").forEach(i => { const v = +i.value||0; if (v > 0) o[i.dataset.compo] = v; }); return o; }
-function fillCompo(c){ document.querySelectorAll("[data-compo]").forEach(i => { i.value = (c||{})[i.dataset.compo] || ""; }); $("m-compoBox").open = !!c && Object.keys(c).length > 0; }
+function readCompo(){ const o = {}; document.querySelectorAll("[data-compo]").forEach(i => { o[i.dataset.compo] = Math.max(0, +i.value||0); }); return o; }   /* zéros compris : la base fusionne les mises à jour */
+function fillCompo(c){ document.querySelectorAll("[data-compo]").forEach(i => { i.value = (c||{})[i.dataset.compo] || ""; }); $("m-compoBox").open = !!c && Object.values(c).some(v => +v > 0); }
 const dDate = d => { if (!d) return ""; const [y,m,j] = d.split("-"); return `${j}/${m}`; };
 const impactKey = m => (m.date||"") + "T" + normT(m.heure||"");
 function menCity(m){ return m.fiche ? cityByRef(m.fiche, m.villeId) : null; }
@@ -2247,7 +2248,7 @@ function startBarons(){
 let suggestions = [], editSug = null;
 function renderSug(){
   if (!$("sugList")) return;
-  if (editSug && $("sugList").contains(document.activeElement)) return;
+  if (editSug && document.activeElement && document.activeElement.matches("[data-sugedit]")) return;
   const showDone = $("sug-done").checked;
   const list = suggestions.filter(x => showDone || x.statut !== "fait").sort((a,b) => (a.statut === "fait") - (b.statut === "fait") || (b.creeLe||"").localeCompare(a.creeLe||""));
   const nDone = suggestions.filter(x => x.statut === "fait").length;
