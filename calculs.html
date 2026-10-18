@@ -75,6 +75,8 @@ details.avance[open] > summary{margin-bottom:8px}
 .field input.lu{border-color:var(--ref)}
 #rvTable td{padding:5px 3px}
 #rvTable input[data-num]{text-align:right}
+table[data-pli]:not([data-ouvert]) tr.plus{display:none}
+button.voir{color:var(--brass);font-size:12.5px;font-weight:600;padding:6px 0 0}
 td.top{font-weight:700;color:var(--brass)}
 tr.clic{cursor:pointer}tr.clic:hover>td{background:var(--keep-soft)}
 .rappel{font:inherit;text-align:left;min-height:36px;padding:7px 10px;border:1px dashed var(--line);border-radius:6px;background:transparent;color:var(--ink);cursor:pointer;font-weight:600}
@@ -406,9 +408,9 @@ async function solve(){
     else {
       const b = r.best[0];
       $("solveOut").innerHTML = `<p class="big">${b.na} Training Arenas, ${b.nb} Barracks, ${b.n} Cabines niveau ${b.l} <small style="font-size:.6em;color:var(--muted)">→ objectif en ${n1(b.days)} jours</small></p>
-        <h3>Les 10 meilleures <small style="font-weight:400;text-transform:none;letter-spacing:0">· clique une ligne pour la simuler ci-dessous</small></h3><div class="scroll"><table class="t"><thead><tr><th>Rang</th><th>Arenas</th><th>Barracks</th><th>Cabines</th><th>Niveau</th><th>Objectif (j)</th><th>Construction (j)</th><th>Pierre perdue</th></tr></thead><tbody>
-        ${r.best.map((x, i) => `<tr class="${i ? "" : "best"} clic" data-sim="${x.na},${x.n},${x.l}" title="Simuler cette combinaison"><td>${i + 1}</td><td>${x.na}</td><td>${x.nb}</td><td>${x.n}</td><td>${x.l}</td><td>${n2(x.days)}</td><td>${n2(x.end)}</td><td>${n0(x.loss)}</td></tr>`).join("")}
-        </tbody></table></div><p class="note">À durée égale, on garde la combinaison qui perd le moins de pierre, puis la plus rapide à construire.</p>`;
+        <h3>Les meilleures combinaisons <small style="font-weight:400;text-transform:none;letter-spacing:0">· clique une ligne pour la simuler ci-dessous</small></h3><div class="scroll"><table class="t" ${pliTable("castTop")}><thead><tr><th>Rang</th><th>Arenas</th><th>Barracks</th><th>Cabines</th><th>Niveau</th><th>Objectif (j)</th><th>Construction (j)</th><th>Pierre perdue</th></tr></thead><tbody>
+        ${r.best.map((x, i) => `<tr class="${i ? "" : "best"}${i < 3 ? "" : " plus"} clic" data-sim="${x.na},${x.n},${x.l}" title="Simuler cette combinaison"><td>${i + 1}</td><td>${x.na}</td><td>${x.nb}</td><td>${x.n}</td><td>${x.l}</td><td>${n2(x.days)}</td><td>${n2(x.end)}</td><td>${n0(x.loss)}</td></tr>`).join("")}
+        </tbody></table></div>${pliBouton("castTop", r.best.length, Math.max(0, r.best.length - 3), "meilleures")}<p class="note">À durée égale, on garde la combinaison qui perd le moins de pierre, puis la plus rapide à construire.</p>`;
       if (!$("simNa").value) setSim(b.na, b.n, b.l);
     }
   } finally { solving = false; btn.disabled = false; prog.hidden = true; renderResume(); }
@@ -483,8 +485,9 @@ function renderCab(){
       <div><span class="lbl">Sans Cabines</span><b style="font-size:2rem">${n0(sans ? sans.total : NaN)} <small>jours</small></b></div></div>
     <p style="margin:10px 0 0">${pourquoi} Au niveau ${q.niveau}, ${c.n} Cabines suffisent : aller jusqu'à ${q.rows.filter(r => r.niveau === q.niveau).reduce((a, r) => r.total < a.total ? r : a).n} ne ferait gagner que ${n2(c.total - bestN)} jour.</p>
     <p class="note">Déroulé : Cabines ${n1(c.montee)} j · Basilica jusqu'au niveau 10 ${n1(c.basilica)} j · bâtiments à pleine vitesse (${n0(c.vitesse * 100)} %) ${n1(c.principal)} j · démolition de ${c.demolies} Cabine${c.demolies > 1 ? "s" : ""} et pose des derniers bâtiments ${n1(c.demolition + c.reconstruction)} j${c.gardees ? ` · ${c.gardees} Cabine${c.gardees > 1 ? "s" : ""} restent (place libre)` : ""}. Pierre des Cabines : ${n0(c.coutPierre)}${f.niveau !== q.niveau || f.n !== c.n ? ` · solution la plus rapide : niveau ${f.niveau} × ${f.n} Cabines, ${n1(f.total)} j` : ""}.</p>
-    <h3>Ce que rapporte chaque niveau</h3><div class="scroll"><table class="t"><thead><tr><th>Niveau</th><th>Meilleur délai (j)</th>${memeN ? "" : "<th>avec</th>"}<th>Gain sur le niveau précédent</th><th>Pierre des Cabines</th><th>Pierre par jour gagné</th></tr></thead><tbody>
-    ${q.niveaux.map(x => `<tr class="${x.niveau === q.niveau ? "best" : ""}"><td>${x.niveau}</td><td>${n1(x.meilleur.total)}</td>${memeN ? "" : `<td>${x.meilleur.n} Cabines</td>`}<td class="${x.gain == null ? "" : x.gain >= seuil ? "good" : "neg"}">${x.gain == null ? "—" : (x.gain >= 0 ? "−" : "+") + n2(Math.abs(x.gain)) + " j"}</td><td>${n0(x.meilleur.coutPierre)}</td><td>${x.pierreParJour == null ? "—" : n0(x.pierreParJour)}</td></tr>`).join("")}</tbody></table></div>
+    <h3>Ce que rapporte chaque niveau</h3><div class="scroll"><table class="t" ${pliTable("cabNiv")}><thead><tr><th>Niveau</th><th>Meilleur délai (j)</th>${memeN ? "" : "<th>avec</th>"}<th>Gain sur le niveau précédent</th><th>Pierre des Cabines</th><th>Pierre par jour gagné</th></tr></thead><tbody>
+    ${q.niveaux.map(x => `<tr class="${x.niveau === q.niveau ? "best" : ""}${Math.abs(x.niveau - q.niveau) <= 1 ? "" : " plus"}"><td>${x.niveau}</td><td>${n1(x.meilleur.total)}</td>${memeN ? "" : `<td>${x.meilleur.n} Cabines</td>`}<td class="${x.gain == null ? "" : x.gain >= seuil ? "good" : "neg"}">${x.gain == null ? "—" : (x.gain >= 0 ? "−" : "+") + n2(Math.abs(x.gain)) + " j"}</td><td>${n0(x.meilleur.coutPierre)}</td><td>${x.pierreParJour == null ? "—" : n0(x.pierreParJour)}</td></tr>`).join("")}</tbody></table></div>
+    ${pliBouton("cabNiv", q.niveaux.length, q.niveaux.filter(x => Math.abs(x.niveau - q.niveau) > 1).length, "niveaux")}
     <p class="note">En vert : le niveau fait gagner au moins ${n1(seuil)} jour. En rouge : gain trop faible ou temps perdu. La pierre est donnée pour information : elle n'entre pas dans le choix.${memeN ? ` Meilleur délai de chaque niveau : avec ${memeN} Cabines.` : ""} Nombres testés : de 5 à ${q.maxN} Cabines (10 par niveau de Basilica au départ). Temps : crown_batiment.xlsx et fiches officielles (Académie, Forum).</p>
     ${(() => { const r45 = E.citeTemps(P, Math.min(45, q.maxN), 4); if (!r45) return "";
       return `<div class="panel" style="margin-top:12px;background:var(--bg)"><b>Note : temps ou pierre ?</b>
@@ -510,8 +513,9 @@ function renderDem(){
     <div><span class="lbl">Reconstruction</span><b>${n2(d.totalReconstruction)} <small>j</small></b></div><div><span class="lbl">Temps total</span><b>${n2(d.total)} <small>jours</small></b></div>
     <div><span class="lbl">Remboursement bois / pierre</span><b>${n0(d.rembBois)} <small>/ ${n0(d.rembPierre)}</small></b></div><div><span class="lbl">Coût des remplaçants bois / pierre</span><b>${n0(d.coutBois)} <small>/ ${n0(d.coutPierre)}</small></b></div></div>
     <p class="note">${p.n} Cabines niveau ${p.niveau}, groupes de ${p.groupe} · vitesse ${n0(d.speedDepart * 100)} % au départ, ${n0(d.speedFin * 100)} % à la fin.</p>
-    <div class="scroll"><table class="t"><thead><tr><th>Groupe</th><th>Cabines</th><th class="l">Remplacer par</th><th>Restantes avant</th><th>Vitesse avant</th><th>Démolition (h)</th><th>Reconstruction (h)</th><th>Cumul (j)</th><th>Remb. pierre</th><th>Coût pierre</th></tr></thead><tbody>
-    ${d.groups.map(g => `<tr><td>${g.g}</td><td>${g.size}</td><td class="l"><select data-dem="${g.g}"><option ${g.type === "Barracks" ? "selected" : ""}>Barracks</option><option ${g.type === "Training Arena" ? "selected" : ""}>Training Arena</option></select></td><td>${g.rest}</td><td>${n0(g.speedAvant * 100)} %</td><td>${n2(g.demolition * 24)}</td><td>${n2(g.reconstruction * 24)}</td><td>${n2(g.cumul)}</td><td>${n0(g.rembPierre)}</td><td>${n0(g.coutPierre)}</td></tr>`).join("")}</tbody></table></div>`;
+    <div class="scroll"><table class="t" ${pliTable("demGr")}><thead><tr><th>Groupe</th><th>Cabines</th><th class="l">Remplacer par</th><th>Restantes avant</th><th>Vitesse avant</th><th>Démolition (h)</th><th>Reconstruction (h)</th><th>Cumul (j)</th><th>Remb. pierre</th><th>Coût pierre</th></tr></thead><tbody>
+    ${d.groups.map((g, i) => `<tr class="${i === 0 || i === d.groups.length - 1 ? "" : "plus"}"><td>${g.g}</td><td>${g.size}</td><td class="l"><select data-dem="${g.g}"><option ${g.type === "Barracks" ? "selected" : ""}>Barracks</option><option ${g.type === "Training Arena" ? "selected" : ""}>Training Arena</option></select></td><td>${g.rest}</td><td>${n0(g.speedAvant * 100)} %</td><td>${n2(g.demolition * 24)}</td><td>${n2(g.reconstruction * 24)}</td><td>${n2(g.cumul)}</td><td>${n0(g.rembPierre)}</td><td>${n0(g.coutPierre)}</td></tr>`).join("")}</tbody></table></div>
+    ${pliBouton("demGr", d.groups.length, Math.max(0, d.groups.length - 2), "groupes")}${d.groups.length > 2 ? `<span class="note" style="margin-left:8px">Premier et dernier groupe affichés ; le type de remplaçant de chaque groupe se change dans la liste complète.</span>` : ""}`;
 }
 $("demOut").addEventListener("change", e => { const s = e.target.closest("[data-dem]"); if (!s) return; S.demTypes = {...(S.demTypes || {})};
   if (s.value === S.demRemplacer) delete S.demTypes[s.dataset.dem]; else S.demTypes[s.dataset.dem] = s.value; renderDem(); scheduleSave(); });
@@ -626,9 +630,10 @@ function renderRecrutRes(){
       <div><span class="lbl">Fer perdu (pertes)</span><b>${n0(H.ferPertes)} <small>/ heure</small></b></div></div>
     <p style="margin:12px 0 0">${conseil}</p>
     <p class="note">${r.n} armée${r.n > 1 ? "s" : ""} en boucle, débits additionnés${r.sansTrajet ? ` · <span class="warn">${r.sansTrajet} ligne${r.sansTrajet > 1 ? "s" : ""} sans trajet, non comptée${r.sansTrajet > 1 ? "s" : ""}</span>` : ""}. Aller-retour = 2 × trajet aller. Fer net = fer ramené − pertes en fer (« Expended ») ; ${sp} % du fer net gardés pour le raffinage.${r.remplacesHeure > 0 ? ` Armées de zerks : les ${n1(r.remplacesHeure)} zerks perdus par heure sont re-recrutés, la file traite donc ${n1(r.fileHeure)} zerks par heure.` : ""}</p>
-    <h3>Vitesse selon le niveau des Arenas</h3><div class="scroll"><table class="t"><thead><tr><th>Niveau${r.arena10 ? " des autres Arenas" : ""}</th><th>Vitesse</th><th>Zerks / heure</th><th>Zerks / jour</th><th>Fer nécessaire / heure</th><th>Ton fer couvre</th><th class="l">Recrutement</th></tr></thead><tbody>
-    ${r.autres > 0 ? r.niveaux.map(x => `<tr class="${r.choix && x.niveau === r.choix.niveau ? "best" : ""}"><td>${x.niveau}</td><td>${n0(x.vitesse * 100)} %</td><td>${n1(x.zerksHeure)}</td><td>${n0(x.zerksJour)}</td><td>${n0(x.ferHeure)}</td><td>${pc(Math.min(x.couverture, 9.99), 0)}</td><td class="l">${x.continu ? '<span class="ok">continu</span>' : '<span class="warn">file à sec</span>'}</td></tr>`).join("")
-                   : `<tr><td colspan="7" class="l">Aucune Arena à régler (${r.arenas === 0 ? "pas d'Arena posée" : "la seule Arena est au niveau 10"}).</td></tr>`}</tbody></table></div></div>
+    <h3>Vitesse selon le niveau des Arenas</h3><div class="scroll"><table class="t" ${pliTable("niveaux")}><thead><tr><th>Niveau${r.arena10 ? " des autres Arenas" : ""}</th><th>Vitesse</th><th>Zerks / heure</th><th>Zerks / jour</th><th>Fer nécessaire / heure</th><th>Ton fer couvre</th><th class="l">Recrutement</th></tr></thead><tbody>
+    ${r.autres > 0 ? r.niveaux.map(x => `<tr class="${r.choix && x.niveau === r.choix.niveau ? "best" : ""}${r.choix && Math.abs(x.niveau - r.choix.niveau) <= 1 ? "" : " plus"}"><td>${x.niveau}</td><td>${n0(x.vitesse * 100)} %</td><td>${n1(x.zerksHeure)}</td><td>${n0(x.zerksJour)}</td><td>${n0(x.ferHeure)}</td><td>${pc(Math.min(x.couverture, 9.99), 0)}</td><td class="l">${x.continu ? '<span class="ok">continu</span>' : '<span class="warn">file à sec</span>'}</td></tr>`).join("")
+                   : `<tr><td colspan="7" class="l">Aucune Arena à régler (${r.arenas === 0 ? "pas d'Arena posée" : "la seule Arena est au niveau 10"}).</td></tr>`}</tbody></table></div>
+    ${r.autres > 0 ? (r.choix ? "" : `<p class="note" style="margin:6px 0 0">Aucun niveau ne tient avec ton fer : le tableau est replié.</p>`) + pliBouton("niveaux", r.niveaux.length, r.niveaux.filter(x => !(r.choix && Math.abs(x.niveau - r.choix.niveau) <= 1)).length, "niveaux") : ""}</div>
     <div class="panel"><h2>À raffiner par jour</h2>
       <div class="kpis"><div><span class="lbl">Fer</span>${cell(rf.fer)}</div><div><span class="lbl">Bois</span>${cellC(rf.bois)}</div><div><span class="lbl">Pierre</span>${cellC(rf.pierre)}</div><div><span class="lbl">Nourriture</span>${cell(rf.nourriture)}</div><div><span class="lbl">Or</span>${cell(rf.or)}</div></div>
       <p class="note">Fer : les ${sp} % gardés${r.excedentFer > 0.5 ? " + " + n0(r.excedentFer) + " que les Arenas ne peuvent pas consommer" : ""}. Bois, or, pierre, nourriture : après déduction des pertes (« Expended »). En rouge : déficit, les pertes coûtent plus que ce que les raids rapportent.${chantier ? " Chantier en cours : la pierre et le bois de cette ville sont gardés pour construire, pas à raffiner (décoche la case « Chantier en cours » pour les raffiner)." : ""}</p></div>`;
@@ -942,6 +947,13 @@ function subscribeRapports(){
     err => setStatus("Lecture des raids impossible : " + (err.message || err.code)));
 }
 
+/* tableaux repliés : seules les lignes utiles, le reste derrière « Voir tout » (état gardé quand la page se redessine) */
+const plisOuverts = new Set();
+const pliTable = id => `data-pli="${id}"${plisOuverts.has(id) ? " data-ouvert" : ""}`;
+const pliBouton = (id, total, caches, quoi) => caches > 0 ? `<button type="button" class="link voir" data-voir="${id}" data-txt="${esc(`Voir les ${total} ${quoi}`)}">${plisOuverts.has(id) ? "Réduire" : `Voir les ${total} ${quoi}`}</button>` : "";
+document.addEventListener("click", e => { const b = e.target.closest("[data-voir]"); if (!b) return; const id = b.dataset.voir, t = document.querySelector(`table[data-pli="${id}"]`);
+  if (plisOuverts.has(id)) plisOuverts.delete(id); else plisOuverts.add(id);
+  if (t) t.toggleAttribute("data-ouvert", plisOuverts.has(id)); b.textContent = plisOuverts.has(id) ? "Réduire" : b.dataset.txt; });
 function renderRappels(){
   document.querySelectorAll("[data-rappel]").forEach(b => { const k = b.dataset.rappel, v = S[k];
     b.textContent = k === "plan" ? n0(planTotal()) + " bâtiments sur 100" : k === "ferJour" ? (v === "" || v == null ? "sans limite" : n0(+v) + " / jour") : k === "groupes" ? n0(Math.max(1, num(v, 1))) + " Cabines" : (v ?? ""); });
