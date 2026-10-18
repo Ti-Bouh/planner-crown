@@ -40,4 +40,4 @@ Données (`DEF_STATS`, `OFF_ATK` dans `index.html`) : wiki Crown of the Gods, va
 
 
 ### Maintenant : suggestions pour le site
-Encart « Suggestions pour le site » dans l'onglet Maintenant : on écrit une idée, elle est enregistrée pour les deux joueurs (collection Firestore `suggestions` : texte, fiche, statut `afaire`/`fait`, creeLe, maj). Chaque suggestion peut être modifiée, marquée faite (puis rouverte) ou supprimée ; les faites sont masquées sauf avec « Voir les faites ».
+Encart « Suggestions pour le site » dans l'onglet Maintenant, sous « Mes ordres » : on écrit une idée, elle est enregistrée pour les deux joueurs (collection Firestore `suggestions` : texte, fiche, statut `afaire`/`fait`, creeLe, maj). Chaque suggestion peut être modifiée, marquée faite (puis rouverte) ou supprimée ; les faites sont masquées sauf avec « Voir les faites ».

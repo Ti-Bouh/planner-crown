@@ -405,19 +405,11 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
       <button type="button" data-quick="operation"><span aria-hidden="true">⚔</span> Nouvelle opération</button>
     </div>
     <div class="nowgrid">
-      <section class="panel" aria-label="Mes ordres">
-        <div class="toolbar"><h2 style="margin:0">Mes ordres</h2><span class="note" id="nowInfo" style="margin:0"></span></div>
-        <div class="scroll"><table class="env" id="nowOrders"></table></div>
-        <p class="note">Attaques et renforts qui te sont attribués, du plus proche au plus lointain. Dans le jeu, règle l'heure d'arrivée indiquée. Clique le statut pour le faire avancer.</p>
-      </section>
       <div class="nowside">
-        <section class="panel" aria-label="Menaces ouvertes">
-          <div class="toolbar"><h2 style="margin:0">Menaces ouvertes</h2><button type="button" class="link" data-goto="defense">Défense →</button></div>
-          <div id="nowThreats"></div>
-        </section>
-        <section class="panel" aria-label="Binôme">
-          <div class="toolbar"><h2 style="margin:0">Binôme</h2><button type="button" class="link" data-goto="binome">Détail →</button></div>
-          <div id="nowTeam"></div>
+        <section class="panel" aria-label="Mes ordres">
+          <div class="toolbar"><h2 style="margin:0">Mes ordres</h2><span class="note" id="nowInfo" style="margin:0"></span></div>
+          <div class="scroll"><table class="env" id="nowOrders"></table></div>
+          <p class="note">Attaques et renforts qui te sont attribués, du plus proche au plus lointain. Dans le jeu, règle l'heure d'arrivée indiquée. Clique le statut pour le faire avancer.</p>
         </section>
         <section class="panel" aria-label="Suggestions pour le site">
           <div class="toolbar"><h2 style="margin:0">Suggestions pour le site</h2><label class="chk"><input type="checkbox" id="sug-done"> Voir les faites</label></div>
@@ -426,6 +418,16 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
             <div><button type="button" class="primary" id="sug-add">Ajouter</button></div>
           </div>
           <div class="suglist" id="sugList"></div>
+        </section>
+      </div>
+      <div class="nowside">
+        <section class="panel" aria-label="Menaces ouvertes">
+          <div class="toolbar"><h2 style="margin:0">Menaces ouvertes</h2><button type="button" class="link" data-goto="defense">Défense →</button></div>
+          <div id="nowThreats"></div>
+        </section>
+        <section class="panel" aria-label="Binôme">
+          <div class="toolbar"><h2 style="margin:0">Binôme</h2><button type="button" class="link" data-goto="binome">Détail →</button></div>
+          <div id="nowTeam"></div>
         </section>
       </div>
     </div>
