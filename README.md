@@ -19,7 +19,7 @@ Enregistrement Firestore : `fiches/{fiche}/calculs/reglages` (réglages) `fiches
 - Onglets groupés par usage : « Au quotidien » (Recrutement, Raids) et « Préparer une cité » (Ma cité, Cabines, Castle) ; une ligne d'explication pour l'onglet ouvert ; réglages rarement utilisés repliés dans « Réglages avancés ».
 - Villes du Recrutement choisies parmi les villes du planner (`fiches/{fiche}/villes`) : nom, coordonnées et troupes repris de l'import CSV ; Raids peut reprendre les Rangers / Triaires à la maison.
 - Un rapport de raid alimente le Recrutement et, pour une armée Rangers / Triaires, le Journal des raids (caverne, niveau et troupes envoyées lus sur la capture, pertes déduites de « Expended »).
-- Coller une capture dans le planner ouvre Calculs › Recrutement (`src/planner-addons.js`, injecté par `build.py`).
+- Coller une capture dans le planner ouvre Calculs › Recrutement (`src/planner-addons.js`, chargé par `index.html`).
 - Nombres lisibles dans les cases (« 1 000 000 ») et saisies « 150k », « 1,5M » acceptées.
 
 
@@ -29,8 +29,8 @@ Depuis la mise à jour « ergonomie 2 », `index.html` est modifié directement 
 menu déroulant par ressource dans le registre, alertes de ville retirées, âge du dernier import
 (stocké dans `fiches/{fiche}.importVilles` et `.importTroupes`, délai d'alerte dans Réglages),
 raccourcis sur Maintenant, modification d'une ville sous sa ligne (suppression dans le formulaire),
-Attaques en étapes 1-2-3 et notifications visibles. **Ne pas relancer `build.py`** sur l'ancienne source
-de l'artifact : il écraserait ces changements.
+Attaques en étapes 1-2-3 et notifications visibles. L'ancien script `build.py` (génération depuis la source de
+l'artifact) a été retiré : il aurait écrasé ces changements.
 
 ### Défense : def conseillée
 Dans « Signaler une menace », la composition de l'attaque (facultative : Vanquisher, Cavalier, Sorcière, Druide, Bélier, Scorpion, Navire) est enregistrée dans `menaces/{id}.compo`.

@@ -41,7 +41,6 @@ h3{font-size:13px;text-transform:uppercase;letter-spacing:.07em;color:var(--mute
 .me{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
 a{color:var(--brass)}
-.back{font-weight:600;text-decoration:none}
 .views{display:flex;gap:8px;flex-wrap:wrap;max-width:100%}
 .vgrp{display:flex;align-items:center;gap:4px;background:var(--keep-soft);padding:4px;border-radius:10px;flex-wrap:wrap}
 .vbtn{border:none;background:transparent;padding:7px 18px;border-radius:7px;font-weight:600;color:var(--muted);font:inherit;font-weight:600;cursor:pointer}
@@ -477,8 +476,6 @@ function chart(pts, goal){
 
 /* ---------- CABINES ---------- */
 let cabOut = null;
-function cabP(){ return { nMax: Math.max(60, Math.floor(mil() / 5) * 5), bonus: bonusVitesse(), depart: num(S.cabDepart, 0), paquet: Math.max(1, num(S.groupes, 1)), arenas: num(S.arenas, 0), barracks: num(S.barracks, 0), autresH: num(S.autresH, 0),
-  pierreJour: S.pierreJour === "" ? null : +S.pierreJour, boisJour: S.boisJour === "" ? null : +S.boisJour }; }
 function citeP(){ return { bonus: bonusVitesse(), depart: num(S.cabDepart, 0), groupe: Math.max(1, num(S.groupes, 1)), basDepart: num(S.basDepart, 8), places: 100,
   plan: { barracks: num(S.barracks, 0), arenas: num(S.arenas, 0), academies: num(S.planAcademies, 0), forums: num(S.planForums, 0), entrepots: num(S.planEntrepots, 0), tours: num(S.planTours, 0), castles: num(S.planCastles, 0) } }; }
 function renderCab(){
