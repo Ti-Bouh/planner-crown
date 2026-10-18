@@ -1867,6 +1867,7 @@ const DEF_STATS = {
   Ballista: {d:[200,100,200,400],   cout:1000,  vit:30, nom:"Baliste"},
   Stinger:  {d:[4500,4500,2000,6000], cout:12000, vit:5, nom:"Stinger", mer:true}
 };
+const WALL_BONUS = [0, .01, .03, .06, .10, .15, .20, .26, .33, .41, .50];   /* City Wall niveau 0 à 10 : bonus de défense des unités terrestres (fiche du bâtiment) */
 function compoAtk(m){
   const parts = [0,0,0,0]; const c = m.compo || {};
   for (const u in OFF_ATK) parts[OFF_ATK[u].t] += (+c[u]||0) * OFF_ATK[u].a;
@@ -1890,20 +1891,21 @@ function recoDef(m){
   const parts = compoAtk(m), tot = parts.reduce((a,b) => a+b, 0);
   if (!tot) return "";
   const pos = menPos(m), tgt = menCity(m);
+  const wl = tgt && tgt.wall != null ? Math.max(0, Math.min(10, Math.round(+tgt.wall||0))) : null, wb = wl != null ? WALL_BONUS[wl] : 0;
   const rows = Object.entries(DEF_STATS).filter(([,st]) => m.type === "mer" || !st.mer).map(([u, st]) => {
     const eff = st.d.reduce((n, d, i) => n + d * parts[i] / tot, 0);       /* défense moyenne face à ce mélange */
-    const nb = Math.ceil(tot / eff), dispo = freeDef(u);
+    const nb = Math.ceil(tot / (eff * (1 + (st.mer ? 0 : wb)))), dispo = freeDef(u);   /* le mur ne renforce que les unités terrestres */
     const villes = dispo.villes.filter(v => !(tgt && v.c.id === tgt.id)).map(v => ({...v, d: dist(v.c, pos)})).sort((a,b) => a.d - b.d);
     return {u, st, eff, nb, ratio: eff / st.cout, dispo, villes};
   }).sort((a,b) => (b.dispo.n > 0) - (a.dispo.n > 0) || b.ratio - a.ratio);   /* d'abord ce qu'on a en ville, puis le meilleur rendement */
   const mix = parts.map((v,i) => v ? `${ATK_TYPES[i]} ${Math.round(v/tot*100)} %` : "").filter(Boolean).join(" · ");
   return `<div class="reco"><h4>Def conseillée</h4>
-    <p class="rnote">Attaque estimée : <b>${fmt(tot)}</b> points (${mix}).</p>
+    <p class="rnote">Attaque estimée : <b>${fmt(tot)}</b> points (${mix}). ${wl != null ? `Mur niveau ${wl} : <b>+${Math.round(wb*100)} %</b> de défense pour les unités terrestres, compté dans « pour égaler l'attaque ».` : "Niveau du mur inconnu : non compté."}</p>
     <div class="scroll"><table class="rftab"><thead><tr><th>Unité</th><th>Déf. moyenne / unité</th><th>≈ Pour égaler l'attaque</th><th>Villes qui en ont (trajet)</th></tr></thead><tbody>
     ${rows.map((r,i) => `<tr class="${i===0?"r1":""}"><td><b>${r.st.nom}</b>${i===0?`<span class="tag">Conseillée</span>`:i===1?`<span class="tag alt">Alternative</span>`:""}</td>
       <td class="mono">${r.eff.toFixed(1)}</td><td class="mono">${fmt(r.nb)}</td><td>${villesTxt(r)}</td></tr>`).join("")}
     </tbody></table></div>
-    <p class="rnote">Classement : d'abord les unités présentes dans vos villes, puis la défense obtenue par ressource dépensée (on peut empiler autant de def qu'on veut sur une ville, donc ce sont les ressources qui comptent, pas les places). « Pour égaler l'attaque » est un repère (défense totale = attaque totale), pas une prévision du combat : murs, tours et recherches n'y sont pas. Villes : celles où l'import des troupes en indique en ville, triées de la plus proche à la plus loin ; trajets aux vitesses de base.</p>
+    <p class="rnote">Classement : d'abord les unités présentes dans vos villes, puis la défense obtenue par ressource dépensée (on peut empiler autant de def qu'on veut sur une ville, donc ce sont les ressources qui comptent, pas les places). « Pour égaler l'attaque » est un repère (défense totale = attaque totale), pas une prévision du combat : les recherches n'y sont pas, ni les postes de Rangers et de Triaires (+100 % pour un nombre limité d'unités). Villes : celles où l'import des troupes en indique en ville, triées de la plus proche à la plus loin ; trajets aux vitesses de base.</p>
   </div>`;
 }
 function buildCompo(){
