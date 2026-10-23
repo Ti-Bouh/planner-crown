@@ -304,7 +304,16 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
 .plfilt{display:flex;gap:8px;flex-wrap:wrap;align-items:end}
 .plfilt .field{width:170px}.plfilt .field select,.plfilt .field input{width:100%;box-sizing:border-box}
 .plcard .btns{display:flex;gap:6px;align-items:center;flex-wrap:nowrap}
-.plgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,560px),1fr));gap:12px;margin-top:12px}
+.plgrid{display:grid;gap:6px;margin-top:12px}
+.plrow{border:1px solid var(--line);border-radius:8px}
+.plrow>summary{display:flex;gap:12px;align-items:center;padding:8px 12px;cursor:pointer;flex-wrap:wrap}
+.plrow>summary::-webkit-details-marker{display:none}
+.plrow>summary::before{content:"▸";color:var(--muted);transition:transform .15s}
+.plrow[open]>summary::before{transform:rotate(90deg)}
+.plrow[open]>summary{border-bottom:1px solid var(--line)}
+.plname{display:flex;gap:8px;align-items:baseline;flex:1 1 220px;min-width:0}
+.plmini span{gap:4px}
+.plbody{padding:12px;display:grid;gap:8px}
 .plcard{border:1px solid var(--line);border-radius:8px;padding:12px;display:grid;gap:8px;min-width:0;align-content:start}
 .plhead{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
 .plhead b{font-size:15px}
@@ -2468,7 +2477,7 @@ function plChips(P){
   return `<div class="plchips">${bat.map(([k, v]) => { const c = PLC[PL_B[k][2]]; return `<span><i class="lt" style="background:${c[0]};color:${c[1]};border-color:${c[2]}">${PL_B[k][1]}</i>${PL_B[k][0]} <b>${v}</b></span>`; }).join("")}
     <span>${P.eau ? "⚓ Côtière" : "⛰ Terrestre"}</span>${P.libres ? `<span>Cases libres <b>${P.libres}</b></span>` : ""}${nat ? `<span>Nature <b>${nat}</b></span>` : ""}${aut ? `<span title="Codes non reconnus : ${esc(Object.keys(P.autres).join(" "))}">Autres <b>${aut}</b></span>` : ""}</div>`;
 }
-let plans = [], editPlan = null;
+let plans = [], editPlan = null; const plOpen = new Set();   /* plans dépliés, gardés ouverts quand la liste se met à jour */
 function plPreview(){
   const P = plParse($("pl-txt").value);
   $("pl-save").disabled = !P.cells || !$("pl-nom").value.trim();
@@ -2486,12 +2495,18 @@ function renderPlans(){
   $("plList").innerHTML = !db ? `<p class="empty">Registre indisponible ici.</p>`
     : !list.length ? `<p class="empty">${plans.length ? "Aucun plan ne correspond au filtre." : "Aucun plan pour l'instant. Colle un sharestring dans « Ajouter un plan » ci-dessus."}</p>`
     : list.map(p => { const P = plParse(p.texte);
-      return `<article class="plcard">
-        <div class="plhead"><b>${esc(p.nom || "Sans nom")}</b>${p.fiche ? pName(p.fiche) : ""}<span class="msub">${p.maj || p.creeLe ? new Date(p.maj || p.creeLe).toLocaleDateString("fr-FR") : ""}</span></div>
-        ${p.note ? `<div class="msub">${esc(p.note)}</div>` : ""}
-        ${P.cells ? plMap(P) + plChips(P) : `<p class="warn" style="margin:0">${esc(P.err || "Sharestring vide.")}</p>`}
-        <div class="btns" style="margin:0"><button type="button" class="primary" data-plcopy="${esc(p.id)}" title="Copier le sharestring pour le coller dans le jeu">Copier</button><button type="button" class="link" data-pledit="${esc(p.id)}">modifier</button><button type="button" class="link danger" data-pldel="${esc(p.id)}">suppr.</button></div>
-      </article>`; }).join("");
+      const top = P.cells ? Object.entries(P.n).filter(([k]) => !PL_NATURE.includes(k)).sort((a,b) => b[1] - a[1]).slice(0, 4)
+        .map(([k, v]) => { const c = PLC[PL_B[k][2]]; return `<span><i class="lt" style="background:${c[0]};color:${c[1]};border-color:${c[2]}">${PL_B[k][1]}</i><b>${v}</b></span>`; }).join("") : "";
+      return `<details class="plrow" data-plid="${esc(p.id)}"${plOpen.has(p.id) ? " open" : ""}>
+        <summary><span class="plname"><b>${esc(p.nom || "Sans nom")}</b>${p.fiche ? pName(p.fiche) : ""}<span class="msub">${p.maj || p.creeLe ? new Date(p.maj || p.creeLe).toLocaleDateString("fr-FR") : ""}</span></span>
+          <span class="plchips plmini">${P.cells ? top + `<span>${P.eau ? "⚓" : "⛰"}</span>` : `<span class="warn">illisible</span>`}</span>
+          <button type="button" class="primary" data-plcopy="${esc(p.id)}" title="Copier le sharestring pour le coller dans le jeu">Copier</button></summary>
+        <div class="plbody">
+          ${p.note ? `<div class="msub">${esc(p.note)}</div>` : ""}
+          ${P.cells ? plMap(P) + plChips(P) : `<p class="warn" style="margin:0">${esc(P.err || "Sharestring vide.")}</p>`}
+          <div class="btns" style="margin:0"><button type="button" class="link" data-pledit="${esc(p.id)}">modifier</button><button type="button" class="link danger" data-pldel="${esc(p.id)}">suppr.</button></div>
+        </div>
+      </details>`; }).join("");
 }
 ["pl-txt","pl-nom"].forEach(id => $(id).addEventListener("input", plPreview));
 $("pl-f-auteur").addEventListener("change", renderPlans);
@@ -2508,15 +2523,17 @@ $("plForm").addEventListener("submit", async e => {
     setStatus(editPlan ? "Plan modifié." : "Plan enregistré."); resetPlan(); $("plPanel").open = false;
   } catch(err){ setStatus("Plan non enregistré : " + (err.message||err.code)); }
 });
+$("plList").addEventListener("toggle", e => { const d = e.target.closest && e.target.closest("details.plrow"); if (!d) return; d.open ? plOpen.add(d.dataset.plid) : plOpen.delete(d.dataset.plid); }, true);
 $("plList").addEventListener("click", async e => {
   const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.plcopy) e.preventDefault();   /* « Copier » dans l'en-tête ne déplie pas la ligne */
   const p = plans.find(x => x.id === (b.dataset.plcopy || b.dataset.pledit || b.dataset.pldel)); if (!p) return;
   if (b.dataset.plcopy){
     try { await navigator.clipboard.writeText(p.texte || ""); setStatus("Sharestring copié : colle-le dans le jeu."); }
     catch { const ta = document.createElement("textarea"); ta.value = p.texte || ""; document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); setStatus("Sharestring copié : colle-le dans le jeu."); } catch { setStatus("Copie impossible : ouvre « modifier » et copie le texte à la main."); } ta.remove(); }
     return;
   }
-  if (b.dataset.pledit){ editPlan = p.id; $("pl-nom").value = p.nom || ""; $("pl-note").value = p.note || ""; $("pl-txt").value = p.texte || "";
+  if (b.dataset.pledit){ editPlan = p.id; plOpen.add(p.id); $("pl-nom").value = p.nom || ""; $("pl-note").value = p.note || ""; $("pl-txt").value = p.texte || "";
     $("pl-save").textContent = "Enregistrer les modifications"; $("pl-cancel").hidden = false; $("plTitle").textContent = "Modifier : " + (p.nom || "plan");
     $("plPanel").open = true; plPreview(); $("plPanel").scrollIntoView({block:"nearest"}); return; }
   if (b.dataset.pldel && db) return armDelete(b, async () => { try { await db.doc("plans/" + p.id).delete(); if (editPlan === p.id) resetPlan(); setStatus("Plan supprimé."); } catch(err){ setStatus("Suppression impossible : " + (err.message||err.code)); } });
