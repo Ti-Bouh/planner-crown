@@ -304,18 +304,18 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
 .plfilt{display:flex;gap:8px;flex-wrap:wrap;align-items:end}
 .plfilt .field{width:170px}.plfilt .field select,.plfilt .field input{width:100%;box-sizing:border-box}
 .plcard .btns{display:flex;gap:6px;align-items:center;flex-wrap:nowrap}
-.plgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-top:12px}
+.plgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,560px),1fr));gap:12px;margin-top:12px}
 .plcard{border:1px solid var(--line);border-radius:8px;padding:12px;display:grid;gap:8px;min-width:0;align-content:start}
 .plhead{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
 .plhead b{font-size:15px}
-.plmap{display:grid;grid-template-columns:repeat(21,1fr);gap:1px;width:100%;max-width:273px;aspect-ratio:1;background:var(--line);border:1px solid var(--line);border-radius:4px;overflow:hidden}
-.plmap i{display:block;background:var(--panel)}
-.plmap i.w{background:var(--keep-soft)}
+.plmap{display:grid;grid-template-columns:repeat(21,1fr);gap:1px;width:100%;max-width:525px;aspect-ratio:1;background:#c9ced8;border:1px solid #c9ced8;border-radius:4px;overflow:hidden;container-type:inline-size}
+.plmap i{display:flex;align-items:center;justify-content:center;background:#fff;color:#1c2230;font:600 clamp(6px,2.1cqi,11px)/1 var(--f-mono);font-style:normal;overflow:hidden;white-space:nowrap}
+.plmap i.w{background:#9aa2b1}
 .plchips{display:flex;flex-wrap:wrap;gap:4px}
 .plchips span{font-size:12px;padding:2px 8px;border-radius:999px;background:var(--keep-soft);display:inline-flex;gap:5px;align-items:center}
-.plchips i{width:9px;height:9px;border-radius:2px;display:inline-block}
-.plprev{display:grid;grid-template-columns:minmax(0,273px) 1fr;gap:12px;align-items:start;margin:8px 0}
-@media (max-width:640px){.plprev{grid-template-columns:1fr}}
+.plchips i.lt{min-width:18px;height:16px;padding:0 2px;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;font:600 10px/1 var(--f-mono);font-style:normal;color:#1c2230;box-sizing:border-box}
+.plprev{display:grid;grid-template-columns:minmax(0,525px) 1fr;gap:12px;align-items:start;margin:8px 0}
+@media (max-width:900px){.plprev{grid-template-columns:1fr}}
 #pl-txt{width:100%;box-sizing:border-box;font-family:var(--f-mono);font-size:12px;resize:vertical}
 .mcard{border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:grid;gap:10px;min-width:0}
 .mcard.done{opacity:.65}
@@ -2416,13 +2416,13 @@ function startSuggestions(){
    Format [ShareString.1.3] (celui du jeu et de CotG Optimizer) : « ; » ville au bord de l'eau ou « : » terrestre,
    puis 441 cases (grille 21 × 21, ligne par ligne). Codes repris de CotG Optimizer (theladystar, GitHub). */
 const PL_TPL = "........................LLLLLLL.LLLLLLL.....LLLLLLLL.LLLLLLLL...LLLLLLLLL.LLLLLLLLL..LLLLLLLLL.LLLLLLLLL..LLLLLL.......LLLLLL..LLLLL..LLLLL..LLLLL..LLLL..LLLLLLL..LLLL..LLLL.LLLLLLLLL.LLLL..LLLL.LLLLLLLLL.LLLL.......LLLL.LLLL.......LLLL.LLLLLLLLL.LLLL..LLLL.LLLLLLLLL.LLLL..LLLL..LLLLLLL..LLLL..LLLLL..LLLLL..LLLLL..LLLLLL.......LLSSLL..LLLLLLLLL.LLLLSllSL..LLLLLLLLL.LLLLSlllS...LLLLLLLL.LLLLLSll.....LLLLLLL.LLLLLLS........................";   /* « . » mur, route, Basilica · « L » case constructible · « S » rive (port, chantier naval) · « l » eau d'une ville côtière */
-const PL_B = {
-  b:["Barracks","#2b5fa8"], z:["Academy","#7b4fb0"], g:["Training Arena","#b23a3a"], x:["Castle","#111827"], c:["Cabin","#c58a1b"],
-  s:["Storehouse","#8a6d3b"], p:["Forum","#d9a64a"], u:["Villa","#e07a9e"], k:["Guardhouse","#5d6577"], e:["Stable","#9c4a1a"],
-  y:["Blacksmith","#3b3b3b"], v:["Shipyard","#1f7a8c"], r:["Port","#3fa7c4"], j:["Sorcerers Tower","#5b2a86"], h:["Hideaway","#7d8597"],
-  "1":["Farm Estate","#9bbf3c"], "2":["Foresters Hut","#3d7a3d"], "3":["Stone Mine","#8f8f8f"], "4":["Iron Mine","#6b7b8c"],
-  l:["Sawmill","#5e8c31"], a:["Masons Hut","#a3a3a3"], d:["Smelter","#556677"], m:["Grain Mill","#c9b037"],
-  ".":["Forêt","#cfe3c4"], ":":["Rocher","#dcdcdc"], ",":["Minerai","#c9d3dd"], ";":["Lac","#bcdcec"]
+const PL_B = {   /* code : [nom, lettres dans la case, couleur] */
+  b:["Barracks","B","#9ec5f0"], z:["Academy","A","#c9b3ea"], g:["Training Arena","TA","#f2a7a7"], x:["Castle","C","#3a3f4b"], c:["Cabin","Cb","#f3d38c"],
+  s:["Storehouse","S","#d8c19a"], p:["Forum","F","#f0d070"], u:["Villa","V","#f4bfd2"], k:["Guardhouse","G","#b9c0cc"], e:["Stable","St","#e3b08f"],
+  y:["Blacksmith","Bs","#8f96a3"], v:["Shipyard","Sy","#8fd0d9"], r:["Port","P","#b6e3f0"], j:["Sorcerers Tower","Tw","#a98bd1"], h:["Hideaway","H","#d4d8de"],
+  "1":["Farm Estate","Fa","#d2e6a0"], "2":["Foresters Hut","Fo","#a6d1a0"], "3":["Stone Mine","SM","#d0d0d0"], "4":["Iron Mine","IM","#b8c4d0"],
+  l:["Sawmill","Sw","#bfdc9a"], a:["Masons Hut","Ma","#e2e2e2"], d:["Smelter","Sm","#c3ccd6"], m:["Grain Mill","GM","#eadf9a"],
+  ".":["Forêt","","#e3efdc"], ":":["Rocher","","#ececec"], ",":["Minerai","","#e3e8ee"], ";":["Lac","","#dcecf4"]
 };
 const PL_NATURE = ".:,;";
 function plParse(txt){
@@ -2445,19 +2445,21 @@ function plParse(txt){
   return {eau, cells, n, autres, libres};
 }
 function plMap(P){
+  const cell = (bg, txt, title, fg) => `<i style="background:${bg}${fg ? ";color:" + fg : ""}"${title ? ` title="${title}"` : ""}>${txt || ""}</i>`;
   return `<div class="plmap" aria-hidden="true">${[...P.cells].map((ch, i) => {
     const k = ch.toLowerCase(), t = PL_TPL[i];
-    if (ch === "T") return `<i style="background:#d9a64a"></i>`;
-    if (PL_B[k]) return `<i style="background:${PL_B[k][1]}" title="${PL_B[k][0]}"></i>`;
-    if (ch === "#") return t === "l" && P.eau ? `<i style="background:#bcdcec"></i>` : `<i class="w"></i>`;
-    return `<i${ch === "-" || ch === "_" ? "" : ` style="background:#f4a"`}></i>`;
+    if (ch === "T") return cell("#e8c46a", "Ba", "Basilica");
+    if (PL_B[k]) return cell(PL_B[k][2], PL_B[k][1], PL_B[k][0], k === "x" ? "#fff" : "");
+    if (ch === "#") return t === "l" && P.eau ? cell("#cfe6f2") : `<i class="w"></i>`;
+    if (ch === "-" || ch === "_") return `<i></i>`;
+    return cell("#ffd0e6", esc(ch), "Code non reconnu");
   }).join("")}</div>`;
 }
 function plChips(P){
   const bat = Object.entries(P.n).filter(([k]) => !PL_NATURE.includes(k)).sort((a,b) => b[1] - a[1]);
   const nat = Object.entries(P.n).filter(([k]) => PL_NATURE.includes(k)).reduce((s, [,v]) => s + v, 0);
   const aut = Object.values(P.autres).reduce((s, v) => s + v, 0);
-  return `<div class="plchips">${bat.map(([k, v]) => `<span><i style="background:${PL_B[k][1]}"></i>${PL_B[k][0]} <b>${v}</b></span>`).join("")}
+  return `<div class="plchips">${bat.map(([k, v]) => `<span><i class="lt" style="background:${PL_B[k][2]}${k === "x" ? ";color:#fff" : ""}">${PL_B[k][1]}</i>${PL_B[k][0]} <b>${v}</b></span>`).join("")}
     <span>${P.eau ? "⚓ Côtière" : "⛰ Terrestre"}</span>${P.libres ? `<span>Cases libres <b>${P.libres}</b></span>` : ""}${nat ? `<span>Nature <b>${nat}</b></span>` : ""}${aut ? `<span title="Codes non reconnus : ${esc(Object.keys(P.autres).join(" "))}">Autres <b>${aut}</b></span>` : ""}</div>`;
 }
 let plans = [], editPlan = null;
