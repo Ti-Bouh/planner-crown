@@ -301,6 +301,24 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
 .mform{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-top:14px}
 .mform summary{cursor:pointer;font-weight:600}
 .mcards{display:grid;gap:12px}
+.plfilt{display:flex;gap:8px;flex-wrap:wrap;align-items:end}
+.plfilt .field{width:170px}.plfilt .field select,.plfilt .field input{width:100%;box-sizing:border-box}
+.plcard .btns{display:flex;gap:6px;align-items:center;flex-wrap:nowrap}
+.plgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,560px),1fr));gap:12px;margin-top:12px}
+.plcard{border:1px solid var(--line);border-radius:8px;padding:12px;display:grid;gap:8px;min-width:0;align-content:start}
+.plhead{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.plhead b{font-size:15px}
+.plmap{display:grid;grid-template-columns:repeat(19,1fr);gap:3px;width:100%;max-width:560px;aspect-ratio:1;container-type:inline-size}
+.plmap i{display:flex;align-items:center;justify-content:center;border:.5px solid transparent;border-radius:3px;font:600 clamp(7px,2.6cqi,14px)/1 var(--f-body,system-ui);font-style:normal;overflow:hidden;white-space:nowrap;box-sizing:border-box}
+.plmap i.libre{border:1px dashed var(--line)}
+.plmap i.eau{background:#E6F1FB}
+.plmap i.w{visibility:hidden}
+.plchips{display:flex;flex-wrap:wrap;gap:4px}
+.plchips span{font-size:12px;padding:2px 8px;border-radius:999px;background:var(--keep-soft);display:inline-flex;gap:5px;align-items:center}
+.plchips i.lt{min-width:20px;height:18px;padding:0 3px;border-radius:3px;border:.5px solid;display:inline-flex;align-items:center;justify-content:center;font:600 11px/1 var(--f-body,system-ui);font-style:normal;box-sizing:border-box}
+.plprev{display:grid;grid-template-columns:minmax(0,560px) 1fr;gap:12px;align-items:start;margin:8px 0}
+@media (max-width:900px){.plprev{grid-template-columns:1fr}}
+#pl-txt{width:100%;box-sizing:border-box;font-family:var(--f-mono);font-size:12px;resize:vertical}
 .mcard{border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:grid;gap:10px;min-width:0}
 .mcard.done{opacity:.65}
 .mhead{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;justify-content:space-between}
@@ -398,6 +416,7 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
       <button type="button" class="vbtn" role="tab" data-view="defense" aria-selected="false">Défense</button>
       <button type="button" class="vbtn" role="tab" data-view="barons" aria-selected="false">Barons</button>
       <button type="button" class="vbtn" role="tab" data-view="carte" aria-selected="false">Carte</button>
+      <button type="button" class="vbtn" role="tab" data-view="plans" aria-selected="false">Plans</button>
     </div>
     <div class="vgrp"><button type="button" class="vbtn" role="tab" data-view="outils" aria-selected="false">⚙ Réglages</button></div>
     <div class="vgrp"><a class="vbtn" href="calculs.html" style="text-decoration:none">Début de serveur</a></div>
@@ -767,6 +786,31 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
     <label style="display:flex;gap:6px;align-items:center;margin:4px 0"><input type="checkbox" id="cImpHide"><span class="chint" style="margin:0">Masquer l'analyse pour comparer avec la capture</span></label>
     <p class="chint" id="cImpMsg">Aucune capture chargée.</p>
     <div class="cmapwrap" style="max-height:70vh"><canvas id="cImpCv" style="display:block;cursor:crosshair"></canvas></div>
+  </section>
+  </div>
+
+  <div class="view" id="view-plans" hidden>
+  <details class="panel mform" id="plPanel">
+    <summary id="plTitle">Ajouter un plan</summary>
+    <form id="plForm" autocomplete="off">
+      <div class="row">
+        <label class="field w-name"><span class="lbl">Nom du plan</span><input id="pl-nom" required maxlength="60" placeholder="ex. Château zerks 56 Barracks"></label>
+        <label class="field w-name"><span class="lbl">Note</span><input id="pl-note" maxlength="120" placeholder="facultatif"></label>
+      </div>
+      <label class="field"><span class="lbl">Sharestring (copié depuis le jeu ou CotG Optimizer)</span><textarea id="pl-txt" rows="3" spellcheck="false" placeholder="[ShareString.1.3]:########…[/ShareString]"></textarea></label>
+      <div id="plPreview"></div>
+      <div class="btns"><button type="submit" class="primary" id="pl-save" disabled>Enregistrer le plan</button><button type="button" id="pl-cancel" hidden>Annuler</button></div>
+    </form>
+  </details>
+  <section class="panel" aria-label="Plans enregistrés">
+    <div class="toolbar">
+      <h2 style="margin:0">Plans enregistrés</h2>
+      <div class="plfilt">
+        <label class="field"><span class="lbl">Auteur</span><select id="pl-f-auteur"></select></label>
+        <label class="field"><span class="lbl">Chercher</span><input id="pl-f-q" placeholder="nom ou note"></label>
+      </div>
+    </div>
+    <div class="plgrid" id="plList"></div>
   </section>
   </div>
 
@@ -1447,7 +1491,7 @@ $("impApply").addEventListener("click", async () => {
 
 /* ---------- fiches ---------- */
 let fiches = [], currentFiche = null, unsubVilles = null, curView = "fiche", countTxt = "";
-const COMMON_VIEWS = ["maintenant","binome","attaques","defense","barons","carte","outils"];
+const COMMON_VIEWS = ["maintenant","binome","attaques","defense","barons","carte","plans","outils"];
 const countStatus = () => COMMON_VIEWS.includes(curView) ? "Enregistré automatiquement" : (countTxt || "Enregistré automatiquement");
 const col = () => db.collection(`fiches/${currentFiche}/villes`);
 function renderTabs(){
@@ -1455,13 +1499,14 @@ function renderTabs(){
     || `<span class="note">Aucune fiche : crée la tienne dans Réglages.</span>`;
   const f = fiches.find(x => x.id === currentFiche);
   const common = COMMON_VIEWS.includes(curView);
-  document.querySelector("h1").textContent = common ? ({maintenant:"Maintenant", binome:"Binôme", attaques:"Attaques", defense:"Défense", barons:"Barons", carte:"Carte", outils:"Réglages"})[curView] : isAll() ? "Nos villes" : (f ? (f.id === moi ? "Mes villes" : "Villes de " + f.nom) : "Mes villes");
+  document.querySelector("h1").textContent = common ? ({maintenant:"Maintenant", binome:"Binôme", attaques:"Attaques", defense:"Défense", barons:"Barons", carte:"Carte", plans:"Plans", outils:"Réglages"})[curView] : isAll() ? "Nos villes" : (f ? (f.id === moi ? "Mes villes" : "Villes de " + f.nom) : "Mes villes");
   $("subTitle").textContent = curView === "maintenant" ? (moi ? "Ce que tu as à faire, en un coup d'œil." : "Choisis qui tu es en haut à droite pour voir tes ordres.")
     : curView === "binome" ? "Vue commune : équilibre off / def et troupes de tous les joueurs."
     : curView === "attaques" ? "Vue commune : opérations, plan de frappe et envois de chaque joueur."
     : curView === "defense" ? "Vue commune : villes menacées, renforts engagés et ce que chacun doit envoyer."
     : curView === "barons" ? "Vue commune : les spots où chacun a envoyé un baron."
     : curView === "carte" ? "Vue commune : terrain du continent, cases réservées et villes des autres joueurs."
+    : curView === "plans" ? "Vue commune : vos plans de ville, à coller et recopier dans le jeu."
     : curView === "outils" ? "Joueurs, import des exports du jeu, ajout de villes et poids TS."
     : "Coordonnées, troupes, rôle off/def et destination des ressources, ville par ville.";
   $("ficheNav").hidden = common;
@@ -2369,6 +2414,118 @@ function startSuggestions(){
     err => { $("sugList").innerHTML = `<p class="empty">Suggestions indisponibles : ${esc(err.message||err.code)}</p>`; });
 }
 
+/* ---------- plans de ville (sharestrings) : collection partagée « plans » ----------
+   Format [ShareString.1.3] (celui du jeu et de CotG Optimizer) : « ; » ville au bord de l'eau ou « : » terrestre,
+   puis 441 cases (grille 21 × 21, ligne par ligne). Codes repris de CotG Optimizer (theladystar, GitHub). */
+const PL_TPL = "........................LLLLLLL.LLLLLLL.....LLLLLLLL.LLLLLLLL...LLLLLLLLL.LLLLLLLLL..LLLLLLLLL.LLLLLLLLL..LLLLLL.......LLLLLL..LLLLL..LLLLL..LLLLL..LLLL..LLLLLLL..LLLL..LLLL.LLLLLLLLL.LLLL..LLLL.LLLLLLLLL.LLLL.......LLLL.LLLL.......LLLL.LLLLLLLLL.LLLL..LLLL.LLLLLLLLL.LLLL..LLLL..LLLLLLL..LLLL..LLLLL..LLLLL..LLLLL..LLLLLL.......LLSSLL..LLLLLLLLL.LLLLSllSL..LLLLLLLLL.LLLLSlllS...LLLLLLLL.LLLLLSll.....LLLLLLL.LLLLLLS........................";   /* « . » mur, route, Basilica · « L » case constructible · « S » rive (port, chantier naval) · « l » eau d'une ville côtière */
+const PLC = {gray:["#D3D1C7","#444441","#5F5E5A"], coral:["#F5C4B3","#712B13","#993C1D"], teal:["#9FE1CB","#085041","#0F6E56"], purple:["#CECBF6","#3C3489","#534AB7"],
+  amber:["#FAC775","#633806","#854F0B"], blue:["#B5D4F4","#0C447C","#185FA5"], green:["#C0DD97","#27500A","#3B6D11"], pink:["#F4C0D1","#72243E","#993556"], red:["#F7C1C1","#791F1F","#A32D2D"]};
+const PL_B = {   /* code : [nom, lettres dans la case, couleur] */
+  b:["Baraque","B","gray"], z:["Académie","A","purple"], g:["Training Arena","T","coral"], x:["Château","C","amber"], c:["Cabane","Cb","green"],
+  s:["Entrepôt","E","blue"], p:["Forum","F","amber"], u:["Villa","V","pink"], k:["Poste de garde","G","gray"], e:["Écurie","Éc","red"],
+  y:["Forge","Fg","gray"], v:["Chantier naval","CN","teal"], r:["Port","P","teal"], j:["Tour du sorcier","Ts","purple"], h:["Cachette","Ca","gray"],
+  "1":["Ferme","Fe","green"], "2":["Bûcheron","Bû","green"], "3":["Carrière","Cr","gray"], "4":["Mine de fer","Mf","blue"],
+  l:["Scierie","Sc","green"], a:["Tailleur de pierre","Tp","gray"], d:["Fonderie","Fo","blue"], m:["Moulin","Mo","amber"],
+  ".":["Forêt","","green"], ":":["Rocher","","gray"], ",":["Minerai","","blue"], ";":["Lac","","blue"]
+};
+const PL_NATURE = ".:,;";
+function plParse(txt){
+  const t = String(txt || ""), i = t.search(/\[ShareString\.1\.3\]/i);
+  if (i < 0) return {err: t.trim() ? "Ce n'est pas un sharestring de plan : il doit commencer par [ShareString.1.3]." : ""};
+  let body = t.slice(i + 17); const j = body.search(/\[\/ShareString\]/i); if (j >= 0) body = body.slice(0, j);
+  body = body.replace(/\s+/g, "");
+  const eau = body[0] === ";" ? true : body[0] === ":" ? false : null;
+  if (eau === null) return {err: "Sharestring illisible : le premier signe doit être « ; » (ville côtière) ou « : » (ville terrestre)."};
+  const cells = body.slice(1, 442);
+  if (cells.length < 441) return {err: `Sharestring incomplet : ${cells.length} cases sur 441. Vérifie qu'il a été copié en entier.`};
+  const n = {}, autres = {}; let libres = 0;
+  for (const ch of cells){
+    const k = ch.toLowerCase();
+    if (ch === "-" || ch === "_") libres++;
+    else if (ch === "#" || ch === "T") {}
+    else if (PL_B[k]) n[k] = (n[k] || 0) + 1;
+    else autres[ch] = (autres[ch] || 0) + 1;
+  }
+  return {eau, cells, n, autres, libres};
+}
+function plMap(P){   /* grille 19 × 19 (l'anneau extérieur n'est que du mur), routes et murs laissés vides, comme les plans dessinés à la main */
+  const box = (col, txt, title, nature) => { const c = PLC[col]; return `<i style="background:${c[0]};color:${c[1]};border-color:${c[2]}${nature ? ";opacity:.45" : ""}"${title ? ` title="${title}"` : ""}>${txt || ""}</i>`; };
+  let h = "";
+  for (let r = 1; r <= 19; r++) for (let c = 1; c <= 19; c++){
+    const i = r * 21 + c, ch = P.cells[i], k = ch.toLowerCase(), t = PL_TPL[i];
+    if (ch === "T") h += box("teal", "H", "Hôtel de ville");
+    else if (PL_B[k]) h += box(PL_B[k][2], PL_B[k][1], PL_B[k][0], PL_NATURE.includes(k));
+    else if (ch === "#") h += t === "l" && P.eau ? `<i class="eau"></i>` : `<i class="w"></i>`;
+    else if (ch === "-" || ch === "_") h += `<i class="libre"></i>`;
+    else h += box("red", esc(ch), "Code non reconnu");
+  }
+  return `<div class="plmap" aria-hidden="true">${h}</div>`;
+}
+function plChips(P){
+  const bat = Object.entries(P.n).filter(([k]) => !PL_NATURE.includes(k)).sort((a,b) => b[1] - a[1]);
+  const nat = Object.entries(P.n).filter(([k]) => PL_NATURE.includes(k)).reduce((s, [,v]) => s + v, 0);
+  const aut = Object.values(P.autres).reduce((s, v) => s + v, 0);
+  return `<div class="plchips">${bat.map(([k, v]) => { const c = PLC[PL_B[k][2]]; return `<span><i class="lt" style="background:${c[0]};color:${c[1]};border-color:${c[2]}">${PL_B[k][1]}</i>${PL_B[k][0]} <b>${v}</b></span>`; }).join("")}
+    <span>${P.eau ? "⚓ Côtière" : "⛰ Terrestre"}</span>${P.libres ? `<span>Cases libres <b>${P.libres}</b></span>` : ""}${nat ? `<span>Nature <b>${nat}</b></span>` : ""}${aut ? `<span title="Codes non reconnus : ${esc(Object.keys(P.autres).join(" "))}">Autres <b>${aut}</b></span>` : ""}</div>`;
+}
+let plans = [], editPlan = null;
+function plPreview(){
+  const P = plParse($("pl-txt").value);
+  $("pl-save").disabled = !P.cells || !$("pl-nom").value.trim();
+  $("plPreview").innerHTML = P.cells ? `<div class="plprev">${plMap(P)}${plChips(P)}</div>` : P.err ? `<p class="warn" style="margin:6px 0">${esc(P.err)}</p>` : "";
+}
+function resetPlan(){ editPlan = null; $("plForm").reset(); $("pl-save").textContent = "Enregistrer le plan"; $("pl-cancel").hidden = true; $("plTitle").textContent = "Ajouter un plan"; plPreview(); }
+function renderPlans(){
+  if (!$("plList")) return;
+  const fa = $("pl-f-auteur"), cur = fa.value;
+  fa.innerHTML = `<option value="">Tous</option>` + fiches.map(f => `<option value="${esc(f.id)}">${esc(f.nom)}</option>`).join("");
+  fa.value = fiches.some(f => f.id === cur) ? cur : "";
+  const q = $("pl-f-q").value.trim().toLowerCase();
+  const list = plans.filter(p => (!fa.value || p.fiche === fa.value) && (!q || ((p.nom || "") + " " + (p.note || "")).toLowerCase().includes(q)))
+    .sort((a,b) => (b.maj || b.creeLe || "").localeCompare(a.maj || a.creeLe || ""));
+  $("plList").innerHTML = !db ? `<p class="empty">Registre indisponible ici.</p>`
+    : !list.length ? `<p class="empty">${plans.length ? "Aucun plan ne correspond au filtre." : "Aucun plan pour l'instant. Colle un sharestring dans « Ajouter un plan » ci-dessus."}</p>`
+    : list.map(p => { const P = plParse(p.texte);
+      return `<article class="plcard">
+        <div class="plhead"><b>${esc(p.nom || "Sans nom")}</b>${p.fiche ? pName(p.fiche) : ""}<span class="msub">${p.maj || p.creeLe ? new Date(p.maj || p.creeLe).toLocaleDateString("fr-FR") : ""}</span></div>
+        ${p.note ? `<div class="msub">${esc(p.note)}</div>` : ""}
+        ${P.cells ? plMap(P) + plChips(P) : `<p class="warn" style="margin:0">${esc(P.err || "Sharestring vide.")}</p>`}
+        <div class="btns" style="margin:0"><button type="button" class="primary" data-plcopy="${esc(p.id)}" title="Copier le sharestring pour le coller dans le jeu">Copier</button><button type="button" class="link" data-pledit="${esc(p.id)}">modifier</button><button type="button" class="link danger" data-pldel="${esc(p.id)}">suppr.</button></div>
+      </article>`; }).join("");
+}
+["pl-txt","pl-nom"].forEach(id => $(id).addEventListener("input", plPreview));
+$("pl-f-auteur").addEventListener("change", renderPlans);
+$("pl-f-q").addEventListener("input", renderPlans);
+$("pl-cancel").addEventListener("click", resetPlan);
+$("plForm").addEventListener("submit", async e => {
+  e.preventDefault(); if (!db) return;
+  const P = plParse($("pl-txt").value), nom = $("pl-nom").value.trim();
+  if (!P.cells || !nom) return;
+  const data = {nom, note:$("pl-note").value.trim(), texte:$("pl-txt").value.trim(), maj:new Date().toISOString()};
+  try {
+    if (editPlan) await db.doc("plans/" + editPlan).update(data);
+    else await db.collection("plans").add({...data, fiche:moi || "", creeLe:new Date().toISOString()});
+    setStatus(editPlan ? "Plan modifié." : "Plan enregistré."); resetPlan(); $("plPanel").open = false;
+  } catch(err){ setStatus("Plan non enregistré : " + (err.message||err.code)); }
+});
+$("plList").addEventListener("click", async e => {
+  const b = e.target.closest("button"); if (!b) return;
+  const p = plans.find(x => x.id === (b.dataset.plcopy || b.dataset.pledit || b.dataset.pldel)); if (!p) return;
+  if (b.dataset.plcopy){
+    try { await navigator.clipboard.writeText(p.texte || ""); setStatus("Sharestring copié : colle-le dans le jeu."); }
+    catch { const ta = document.createElement("textarea"); ta.value = p.texte || ""; document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); setStatus("Sharestring copié : colle-le dans le jeu."); } catch { setStatus("Copie impossible : ouvre « modifier » et copie le texte à la main."); } ta.remove(); }
+    return;
+  }
+  if (b.dataset.pledit){ editPlan = p.id; $("pl-nom").value = p.nom || ""; $("pl-note").value = p.note || ""; $("pl-txt").value = p.texte || "";
+    $("pl-save").textContent = "Enregistrer les modifications"; $("pl-cancel").hidden = false; $("plTitle").textContent = "Modifier : " + (p.nom || "plan");
+    $("plPanel").open = true; plPreview(); $("plPanel").scrollIntoView({block:"nearest"}); return; }
+  if (b.dataset.pldel && db) return armDelete(b, async () => { try { await db.doc("plans/" + p.id).delete(); if (editPlan === p.id) resetPlan(); setStatus("Plan supprimé."); } catch(err){ setStatus("Suppression impossible : " + (err.message||err.code)); } });
+});
+function startPlans(){
+  db.collection("plans").onSnapshot(s => { plans = s.docs.map(d => ({id:d.id, ...d.data()})); if (curView === "plans") renderPlans(); },
+    err => { $("plList").innerHTML = `<p class="empty">Plans indisponibles : ${esc(err.message||err.code)}</p>`; });
+}
+
 function startDefense(){
   db.collection("menaces").onSnapshot(s => { menaces = s.docs.map(d => ({id:d.id, ...d.data()})); renderDefense(); }, () => {});
   db.collection("renforts").onSnapshot(s => { renforts = s.docs.map(d => ({id:d.id, ...d.data()})); renderDefense(); }, () => {});
@@ -2423,18 +2580,19 @@ $("nowOrders").addEventListener("click", async e => {
 
 /* ---------- vues ---------- */
 function showView(v){
-  if (!["maintenant","fiche","binome","attaques","defense","barons","carte","outils"].includes(v)) v = "maintenant";
+  if (!["maintenant","fiche","binome","attaques","defense","barons","carte","plans","outils"].includes(v)) v = "maintenant";
   if (v === "outils" && moi && !editingId && currentFiche !== moi && fiches.some(f => f.id === moi)) selectFiche(moi);
   const st = $("status").textContent; const wasCount = !st || st === countTxt || st === "Enregistré automatiquement";
   curView = v; renderTabs(); document.body.classList.toggle("wide", v === "attaques" || v === "carte"); if (wasCount && countTxt) setStatus(countStatus()); renderWelcome();
   document.querySelectorAll(".vbtn").forEach(b => b.setAttribute("aria-selected", String(b.dataset.view === v)));
-  ["maintenant","fiche","binome","attaques","defense","barons","carte","outils"].forEach(k => $("view-"+k).hidden = k !== v);
+  ["maintenant","fiche","binome","attaques","defense","barons","carte","plans","outils"].forEach(k => $("view-"+k).hidden = k !== v);
   try { localStorage.setItem("vueActive", v); } catch {}
   if (v === "binome") renderBinome();
   if (v === "attaques") renderAttaques();
   if (v === "defense") renderDefense();
   if (v === "barons") renderBarons();
   if (v === "carte") renderCarte();
+  if (v === "plans") renderPlans();
   if (v === "maintenant") renderNow();
 }
 document.querySelector(".qbar").addEventListener("click", e => {
@@ -2929,7 +3087,7 @@ buildCompo(); buildForm(); buildTsGrid(); resetForm(); fillUnitSelect(""); rende
   db.doc("reglages/foi").onSnapshot(d => { foiAlliance = (d.exists && d.data().foi) || {}; renderRech(); renderDefense(); }, () => {});
   db.doc("reglages/objectif").onSnapshot(d => { if (d.exists){ objectif = {pct:+d.data().pct||50, ts:+d.data().ts||null};
     if (document.activeElement?.id !== "obj-pct") $("obj-pct").value = objectif.pct; if (document.activeElement?.id !== "obj-ts") $("obj-ts").value = objectif.ts || ""; renderBinome(); } }, () => {});
-  startAttaques(); startDefense(); startBarons(); startCarte(); startSuggestions();
+  startAttaques(); startDefense(); startBarons(); startCarte(); startSuggestions(); startPlans();
   db.collection("fiches").orderBy("creeLe").onSnapshot(snap => {
     fiches = snap.docs.map(d => ({id:d.id, nom:d.data().nom || d.id, importVilles:d.data().importVilles || "", importTroupes:d.data().importTroupes || "", recherches:d.data().recherches || {}, durabilite:d.data().durabilite || {}}));
     renderAge(); renderRech(); renderDefense();
