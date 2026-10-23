@@ -308,13 +308,15 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
 .plcard{border:1px solid var(--line);border-radius:8px;padding:12px;display:grid;gap:8px;min-width:0;align-content:start}
 .plhead{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
 .plhead b{font-size:15px}
-.plmap{display:grid;grid-template-columns:repeat(21,1fr);gap:1px;width:100%;max-width:525px;aspect-ratio:1;background:#c9ced8;border:1px solid #c9ced8;border-radius:4px;overflow:hidden;container-type:inline-size}
-.plmap i{display:flex;align-items:center;justify-content:center;background:#fff;color:#1c2230;font:600 clamp(6px,2.1cqi,11px)/1 var(--f-mono);font-style:normal;overflow:hidden;white-space:nowrap}
-.plmap i.w{background:#9aa2b1}
+.plmap{display:grid;grid-template-columns:repeat(19,1fr);gap:3px;width:100%;max-width:560px;aspect-ratio:1;container-type:inline-size}
+.plmap i{display:flex;align-items:center;justify-content:center;border:.5px solid transparent;border-radius:3px;font:600 clamp(7px,2.6cqi,14px)/1 var(--f-body,system-ui);font-style:normal;overflow:hidden;white-space:nowrap;box-sizing:border-box}
+.plmap i.libre{border:1px dashed var(--line)}
+.plmap i.eau{background:#E6F1FB}
+.plmap i.w{visibility:hidden}
 .plchips{display:flex;flex-wrap:wrap;gap:4px}
 .plchips span{font-size:12px;padding:2px 8px;border-radius:999px;background:var(--keep-soft);display:inline-flex;gap:5px;align-items:center}
-.plchips i.lt{min-width:18px;height:16px;padding:0 2px;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;font:600 10px/1 var(--f-mono);font-style:normal;color:#1c2230;box-sizing:border-box}
-.plprev{display:grid;grid-template-columns:minmax(0,525px) 1fr;gap:12px;align-items:start;margin:8px 0}
+.plchips i.lt{min-width:20px;height:18px;padding:0 3px;border-radius:3px;border:.5px solid;display:inline-flex;align-items:center;justify-content:center;font:600 11px/1 var(--f-body,system-ui);font-style:normal;box-sizing:border-box}
+.plprev{display:grid;grid-template-columns:minmax(0,560px) 1fr;gap:12px;align-items:start;margin:8px 0}
 @media (max-width:900px){.plprev{grid-template-columns:1fr}}
 #pl-txt{width:100%;box-sizing:border-box;font-family:var(--f-mono);font-size:12px;resize:vertical}
 .mcard{border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:grid;gap:10px;min-width:0}
@@ -2416,13 +2418,15 @@ function startSuggestions(){
    Format [ShareString.1.3] (celui du jeu et de CotG Optimizer) : « ; » ville au bord de l'eau ou « : » terrestre,
    puis 441 cases (grille 21 × 21, ligne par ligne). Codes repris de CotG Optimizer (theladystar, GitHub). */
 const PL_TPL = "........................LLLLLLL.LLLLLLL.....LLLLLLLL.LLLLLLLL...LLLLLLLLL.LLLLLLLLL..LLLLLLLLL.LLLLLLLLL..LLLLLL.......LLLLLL..LLLLL..LLLLL..LLLLL..LLLL..LLLLLLL..LLLL..LLLL.LLLLLLLLL.LLLL..LLLL.LLLLLLLLL.LLLL.......LLLL.LLLL.......LLLL.LLLLLLLLL.LLLL..LLLL.LLLLLLLLL.LLLL..LLLL..LLLLLLL..LLLL..LLLLL..LLLLL..LLLLL..LLLLLL.......LLSSLL..LLLLLLLLL.LLLLSllSL..LLLLLLLLL.LLLLSlllS...LLLLLLLL.LLLLLSll.....LLLLLLL.LLLLLLS........................";   /* « . » mur, route, Basilica · « L » case constructible · « S » rive (port, chantier naval) · « l » eau d'une ville côtière */
+const PLC = {gray:["#D3D1C7","#444441","#5F5E5A"], coral:["#F5C4B3","#712B13","#993C1D"], teal:["#9FE1CB","#085041","#0F6E56"], purple:["#CECBF6","#3C3489","#534AB7"],
+  amber:["#FAC775","#633806","#854F0B"], blue:["#B5D4F4","#0C447C","#185FA5"], green:["#C0DD97","#27500A","#3B6D11"], pink:["#F4C0D1","#72243E","#993556"], red:["#F7C1C1","#791F1F","#A32D2D"]};
 const PL_B = {   /* code : [nom, lettres dans la case, couleur] */
-  b:["Barracks","B","#9ec5f0"], z:["Academy","A","#c9b3ea"], g:["Training Arena","TA","#f2a7a7"], x:["Castle","C","#3a3f4b"], c:["Cabin","Cb","#f3d38c"],
-  s:["Storehouse","S","#d8c19a"], p:["Forum","F","#f0d070"], u:["Villa","V","#f4bfd2"], k:["Guardhouse","G","#b9c0cc"], e:["Stable","St","#e3b08f"],
-  y:["Blacksmith","Bs","#8f96a3"], v:["Shipyard","Sy","#8fd0d9"], r:["Port","P","#b6e3f0"], j:["Sorcerers Tower","Tw","#a98bd1"], h:["Hideaway","H","#d4d8de"],
-  "1":["Farm Estate","Fa","#d2e6a0"], "2":["Foresters Hut","Fo","#a6d1a0"], "3":["Stone Mine","SM","#d0d0d0"], "4":["Iron Mine","IM","#b8c4d0"],
-  l:["Sawmill","Sw","#bfdc9a"], a:["Masons Hut","Ma","#e2e2e2"], d:["Smelter","Sm","#c3ccd6"], m:["Grain Mill","GM","#eadf9a"],
-  ".":["Forêt","","#e3efdc"], ":":["Rocher","","#ececec"], ",":["Minerai","","#e3e8ee"], ";":["Lac","","#dcecf4"]
+  b:["Baraque","B","gray"], z:["Académie","A","purple"], g:["Training Arena","T","coral"], x:["Château","C","amber"], c:["Cabane","Cb","green"],
+  s:["Entrepôt","E","blue"], p:["Forum","F","amber"], u:["Villa","V","pink"], k:["Poste de garde","G","gray"], e:["Écurie","Éc","red"],
+  y:["Forge","Fg","gray"], v:["Chantier naval","CN","teal"], r:["Port","P","teal"], j:["Tour du sorcier","Ts","purple"], h:["Cachette","Ca","gray"],
+  "1":["Ferme","Fe","green"], "2":["Bûcheron","Bû","green"], "3":["Carrière","Cr","gray"], "4":["Mine de fer","Mf","blue"],
+  l:["Scierie","Sc","green"], a:["Tailleur de pierre","Tp","gray"], d:["Fonderie","Fo","blue"], m:["Moulin","Mo","amber"],
+  ".":["Forêt","","green"], ":":["Rocher","","gray"], ",":["Minerai","","blue"], ";":["Lac","","blue"]
 };
 const PL_NATURE = ".:,;";
 function plParse(txt){
@@ -2444,22 +2448,24 @@ function plParse(txt){
   }
   return {eau, cells, n, autres, libres};
 }
-function plMap(P){
-  const cell = (bg, txt, title, fg) => `<i style="background:${bg}${fg ? ";color:" + fg : ""}"${title ? ` title="${title}"` : ""}>${txt || ""}</i>`;
-  return `<div class="plmap" aria-hidden="true">${[...P.cells].map((ch, i) => {
-    const k = ch.toLowerCase(), t = PL_TPL[i];
-    if (ch === "T") return cell("#e8c46a", "Ba", "Basilica");
-    if (PL_B[k]) return cell(PL_B[k][2], PL_B[k][1], PL_B[k][0], k === "x" ? "#fff" : "");
-    if (ch === "#") return t === "l" && P.eau ? cell("#cfe6f2") : `<i class="w"></i>`;
-    if (ch === "-" || ch === "_") return `<i></i>`;
-    return cell("#ffd0e6", esc(ch), "Code non reconnu");
-  }).join("")}</div>`;
+function plMap(P){   /* grille 19 × 19 (l'anneau extérieur n'est que du mur), routes et murs laissés vides, comme les plans dessinés à la main */
+  const box = (col, txt, title, nature) => { const c = PLC[col]; return `<i style="background:${c[0]};color:${c[1]};border-color:${c[2]}${nature ? ";opacity:.45" : ""}"${title ? ` title="${title}"` : ""}>${txt || ""}</i>`; };
+  let h = "";
+  for (let r = 1; r <= 19; r++) for (let c = 1; c <= 19; c++){
+    const i = r * 21 + c, ch = P.cells[i], k = ch.toLowerCase(), t = PL_TPL[i];
+    if (ch === "T") h += box("teal", "H", "Hôtel de ville");
+    else if (PL_B[k]) h += box(PL_B[k][2], PL_B[k][1], PL_B[k][0], PL_NATURE.includes(k));
+    else if (ch === "#") h += t === "l" && P.eau ? `<i class="eau"></i>` : `<i class="w"></i>`;
+    else if (ch === "-" || ch === "_") h += `<i class="libre"></i>`;
+    else h += box("red", esc(ch), "Code non reconnu");
+  }
+  return `<div class="plmap" aria-hidden="true">${h}</div>`;
 }
 function plChips(P){
   const bat = Object.entries(P.n).filter(([k]) => !PL_NATURE.includes(k)).sort((a,b) => b[1] - a[1]);
   const nat = Object.entries(P.n).filter(([k]) => PL_NATURE.includes(k)).reduce((s, [,v]) => s + v, 0);
   const aut = Object.values(P.autres).reduce((s, v) => s + v, 0);
-  return `<div class="plchips">${bat.map(([k, v]) => `<span><i class="lt" style="background:${PL_B[k][2]}${k === "x" ? ";color:#fff" : ""}">${PL_B[k][1]}</i>${PL_B[k][0]} <b>${v}</b></span>`).join("")}
+  return `<div class="plchips">${bat.map(([k, v]) => { const c = PLC[PL_B[k][2]]; return `<span><i class="lt" style="background:${c[0]};color:${c[1]};border-color:${c[2]}">${PL_B[k][1]}</i>${PL_B[k][0]} <b>${v}</b></span>`; }).join("")}
     <span>${P.eau ? "⚓ Côtière" : "⛰ Terrestre"}</span>${P.libres ? `<span>Cases libres <b>${P.libres}</b></span>` : ""}${nat ? `<span>Nature <b>${nat}</b></span>` : ""}${aut ? `<span title="Codes non reconnus : ${esc(Object.keys(P.autres).join(" "))}">Autres <b>${aut}</b></span>` : ""}</div>`;
 }
 let plans = [], editPlan = null;
