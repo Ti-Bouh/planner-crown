@@ -74,5 +74,5 @@ tableau Unités (bonus de recherche) affiché, courbe Castle prolongée jusqu'à
 La page `calculs.html` s'appelle « Début de serveur » (titre, bouton du planner, messages). L'adresse reste calculs.html.
 
 ### Plans
-Onglet « Plans » (vue commune) : on colle un sharestring de plan de ville (`[ShareString.1.3]`, celui du jeu et de CotG Optimizer), avec un nom et une note. Chaque plan affiche son dessin (grille 21 × 21), le nombre de chaque bâtiment, son auteur, et un bouton « Copier le sharestring » pour le recoller en jeu. Modifier, supprimer, filtrer par auteur ou chercher par nom. Collection Firestore `plans` (nom, note, texte, fiche, creeLe, maj). Codes des bâtiments repris de CotG Optimizer (theladystar, GitHub).
+Onglet « Plans » (vue commune) : on colle un sharestring de plan de ville (`[ShareString.1.3]`, celui du jeu et de CotG Optimizer), avec un nom et une note. Liste dépliante : une ligne par plan (nom, auteur, principaux bâtiments, bouton Copier) ; en dépliant, le dessin (grille 19 × 19, lettres), le nombre de chaque bâtiment, son auteur, et un bouton « Copier le sharestring » pour le recoller en jeu. Modifier, supprimer, filtrer par auteur ou chercher par nom. Collection Firestore `plans` (nom, note, texte, fiche, creeLe, maj). Codes des bâtiments repris de CotG Optimizer (theladystar, GitHub).
 
