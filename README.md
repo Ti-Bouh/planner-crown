@@ -64,8 +64,10 @@ Même barre principale que le planner ; ses onglets propres sont en dessous :
 - **Ma cité** : paramètres communs saisis une seule fois (recherche Construction Speed, fer envoyé par jour, Cabines
   démolies par groupes de…, plan de la cité : Barracks, Arenas, Académies, Marchés, Entrepôts, Tours, Castle) ;
   fer, pierre et bois par jour repris des raids d'une ville du Recrutement ou saisis à la main.
-- **Castle** : Solveur (meilleure combinaison Arenas / Barracks / Cabines pour n'importe quel nombre d'emplacements,
-  clic sur une des 10 meilleures lignes pour la simuler) et Simulateur détaillé avec courbe.
+- **Castle** : Solveur (avec les Arenas et Barracks du plan de Ma cité, nombre et niveau de Cabines qui finissent la
+  construction du château le plus tôt ; à égalité, objectif de zerks le plus tôt puis moins de pierre perdue ; le délai
+  minimal imposé par le fer envoyé par jour est affiché à côté de l'objectif ; clic sur une des 10 meilleures lignes pour
+  la simuler) et Simulateur détaillé avec courbe.
 - **Cabines** : niveau et nombre optimaux pour construire toute la cité au niveau 10 le plus vite possible
   (10 emplacements par niveau de Basilica), plan de démolition groupe par groupe (suit l'optimum par défaut,
   paramètre `gardees` de `cabDemolition` ; « Un autre cas » pour tester ses valeurs).
