@@ -1,90 +1,85 @@
 # planner-crown
-Planner Crown of the Gods
+Planner Crown of the Gods, hébergé sur GitHub Pages. Connexion Google, données dans Cloud Firestore
+(`src/firebase-shim.js`, partagé par les deux pages ; accès limité aux comptes autorisés par les règles Firestore).
 
-## Page Calculs (`calculs.html`)
+## Organisation du planner (`index.html`)
 
-Calculateurs reliés au planner (même connexion Google, même fiche « Je suis ») :
+- **Moi** : Maintenant, Mes villes, Début de serveur (`calculs.html`).
+- **Ensemble** : Binôme, Attaques, Défense, Carte et barons, Plans.
+- **⚙ Réglages** : joueurs, import des exports du jeu, poids TS.
+- `index.html#vue` ouvre directement une vue (utilisé par la barre de `calculs.html`).
+- Toutes les listes suivent le même en-tête : titre, case « Voir les terminé(e)s », bouton « + … » qui ouvre le
+  formulaire juste en dessous (`details.addp`, bouton `data-open`).
 
-- **Ma cité** : fer, pierre et bois par jour repris automatiquement des raids d'une ville du Recrutement (ou saisis à la main) ; paramètres communs (recherche Construction Speed, fer / pierre / bois par jour, plan Arenas / Barracks, scénario testé) et contrôles de cohérence.
-- **Castle** : Solveur (meilleure combinaison Arenas / Barracks / Cabines, calculée en direct pour n'importe quel nombre d'emplacements) et Simulateur détaillé avec courbe.
-- **Cabines** : niveau et nombre optimaux pour construire toute la cité au niveau 10 le plus vite possible (plan saisi : Barracks, Arenas, Académies, Forums, entrepôts, tour, Castle ; 10 emplacements par niveau de Basilica ; démolition des Cabines par groupes), au meilleur rapport temps / niveau ; plan de démolition groupe par groupe.
-- **Recrutement** : une fiche par ville (indépendantes), raids en cours (une ligne = une armée en boucle, modifiable, trajet aller en h:mm:ss), remplis automatiquement depuis une capture du rapport (lecture dans le navigateur avec Tesseract.js, contrôle Carried − Expended = Profit) ; zerks financés par heure à partir du fer net des pertes, 10 % gardés pour le raffinage, niveau des Training Arenas pour un recrutement continu (case « 1 Arena au niveau 10 »), raids nécessaires et surplus à raffiner.
-- **Raids** : Simulateur (troupes à envoyer, mélanges Ranger : Triaire, calcul avec tes troupes), Journal des raids et Synthèse par configuration.
+### Maintenant
+Mes ordres, menaces ouvertes, résumé du binôme, raccourcis (menace, baron, opération).
+Suggestions pour le site : collection `suggestions` (texte, fiche, statut `afaire` / `fait`, creeLe, maj), modifiables,
+marquées faites puis rouvertes, supprimables ; les faites sont masquées sauf avec « Voir les terminées ».
 
-Fichiers : `src/calc-engine.js` (moteurs, portage formule par formule des classeurs Excel Crown), `src/calc-data.js` (données du jeu).
+### Mes villes
+Ligne « Voir la fiche de » : Tous, une fiche par joueur, puis deux sous-onglets limités au joueur choisi dans « Je suis ».
+- **Registre** : coordonnées, rôle, troupes, TS, hub de rattachement ; « + Ajouter une ville » dans son en-tête,
+  modification sous la ligne de la ville (suppression dans le formulaire). Âge du dernier import stocké dans
+  `fiches/{fiche}.importVilles` et `.importTroupes`, délai d'alerte dans Réglages.
+- **Fortifications** (fiche d'une ville) : niveau du mur (repris de l'import des troupes) et postes de Rangers / Triaires
+  (nombre et niveau, `villes/{id}.postes`).
+- **Ravitaillement** : par ressource, ↑ = surplus envoyé au hub, R = surplus raffiné (les deux s'excluent,
+  `res.{ressource}` = `hub` / `raffiner` / `garder`), ↓ = reçoit du hub (`recoit.{ressource}`, indépendant).
+  En haut, les villes qui reçoivent du hub, par ressource. Pas de quantités.
+- **Recherches** : recherches de combat par unité (`fiches/{fiche}.recherches`, niveaux 0 à 12), durabilité des
+  bâtiments et fortifications (`fiches/{fiche}.durabilite`, enregistrée mais non utilisée dans la def conseillée, elle
+  joue contre le siège) et foi des dieux Naera, Vexemis, Cyndros, Ylanna, commune à l'alliance (`reglages/foi`).
+  Bonus = 0/1/3/6/10/15/20/25/30/35/40/45/50 % selon le niveau + 0,5 % par point de foi du dieu de l'unité
+  (d'après les scripts de joueurs GFunky et Dfunky ; table confirmée par les recherches de durabilité du jeu).
 
-Enregistrement Firestore : `fiches/{fiche}/calculs/reglages` (réglages) `fiches/{fiche}/raids/{id}` (journal) et `fiches/{fiche}/recrutement/{ville}` + `…/rapports/{id}` (onglet Recrutement).
+### Défense
+- Composition de l'attaque (facultative : Vanquisher, Cavalier, Sorcière, Druide, Bélier, Scorpion, Navire) dans
+  `menaces/{id}.compo`. La carte de la menace affiche une **def conseillée** et une **alternative** : défense moyenne de
+  chaque unité face au mélange d'attaque, nombre pour égaler l'attaque, villes qui ont l'unité (de la plus proche à la
+  plus loin). Classement : unités disponibles d'abord, puis défense par ressource dépensée (pas de limite de place en
+  renfort). L'ajout de renfort présélectionne l'unité conseillée.
+- Couverture réelle : défense en points face à l'attaque (sur place + renforts, avec mur, recherches, foi et postes),
+  repères égaler (= attaque) et écraser (4 × l'attaque) ; la pastille et le compteur « Couvertes » en découlent.
+  Plan de renfort en un clic (unité conseillée d'abord, villes les plus proches, villes trop tardives écartées).
+- Pour la ville menacée sont comptés : le mur (unités terrestres ; +1 % au niveau 1 à +50 % au niveau 10), les
+  recherches de son propriétaire et les unités doublées par les postes (30 au niveau 1 à 2 000 au niveau 10 par poste).
+- Données (`DEF_STATS`, `OFF_ATK` dans `index.html`) : wiki Crown of the Gods, valeurs de base. Ranger d'après sa
+  fiche (déf. 40 / 10 / 25 / 15).
 
-### Ergonomie
-- Onglets groupés par usage : « Au quotidien » (Recrutement, Raids) et « Préparer une cité » (Ma cité, Cabines, Castle) ; une ligne d'explication pour l'onglet ouvert ; réglages rarement utilisés repliés dans « Réglages avancés ».
-- Villes du Recrutement choisies parmi les villes du planner (`fiches/{fiche}/villes`) : nom, coordonnées et troupes repris de l'import CSV ; Raids peut reprendre les Rangers / Triaires à la maison.
-- Un rapport de raid alimente le Recrutement et, pour une armée Rangers / Triaires, le Journal des raids (caverne, niveau et troupes envoyées lus sur la capture, pertes déduites de « Expended »).
-- Coller une capture dans le planner ouvre Calculs › Recrutement (`src/planner-addons.js`, chargé par `index.html`).
-- Nombres lisibles dans les cases (« 1 000 000 ») et saisies « 150k », « 1,5M » acceptées.
-
-
-## Planner : modifications faites directement dans index.html
-
-**Organisation (octobre 2026)** : barre Moi = Maintenant, Mes villes, Début de serveur ; Ensemble = Binôme, Attaques,
-Défense, Carte et barons (les barons sont un panneau de la Carte), Plans ; puis Réglages. Sous la ligne « Voir la fiche
-de » : Ravitaillement et Recherches (fiche du joueur « Je suis » + foi commune). Toutes les listes suivent le même
-en-tête : titre, case « Voir les terminé(e)s », bouton « + Ajouter… » qui ouvre le formulaire (`details.addp`, attribut
-`data-open`). « + Ajouter une ville » est dans l'en-tête du registre. `index.html#vue` ouvre directement une vue
-(liens de la barre sur `calculs.html`).
-
-**Ravitaillement** (onglet au bout de la ligne « Voir la fiche de ») : uniquement les villes du joueur choisi dans
-« Je suis ». Par ressource, ↑ = surplus envoyé au hub, R = surplus raffiné (les deux s'excluent, champ `res.{ressource}`
-= `hub` / `raffiner` / `garder`), ↓ = reçoit du hub (champ `recoit.{ressource}`, indépendant). En haut, la liste des
-villes qui reçoivent du hub, par ressource. Pas de quantités. Les menus de ressources ont été retirés de Mes villes.
-
-Depuis la mise à jour « ergonomie 2 », `index.html` est modifié directement : onglets groupés Moi / Ensemble,
-menu déroulant par ressource dans le registre, alertes de ville retirées, âge du dernier import
-(stocké dans `fiches/{fiche}.importVilles` et `.importTroupes`, délai d'alerte dans Réglages),
-raccourcis sur Maintenant, modification d'une ville sous sa ligne (suppression dans le formulaire),
-Attaques en étapes 1-2-3 et notifications visibles. L'ancien script `build.py` (génération depuis la source de
-l'artifact) a été retiré : il aurait écrasé ces changements.
-
-### Défense : def conseillée
-Dans « Signaler une menace », la composition de l'attaque (facultative : Vanquisher, Cavalier, Sorcière, Druide, Bélier, Scorpion, Navire) est enregistrée dans `menaces/{id}.compo`.
-La carte de la menace affiche alors une **def conseillée** et une **alternative** : défense moyenne de chaque unité face au mélange d'attaque, nombre pour égaler l'attaque et la liste des villes qui ont l'unité (nom, joueur, trajet), de la plus proche à la plus loin.
-Classement : unités disponibles d'abord, puis défense par ressource dépensée (pas de limite de place en renfort). L'ajout de renfort présélectionne l'unité conseillée.
-Données (`DEF_STATS`, `OFF_ATK` dans `index.html`) : wiki Crown of the Gods, valeurs de base. Ranger ajouté d'après sa fiche (déf. 40 / 10 / 25 / 15). Le mur de la ville menacée (niveau importé, bonus de la fiche City Wall : +1 % au niveau 1 à +50 % au niveau 10) est compté pour les unités terrestres dans « pour égaler l'attaque ».
-
-
-### Maintenant : suggestions pour le site
-Encart « Suggestions pour le site » dans l'onglet Maintenant, sous « Mes ordres » : on écrit une idée, elle est enregistrée pour les deux joueurs (collection Firestore `suggestions` : texte, fiche, statut `afaire`/`fait`, creeLe, maj). Chaque suggestion peut être modifiée, marquée faite (puis rouverte) ou supprimée ; les faites sont masquées sauf avec « Voir les faites ».
-
-### Recherches et fortifications
-- **Mes villes** : onglet d'un joueur = ses recherches et sa durabilité ; onglet « Tous » = la foi, commune. **Recherches de combat** : niveau (0 à 12) de la recherche de combat de chaque unité (`fiches/{fiche}.recherches`) et foi des dieux Naera, Vexemis, Cyndros, Ylanna, commune à l'alliance (`reglages/foi`). Bonus = 0/1/3/6/10/15/20/25/30/35/40/45/50 % selon le niveau + 0,5 % par point de foi du dieu de l'unité (d'après les scripts de joueurs GFunky et Dfunky ; table confirmée par les recherches de durabilité du jeu). Durabilité des bâtiments et des fortifications (`fiches/{fiche}.durabilite`, niveaux 0 à 12) : enregistrée, non utilisée dans la def conseillée (elle joue contre le siège).
-- **Fiche d'une ville › Fortifications** : niveau du mur (repris de l'import des troupes) et postes de Rangers / Triaires (nombre et niveau, `villes/{id}.postes`).
-- La def conseillée compte, pour la ville menacée : le mur (unités terrestres), les recherches de son propriétaire et les unités doublées par les postes (30 au niveau 1 à 2 000 au niveau 10 par poste).
-
-
-### Défense : couverture réelle et plan de renfort
-Quand la composition de l'attaque est connue, la carte de la menace mesure la défense en points face à cette attaque (sur place + renforts, avec mur, recherches, foi et postes), avec deux repères : égaler (= attaque, échange à 50/50 en assaut) et écraser (4 × l'attaque). La pastille et le compteur « Couvertes » en découlent. La def conseillée ajoute la colonne « Pour écraser » et un plan de renfort (unité conseillée d'abord, villes les plus proches d'abord, villes trop tardives écartées d'après l'heure d'impact et l'heure de l'ordinateur), créé en un clic.
-
-## Début de serveur (calculs.html) : simplification (octobre 2026)
-
-Un seul champ par réglage : « Fer envoyé par jour » et « Démolies par groupes de » se règlent dans Ma cité
-(Castle et Démolition affichent un rappel cliquable) ; le niveau de départ des Cabines ne se règle que dans Cabines.
-Castle : clic sur une ligne des 10 meilleures pour la simuler. Raids : ★ dans le tableau Unité seule à la place
-des tuiles « Si … te limitent ». Corrections : saisie du formulaire de raid gardée quand un réglage change,
-tableau Unités (bonus de recherche) affiché, courbe Castle prolongée jusqu'à l'objectif.
-
-## Début de serveur (calculs.html) : fusions (octobre 2026)
-
-- Saisie unique des raids : le formulaire de Recrutement (ou une capture) alimente aussi le Journal des raids
-  (caverne, niveau, % du donjon, non transporté ajoutés au formulaire) ; le Journal n'a plus de formulaire propre.
-- Plan de la cité saisi une seule fois dans Ma cité (Barracks, Arenas, Académies, Marchés, Entrepôts, Tours, Castle) ;
-  « Emplacements de la cité » retiré, Cabines garde la Basilica de départ et le niveau des Cabines déjà posées.
-- Démolition : suit par défaut l'optimum de Cabines (Cabines démolies et Cabines qui restent : paramètre `gardees`
-  de `cabDemolition`) ; « Un autre cas » pour tester ses propres valeurs.
-- Simulateur de raid : peut suivre les troupes à la maison de la ville ouverte dans Recrutement (`rTroupesSrc`).
-
-## Nom de la page
-
-La page `calculs.html` s'appelle « Début de serveur » (titre, bouton du planner, messages). L'adresse reste calculs.html.
+### Carte et barons
+Terrain du continent, cases réservées, villes des autres joueurs, import du terrain depuis une capture. Panneau
+« Barons envoyés » (collection `barons`) sous la carte ; les barons en route apparaissent aussi sur la carte.
 
 ### Plans
-Onglet « Plans » (vue commune) : on colle un sharestring de plan de ville (`[ShareString.1.3]`, celui du jeu et de CotG Optimizer), avec un nom et une note. Liste dépliante : une ligne par plan (nom, auteur, principaux bâtiments, bouton Copier) ; en dépliant, le dessin (grille 19 × 19, lettres), le nombre de chaque bâtiment, son auteur, et un bouton « Copier le sharestring » pour le recoller en jeu. Modifier, supprimer, filtrer par auteur ou chercher par nom. Collection Firestore `plans` (nom, note, texte, fiche, creeLe, maj). Codes des bâtiments repris de CotG Optimizer (theladystar, GitHub).
+On colle un sharestring de plan de ville (`[ShareString.1.3]`, celui du jeu et de CotG Optimizer), avec un nom et une
+note. Une ligne par plan (nom, auteur, principaux bâtiments, bouton Copier) ; en dépliant, le dessin (grille 19 × 19,
+lettres) et le nombre de chaque bâtiment. Modifier, supprimer, filtrer par auteur ou chercher par nom. Collection
+`plans` (nom, note, texte, fiche, creeLe, maj). Codes des bâtiments repris de CotG Optimizer (theladystar, GitHub).
 
+## Début de serveur (`calculs.html`)
+
+Même barre principale que le planner ; ses onglets propres sont en dessous :
+« Au quotidien » (Recrutement, Raids) et « Préparer une cité » (Ma cité, Cabines, Castle).
+
+- **Ma cité** : paramètres communs saisis une seule fois (recherche Construction Speed, fer envoyé par jour, Cabines
+  démolies par groupes de…, plan de la cité : Barracks, Arenas, Académies, Marchés, Entrepôts, Tours, Castle) ;
+  fer, pierre et bois par jour repris des raids d'une ville du Recrutement ou saisis à la main.
+- **Castle** : Solveur (meilleure combinaison Arenas / Barracks / Cabines pour n'importe quel nombre d'emplacements,
+  clic sur une des 10 meilleures lignes pour la simuler) et Simulateur détaillé avec courbe.
+- **Cabines** : niveau et nombre optimaux pour construire toute la cité au niveau 10 le plus vite possible
+  (10 emplacements par niveau de Basilica), plan de démolition groupe par groupe (suit l'optimum par défaut,
+  paramètre `gardees` de `cabDemolition` ; « Un autre cas » pour tester ses valeurs).
+- **Recrutement** : une fiche par ville du planner, raids en cours (une ligne = une armée en boucle), remplis depuis une
+  capture du rapport (Tesseract.js dans le navigateur, contrôle Carried − Expended = Profit) ; zerks financés par
+  heure à partir du fer net des pertes, 10 % gardés pour le raffinage, niveau des Training Arenas pour un recrutement
+  continu, raids nécessaires et surplus à raffiner. Le formulaire alimente aussi le Journal des raids.
+- **Raids** : Simulateur (troupes à envoyer, mélanges Ranger : Triaire, peut suivre les troupes à la maison de la
+  ville ouverte dans Recrutement), Journal des raids et Synthèse par configuration.
+- Coller une capture dans le planner ouvre Début de serveur › Recrutement (`src/planner-addons.js`).
+- Saisies « 150k », « 1,5M » acceptées ; nombres affichés « 1 000 000 ».
+
+Fichiers : `src/calc-engine.js` (moteurs, portage formule par formule des classeurs Excel Crown),
+`src/calc-data.js` (données du jeu).
+
+Firestore : `fiches/{fiche}/calculs/reglages` (réglages), `fiches/{fiche}/raids/{id}` (journal),
+`fiches/{fiche}/recrutement/{ville}` et `…/rapports/{id}` (Recrutement).

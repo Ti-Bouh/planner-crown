@@ -72,7 +72,6 @@ legend{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--
 .chip input:focus-visible+span{outline:2px solid var(--brass)}
 .groups{display:grid;gap:8px}
 .ghead{font-size:12px;color:var(--muted);margin-bottom:2px}
-.resrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 .btns{display:flex;gap:8px;flex-wrap:wrap}
 button{font:inherit;cursor:pointer;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:7px 14px}
 button.primary{background:var(--brass);border-color:var(--brass);color:var(--panel);font-weight:600}
@@ -97,12 +96,6 @@ table.reg{border-collapse:collapse;width:100%;min-width:980px;font-size:13px}
 .troops{display:flex;flex-wrap:wrap;gap:4px;max-width:240px}
 .t{font-size:11.5px;padding:1px 7px;border-radius:4px;white-space:nowrap}
 .t.off{background:var(--off-soft);color:var(--off)}.t.def{background:var(--def-soft);color:var(--def)}.t.neu{background:var(--keep-soft);color:var(--muted)}
-.r-raffiner{background:var(--ref-soft);border-color:var(--ref);color:var(--ref)}
-.r-hub{background:var(--hub-soft);border-color:var(--hub);color:var(--hub)}
-.r-afaire{background:transparent;border-style:dashed;border-color:var(--line);color:var(--muted)}
-.r-garder{background:var(--keep-soft);border-color:var(--line);color:var(--muted)}
-.rsel{font:inherit;font-size:12px;font-weight:600;padding:3px 22px 3px 8px;border-radius:5px;border:1px solid var(--line);min-width:96px;min-height:0;cursor:pointer}
-.rsel.r-afaire{border-style:dashed;background-color:transparent}
 .tabsep{width:1px;height:22px;background:var(--line);align-self:center;margin:0 6px}
 .rvgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
 .rvcard{background:var(--bg);border-radius:8px;padding:10px 12px}
@@ -211,7 +204,6 @@ tr.editing>td{background:var(--keep-soft)}
 .unk{display:inline-block;font-size:10px;font-weight:600;padding:0 5px;border-radius:4px;background:var(--off-soft);color:var(--off);margin-left:4px}
 body.wide .wrap{max-width:1880px}
 .planscroll{max-height:72vh;overflow:auto;border-bottom:1px solid var(--line)}
-.plan thead th{position:sticky;top:0;z-index:2}
 .plan thead th.tgt{z-index:3}
 .filt{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center}
 .welcome{display:grid;gap:8px;border:1px solid var(--brass);background:var(--brass-soft);border-radius:10px;padding:14px 16px}
@@ -228,8 +220,6 @@ body.wide .wrap{max-width:1880px}
 .owner{font-size:11.5px;font-weight:600;padding:1px 7px;border-radius:4px;background:var(--brass-soft);color:var(--brass);white-space:nowrap}
 .pn{font-weight:600}
 .pdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:1px}
-.robanner{border:1px solid var(--off);background:var(--off-soft);color:var(--ink);border-radius:10px;padding:12px 16px;font-size:13.5px;line-height:1.5}
-.robanner b{color:var(--off)}
 .fmsg{margin:10px 0 0;font-size:13px;font-weight:600}
 .fmsg:empty{display:none}
 .fmsg.ok{color:var(--ref)}.fmsg.ko{color:var(--off)}
@@ -252,7 +242,7 @@ body.wide .wrap{max-width:1880px}
 .ruleok{margin:10px 0 0;font-size:12.5px;color:var(--muted)}
 table.plan{border-collapse:separate;border-spacing:0;font-size:13px}
 .plan th,.plan td{border-bottom:1px solid var(--line);padding:6px;text-align:left;vertical-align:top}
-.plan thead th{background:var(--panel);font-weight:500;min-width:104px}
+.plan thead th{position:sticky;top:0;z-index:2;background:var(--panel);font-weight:500;min-width:104px}
 .plan .tgt{position:sticky;left:0;background:var(--panel);min-width:150px;z-index:1;box-shadow:inset -1px 0 var(--line)}
 .wh{display:grid;gap:2px}
 .wh .wtime{font-family:var(--f-mono);font-size:12.5px;font-variant-numeric:tabular-nums}
@@ -323,7 +313,6 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
 .mcards{display:grid;gap:12px}
 .plfilt{display:flex;gap:8px;flex-wrap:wrap;align-items:end}
 .plfilt .field{width:170px}.plfilt .field select,.plfilt .field input{width:100%;box-sizing:border-box}
-.plcard .btns{display:flex;gap:6px;align-items:center;flex-wrap:nowrap}
 .plgrid{display:grid;gap:6px;margin-top:12px}
 .plrow{border:1px solid var(--line);border-radius:8px}
 .plrow>summary{display:flex;gap:12px;align-items:center;padding:8px 12px;cursor:pointer;flex-wrap:wrap}
@@ -334,9 +323,6 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
 .plname{display:flex;gap:8px;align-items:baseline;flex:1 1 220px;min-width:0}
 .plmini span{gap:4px}
 .plbody{padding:12px;display:grid;gap:8px}
-.plcard{border:1px solid var(--line);border-radius:8px;padding:12px;display:grid;gap:8px;min-width:0;align-content:start}
-.plhead{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
-.plhead b{font-size:15px}
 .plmap{display:grid;grid-template-columns:repeat(19,1fr);gap:3px;width:100%;max-width:560px;aspect-ratio:1;container-type:inline-size}
 .plmap i{display:flex;align-items:center;justify-content:center;border:.5px solid transparent;border-radius:3px;font:600 clamp(7px,2.6cqi,14px)/1 var(--f-body,system-ui);font-style:normal;overflow:hidden;white-space:nowrap;box-sizing:border-box}
 .plmap i.libre{border:1px dashed var(--line)}
@@ -386,16 +372,14 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
 .csw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px}
 .clayout{display:grid;grid-template-columns:300px minmax(0,1fr);gap:16px;align-items:start}
 .clayout>*{min-width:0}
-.cside{order:-1;position:sticky;top:8px;max-height:calc(100vh - 16px);overflow:auto}
-.cmapbox{max-width:100%;min-width:0}
+.cside{order:-1;position:sticky;top:8px;max-height:calc(100vh - 16px);overflow:auto;display:grid;gap:16px}
+.cmapbox{max-width:100%;min-width:0;position:relative}
 @media (max-width:960px){.clayout{grid-template-columns:1fr}.cside{position:static;max-height:none;order:0}}
 .cmapwrap{overflow:auto;max-height:76vh;border:1px solid var(--line);border-radius:8px;background:var(--keep-soft)}
 #cMap{display:block;cursor:crosshair;touch-action:none}
-.cmapbox{position:relative}
 .crul{position:absolute;left:1px;top:1px;pointer-events:none}
 .chover{font-family:var(--f-mono);font-size:12px;color:var(--muted);margin-top:6px;min-height:1.3em}
 .clegend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font-size:12.5px;color:var(--muted)}
-.cside{display:grid;gap:16px}
 .cinfo{background:var(--keep-soft);border-radius:8px;padding:10px;display:grid;gap:4px}
 .cinfo b{font-family:var(--f-mono);font-size:1.1rem}
 .clist{list-style:none;margin:0;padding:0;max-height:300px;overflow:auto}
@@ -422,11 +406,6 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
       <span class="age" id="dataAge" hidden></span>
     </div>
   </header>
-
-  <section class="robanner" id="roBanner" hidden role="status">
-    <b>Lecture seule.</b> Tu vois tout en direct, mais ton accès ne permet pas d'enregistrer : la personne qui gère la page met les données à jour pour vous deux.
-    Pour mettre à jour tes villes, envoie-lui tes deux exports du jeu (CotG_Dashboard et CotG_Troop_export) ; pour une attaque ou un renfort, dis-lui quelle case tu prends.
-  </section>
 
   <section class="welcome" id="welcome" hidden aria-label="Bienvenue">
     <h2>Bienvenue sur le planner</h2>
@@ -578,7 +557,7 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
         <tbody id="regBody"></tbody>
       </table>
     </div>
-    <div class="empty" id="emptyState">Aucune ville pour l'instant. Va dans Outils pour importer tes CSV du jeu ou ajouter une ville.</div>
+    <div class="empty" id="emptyState">Aucune ville pour l'instant.</div>
   </section>
 
   </div>
@@ -942,196 +921,7 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
   </div>
 </div>
 
-<script>
-/* Planner Crown — couche Firebase pour la version hébergée hors de Claude.
-   Elle recrée l'interface window.claude.use("db" | "user") utilisée par la page,
-   au-dessus de Cloud Firestore et de la connexion Google (Firebase Auth). */
-(function(){
-  const FB_VERSION = "10.12.2";
-  const FB_BASE = window.__FB_BASE__ || `https://www.gstatic.com/firebasejs/${FB_VERSION}`;
-  const firebaseConfig = {
-    apiKey: "AIzaSyBsN1rV_N9h-G2G-blu2q43b-iPG1YGTZ8",
-    authDomain: "planner-crown.firebaseapp.com",
-    projectId: "planner-crown",
-    storageBucket: "planner-crown.firebasestorage.app",
-    messagingSenderId: "978521794830",
-    appId: "1:978521794830:web:095b92c86ed017b7f04f5f"
-  };
-
-  let ready = null, canWrite = null, currentUser = null;
-
-  /* ---------- écran de connexion ---------- */
-  function styles(){
-    if (document.getElementById("fbCss")) return;
-    const css = document.createElement("style"); css.id = "fbCss";
-    css.textContent = `
-      #fbGate{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:var(--bg,#eef0f3);padding:16px}
-      #fbGate .box{max-width:440px;width:100%;background:var(--panel,#fff);color:var(--ink,#1c2230);border:1px solid var(--line,#d6dae3);border-radius:12px;padding:24px;display:grid;gap:14px}
-      #fbGate h2{margin:0;font-family:var(--f-display,Georgia,serif);font-size:1.6rem}
-      #fbGate p{margin:0;color:var(--muted,#5d6577);font-size:14px;line-height:1.5}
-      #fbGate .err{color:var(--off,#b23a3a);font-weight:600}
-      #fbGate button{font:inherit;font-weight:600;padding:10px 16px;border-radius:8px;border:1px solid var(--brass,#9a6b12);background:var(--brass,#9a6b12);color:var(--panel,#fff);cursor:pointer;justify-self:start}
-      #fbUser{font-size:12px;color:var(--muted,#5d6577);display:flex;gap:8px;align-items:center}
-      #fbUser button{font:inherit;box-shadow:none;min-height:0;font-size:12px;border:none;background:none;color:var(--muted,#5d6577);text-decoration:underline;cursor:pointer;padding:0}`;
-    document.head.appendChild(css);
-  }
-  function gate(){
-    let el = document.getElementById("fbGate");
-    if (el) return el;
-    styles();
-    el = document.createElement("div"); el.id = "fbGate";
-    el.innerHTML = `<div class="box"><h2>Planner Crown</h2><p id="fbGateMsg">Connecte-toi avec ton compte Google pour ouvrir le planner.</p><button type="button" id="fbGateBtn">Se connecter avec Google</button></div>`;
-    document.body.appendChild(el);
-    return el;
-  }
-  function showUserBadge(auth, signOut){
-    const host = document.querySelector(".hright"); if (!host || document.getElementById("fbUser")) return;
-    styles();
-    const d = document.createElement("div"); d.id = "fbUser";
-    d.innerHTML = `<span></span><button type="button">Se déconnecter</button>`;
-    d.querySelector("span").textContent = currentUser?.email || "";
-    d.querySelector("button").addEventListener("click", async () => { await signOut(auth); location.reload(); });
-    host.appendChild(d);
-  }
-
-  /* ---------- adaptateur Firestore ---------- */
-  function isPlain(v){ return v && typeof v === "object" && !Array.isArray(v) && Object.getPrototypeOf(v) === Object.prototype; }
-  // la base Claude fusionne les objets imbriqués lors d'un update ; Firestore les remplace.
-  // On aplatit donc en chemins de champs pour garder le même comportement.
-  function flatten(obj, prefix, out){
-    out = out || [];
-    for (const k in obj){ const v = obj[k], p = prefix.concat(k);
-      if (v === undefined) continue;
-      if (isPlain(v) && Object.keys(v).length) flatten(v, p, out); else out.push([p, v]); }
-    return out;
-  }
-  function mapErr(e){
-    const code = e && e.code === "permission-denied" ? "invalid_argument"
-      : e && e.code === "not-found" ? "invalid_argument"
-      : e && e.code === "unavailable" ? "unavailable" : (e && e.code) || "unavailable";
-    const err = new Error(e && e.message || String(e)); err.code = code; return err;
-  }
-
-  async function build(){
-    const [{initializeApp}, F, A] = await Promise.all([
-      import(`${FB_BASE}/firebase-app.js`),
-      import(`${FB_BASE}/firebase-firestore.js`),
-      import(`${FB_BASE}/firebase-auth.js`)
-    ]);
-    const app = initializeApp(firebaseConfig);
-    const fdb = F.initializeFirestore(app, { ignoreUndefinedProperties: true });
-    const auth = A.getAuth(app);
-
-    // attendre la session Google (persistée) ou la demander
-    currentUser = await new Promise(res => { const off = A.onAuthStateChanged(auth, u => { off(); res(u); }); });
-    if (!currentUser){
-      const g = gate();
-      currentUser = await new Promise(res => {
-        g.querySelector("#fbGateBtn").addEventListener("click", async () => {
-          try { const r = await A.signInWithPopup(auth, new A.GoogleAuthProvider()); res(r.user); }
-          catch(e){ g.querySelector("#fbGateMsg").innerHTML = `<span class="err">Connexion impossible (${e.code || e.message}).</span> Réessaie, et autorise les fenêtres pop-up pour cette page.`; }
-        });
-      });
-    }
-
-    const wrapDoc = s => ({ id: s.id, exists: s.exists(), data: () => s.exists() ? s.data() : undefined, metadata: { fromCache: s.metadata.fromCache, hasPendingWrites: s.metadata.hasPendingWrites } });
-    const wrapQuery = s => ({ docs: s.docs.map(wrapDoc), size: s.size, empty: s.empty, docChanges: () => [], metadata: { fromCache: s.metadata.fromCache, hasPendingWrites: s.metadata.hasPendingWrites } });
-
-    function docRef(path){
-      const r = F.doc(fdb, path);
-      return {
-        id: r.id, path,
-        get: async () => { try { return wrapDoc(await F.getDoc(r)); } catch(e){ throw mapErr(e); } },
-        set: async d => { try { await F.setDoc(r, d); } catch(e){ throw mapErr(e); } },
-        update: async d => { try {
-          const pairs = flatten(d, []); if (!pairs.length) return;
-          const args = []; pairs.forEach(([p, v]) => args.push(new F.FieldPath(...p), v));
-          await F.updateDoc(r, ...args);
-        } catch(e){ throw mapErr(e); } },
-        delete: async () => { try { await F.deleteDoc(r); } catch(e){ throw mapErr(e); } },
-        onSnapshot: (next, err) => F.onSnapshot(r, s => next(wrapDoc(s)), e => err && err(mapErr(e))),
-        collection: sub => colRef(path + "/" + sub)
-      };
-    }
-    function colRef(path, orderField){
-      const c = F.collection(fdb, path);
-      const q = () => orderField ? F.query(c, F.orderBy(orderField)) : c;
-      return {
-        path,
-        doc: id => docRef(id ? path + "/" + id : F.doc(c).path),
-        add: async d => { try { const r = await F.addDoc(c, d); return docRef(r.path); } catch(e){ throw mapErr(e); } },
-        orderBy: f => colRef(path, f),
-        get: async () => { try { return wrapQuery(await F.getDocs(q())); } catch(e){ throw mapErr(e); } },
-        onSnapshot: (next, err) => F.onSnapshot(q(), s => next(wrapQuery(s)), e => err && err(mapErr(e)))
-      };
-    }
-    const dbApi = { doc: docRef, collection: p => colRef(p) };
-
-    // vérifier que ce compte a accès
-    try { await F.getDoc(F.doc(fdb, "reglages/acces")); canWrite = true; }
-    catch(e){
-      if (e && e.code === "permission-denied"){
-        const g = gate();
-        g.querySelector("#fbGateMsg").innerHTML = `<span class="err">Le compte ${currentUser.email} n'a pas accès à ce planner.</span> Demande à Emeline d'ajouter cette adresse, ou connecte-toi avec un autre compte.`;
-        const b = g.querySelector("#fbGateBtn"); b.textContent = "Changer de compte";
-        b.replaceWith(b.cloneNode(true)); g.querySelector("#fbGateBtn").addEventListener("click", async () => { await A.signOut(auth); location.reload(); });
-        return new Promise(() => {}); // reste bloqué sur l'écran
-      }
-      canWrite = null;
-    }
-    const g = document.getElementById("fbGate"); if (g) g.remove();
-    showUserBadge(auth, A.signOut);
-    window.__fbImport = async docs => { // import unique d'une sauvegarde { "chemin/doc": {...} }
-      const paths = Object.keys(docs); let n = 0;
-      for (let i = 0; i < paths.length; i += 400){
-        const b = F.writeBatch(fdb);
-        paths.slice(i, i + 400).forEach(p => b.set(F.doc(fdb, p), docs[p]));
-        await b.commit(); n += Math.min(400, paths.length - i);
-      }
-      return n;
-    };
-    // base vide : proposer l'import unique de la sauvegarde
-    try {
-      const fs = await F.getDocs(F.collection(fdb, "fiches"));
-      if (fs.empty) importBanner();
-    } catch {}
-    return dbApi;
-  }
-
-  function importBanner(){
-    const b = document.createElement("div"); b.id = "fbImport";
-    b.style.cssText = "position:fixed;left:16px;right:16px;bottom:16px;z-index:40;max-width:560px;margin:0 auto;background:var(--panel,#fff);color:var(--ink,#1c2230);border:2px solid var(--brass,#9a6b12);border-radius:10px;padding:14px 16px;display:grid;gap:8px;font-size:14px;box-shadow:0 6px 24px rgba(0,0,0,.15)";
-    b.innerHTML = `<strong>Le planner est vide.</strong><span>Si tu as le fichier de sauvegarde (planner-crown-sauvegarde.json), importe-le une seule fois pour récupérer les villes, opérations et menaces.</span><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input type="file" accept=".json,application/json"><button type="button" style="font:inherit;border:none;background:none;text-decoration:underline;cursor:pointer;color:inherit">Ignorer</button></div><span class="msg"></span>`;
-    const msg = b.querySelector(".msg");
-    b.querySelector("button").addEventListener("click", () => b.remove());
-    b.querySelector("input").addEventListener("change", async e => {
-      const f = e.target.files[0]; if (!f) return;
-      try {
-        const data = JSON.parse(await f.text());
-        const docs = data && data.docs ? data.docs : data;
-        msg.textContent = "Import en cours…";
-        const n = await window.__fbImport(docs);
-        msg.textContent = n + " éléments importés. Rechargement…";
-        setTimeout(() => location.reload(), 900);
-      } catch(err){ msg.textContent = "Import impossible : " + (err.message || err); }
-    });
-    document.body.appendChild(b);
-  }
-
-  const userApi = {
-    can: async name => name === "data.write" ? canWrite : null,
-    isOwner: async () => false, canEdit: async () => !!canWrite
-  };
-  window.claude = {
-    use: async name => {
-      if (name === "db"){ if (!ready) ready = build().catch(e => { console.error(e); return null; }); return ready; }
-      if (name === "user"){ if (ready) await ready; return userApi; }
-      return null;
-    }
-  };
-})();
-
-</script>
+<script src="src/firebase-shim.js"></script>
 <script>
 const TROOPS = {
   off: ["Vanquisher","Sorcerer","Horseman","Druid","Ram","Scorpion","Warship"],
@@ -1140,8 +930,6 @@ const TROOPS = {
 };
 const TROOP_CLASS = {}; for (const k in TROOPS) TROOPS[k].forEach(t => TROOP_CLASS[t] = k);
 const RES = [["bois","Bois"],["pierre","Pierre"],["fer","Fer"],["nourriture","Nourriture"]];
-const MODES = ["raffiner","hub","garder"];
-const MODE_LABEL = {raffiner:"Raffiner",hub:"Hub",garder:"Garder",afaire:"À définir"};
 const ROLE_LABEL = {off:"Off",def:"Def",mixte:"Mixte",hub:"Hub",none:"—"};
 
 let db = null, cities = [], editingId = null;
@@ -1314,7 +1102,7 @@ $("delCityBtn").addEventListener("click", async () => {
   catch(err){ setStatus("Suppression impossible : " + (err.message||err.code)); }
 });
 $("cityForm").addEventListener("submit", async e => {
-  e.preventDefault(); if (!db){ setStatus("Registre indisponible : ouvre la page en étant connecté à claude.ai."); return; }
+  e.preventDefault(); if (!db){ setStatus("Base indisponible : recharge la page."); return; }
   if (!currentFiche){ setStatus("Choisis ou crée une fiche d'abord."); return; }
   const data = {
     name: $("f-name").value.trim(), x: +$("f-x").value, y: +$("f-y").value, ts: +$("f-ts").value || 0,
@@ -1487,7 +1275,7 @@ const drop = $("drop");
 drop.addEventListener("drop", e => { const f = [...(e.dataTransfer?.files||[])]; if (f.length) handleFiles(f); });
 $("impCancel").addEventListener("click", () => { pendingImport = null; $("impPreview").hidden = true; });
 $("impApply").addEventListener("click", async () => {
-  if (!db || !currentFiche){ setStatus("Import impossible : choisis une fiche, connectée à claude.ai."); return; }
+  if (!db || !currentFiche){ setStatus("Import impossible : choisis d'abord une fiche."); return; }
   const btn = $("impApply"); btn.disabled = true; let ok = 0, ko = 0;
   const pool = allCities[currentFiche] || cities;
   const known = new Set(pool.map(c => c.id)); const hubImp = pendingImport.find(r => /hub/i.test(r.patch.reference||"")); const hubExist = pool.find(c => effRole(c)==="hub");
@@ -1556,11 +1344,9 @@ $("ficheTabs").addEventListener("click", e => { const b = e.target.closest("[dat
   if (curView === "ravit" || curView === "rech") showView("fiche");
   viewAll = b.dataset.fiche === "__all"; try { localStorage.setItem("villesTous", viewAll ? "1" : "0"); } catch {}
   if (!viewAll) selectFiche(b.dataset.fiche); render(); renderTabs(); renderRech(); });
-let canWrite = null;
 function nfMsg(t, ok){ $("nf-msg").textContent = t; $("nf-msg").className = "fmsg " + (ok ? "ok" : "ko"); }
-function renderRO(){ $("roBanner").hidden = canWrite !== false; try { renderPlayers(); } catch {} }
 function renderPlayers(){
-  $("playerList").innerHTML = fiches.length ? fiches.map(f => `<span style="background:${pSoft(f.id)}">${pName(f.id)}${f.id===moi ? " (moi)" : ""} · ${(allCities[f.id]||[]).length} villes${canWrite !== false ? `<button type="button" class="pdel" data-fid="${esc(f.id)}" title="Supprimer la fiche, ses villes et ses envois">Supprimer</button>` : ""}</span>`).join("") : "";
+  $("playerList").innerHTML = fiches.length ? fiches.map(f => `<span style="background:${pSoft(f.id)}">${pName(f.id)}${f.id===moi ? " (moi)" : ""} · ${(allCities[f.id]||[]).length} villes<button type="button" class="pdel" data-fid="${esc(f.id)}" title="Supprimer la fiche, ses villes et ses envois">Supprimer</button></span>`).join("") : "";
 }
 $("playerList").addEventListener("click", e => {
   const btn = e.target.closest(".pdel"); if (!btn || !db) return;
@@ -1582,8 +1368,7 @@ $("playerList").addEventListener("click", e => {
 });
 $("newFiche").addEventListener("submit", async e => {
   e.preventDefault();
-  if (!db){ nfMsg("La page n'a pas accès à l'enregistrement ici : ouvre-la depuis claude.ai en étant connecté à ton compte.", false); return; }
-  if (canWrite === false){ nfMsg("Ton accès à la page est en lecture seule : la fiche ne peut pas être créée (voir le message en haut de la page).", false); return; }
+  if (!db){ nfMsg("Base indisponible : recharge la page.", false); return; }
   const nom = $("nf-name").value.trim(); if (!nom) return;
   const slug = nom.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,24) || "joueur";
   const id = fiches.some(f => f.id === slug) ? slug + "-" + Math.random().toString(36).slice(2,6) : slug;
@@ -1591,9 +1376,7 @@ $("newFiche").addEventListener("submit", async e => {
   try { await db.doc("fiches/" + id).set({nom, creeLe:new Date().toISOString()}); $("nf-name").value = ""; selectFiche(id);
     const auto = !moi; if (auto){ moi = id; try { localStorage.setItem("moi", id); } catch {} renderMe(); renderWelcome(); }
     nfMsg(auto ? `Fiche « ${nom} » créée et choisie dans « Je suis ». Tu peux importer tes CSV.` : `Fiche « ${nom} » créée. Si c'est la tienne, choisis-la dans « Je suis » en haut à droite.`, true); }
-  catch(err){
-    if (err && err.code === "invalid_argument"){ canWrite = false; renderRO(); nfMsg("Création refusée : ton accès à la page ne permet pas d'enregistrer (voir le message en haut de la page).", false); }
-    else nfMsg("La fiche n'a pas été créée (" + (err?.message || err?.code || "erreur inconnue") + "). Réessaie dans un instant.", false); }
+  catch(err){ nfMsg("La fiche n'a pas été créée (" + (err?.message || err?.code || "erreur inconnue") + "). Réessaie dans un instant.", false); }
   btn.disabled = false;
 });
 
@@ -2348,7 +2131,6 @@ function renderBarons(){
   const nb = k => barons.filter(b => (b.statut||"envoye") === k).length;
   $("bn-kpis").innerHTML = `<div><span class="lbl">En route</span><b>${nb("envoye")}</b></div><div><span class="lbl">Réussis</span><b>${nb("reussi")}</b></div><div><span class="lbl">Ratés</span><b>${nb("rate")}</b></div>`;
   const list = barons.filter(b => showDone || bnLive(b)).sort((a,b) => (bnLive(b) - bnLive(a)) || ((a.date||"9") + normT(a.heure)).localeCompare((b.date||"9") + normT(b.heure)) || (a.creeLe||"").localeCompare(b.creeLe||""));
-  const ro = canWrite === false;
   $("bnTable").innerHTML = !list.length ? `<tbody><tr><td class="empty">${barons.length ? "Aucun baron en route. Coche la case pour voir les spots terminés." : "Aucun baron noté pour l'instant."}</td></tr></tbody>`
     : `<thead><tr><th>Spot</th><th>Joueur</th><th>Arrivée</th><th>Statut</th><th>Note</th><th></th></tr></thead><tbody>` + list.map(b => {
       const twins = live.filter(o => o.id !== b.id && +o.x === +b.x && +o.y === +b.y);
@@ -2357,9 +2139,9 @@ function renderBarons(){
       const st = b.statut || "envoye";
       return `<tr class="${b.fiche===moi?"mine":""}"><td><span class="cont">C${continentOf(b.x,b.y) ?? "?"}</span><span class="mono">${b.x}:${b.y}</span>${warn ? `<div class="bnwarn">${warn}</div>` : ""}</td>
         <td>${pName(b.fiche)}</td><td class="mono">${b.date ? dDate(b.date) + " " : ""}${b.heure ? hhmm(b.heure) : (b.date ? "" : "—")}</td>
-        <td><button type="button" class="stbtn ${BN_CLASS[st]}" data-bnst="${esc(b.id)}" ${ro ? "disabled" : ""} aria-label="Statut : ${BN_LABEL[st]}, cliquer pour changer">${BN_LABEL[st]}</button></td>
+        <td><button type="button" class="stbtn ${BN_CLASS[st]}" data-bnst="${esc(b.id)}" aria-label="Statut : ${BN_LABEL[st]}, cliquer pour changer">${BN_LABEL[st]}</button></td>
         <td>${esc(b.note||"")}</td>
-        <td style="white-space:nowrap">${ro ? `<button class="link" data-bnmap="${esc(b.id)}">Voir sur la carte</button>` : `<button class="link" data-bnmap="${esc(b.id)}">Voir sur la carte</button><button class="link" data-bnedit="${esc(b.id)}">Modifier</button><button class="link danger" data-bndel="${esc(b.id)}">Supprimer</button>`}</td></tr>`; }).join("") + `</tbody>`;
+        <td style="white-space:nowrap"><button class="link" data-bnmap="${esc(b.id)}">Voir sur la carte</button><button class="link" data-bnedit="${esc(b.id)}">Modifier</button><button class="link danger" data-bndel="${esc(b.id)}">Supprimer</button></td></tr>`; }).join("") + `</tbody>`;
 }
 function resetBn(){ editBn = null; ["bn-x","bn-y","bn-date","bn-heure","bn-note"].forEach(id => $(id).value = ""); $("bn-warn").textContent = ""; $("bn-save").textContent = "Ajouter le spot"; $("bn-cancel").hidden = true; $("bnTitle").textContent = "Noter un baron envoyé"; }
 function bnCheck(){
@@ -2632,9 +2414,8 @@ function renderRavit(){
     + `<div class="rvgrid">${RES.map(([k,l]) => { const r = g.rows.filter(c => (c.recoit||{})[k]);
       return `<div class="rvcard"><b>${l}</b><span>${r.length ? r.map(label).join(" · ") : `<span style="color:var(--muted)">Aucune ville</span>`}</span></div>`; }).join("")}</div>`).join("")
     : `<p class="note">Aucune ville ne reçoit encore du hub. Allume ↓ sur une ressource ci-dessous.</p>`;
-  const ro = canWrite === false ? " disabled" : "";
   tab.innerHTML = list.length ? `<thead><tr><th>Ville</th>${RES.map(([,l]) => `<th>${l}</th>`).join("")}</tr></thead><tbody>${list.map(c => `<tr><td>${label(c)}</td>${RES.map(([k,l]) => {
-      const m = (c.res||{})[k], d = !!(c.recoit||{})[k], A = `data-cid="${esc(c.id)}" data-res="${k}"${ro}`;
+      const m = (c.res||{})[k], d = !!(c.recoit||{})[k], A = `data-cid="${esc(c.id)}" data-res="${k}"`;
       return `<td><span class="rvset"><button type="button" class="rvb${m==="hub"?" on-up":""}" data-rv="up" ${A} aria-pressed="${m==="hub"}" aria-label="${l} : surplus envoyé au hub">↑</button><button type="button" class="rvb${m==="raffiner"?" on-r":""}" data-rv="r" ${A} aria-pressed="${m==="raffiner"}" aria-label="${l} : surplus raffiné">R</button><span class="rvsep"></span><button type="button" class="rvb${d?" on-dn":""}" data-rv="dn" ${A} aria-pressed="${d}" aria-label="${l} : reçoit du hub">↓</button></span></td>`; }).join("")}</tr>`).join("")}</tbody>` : "";
   note.textContent = !list.length ? "Aucune ville dans ta fiche pour l'instant : importe tes CSV d'abord."
     : !hubs.length ? "Aucune de tes villes n'a le rôle Hub : choisis-le dans Mes villes (Modifier) pour que la liste du haut sache à quel hub rattacher les villes."
@@ -2662,7 +2443,6 @@ document.addEventListener("click", e => {
 
 /* ---------- vues ---------- */
 function showView(v){
-  if (v === "barons") v = "carte";
   if (!["maintenant","fiche","rech","ravit","binome","attaques","defense","carte","plans","outils"].includes(v)) v = "maintenant";
   if (v === "outils" && moi && !editingId && currentFiche !== moi && fiches.some(f => f.id === moi)) selectFiche(moi);
   const st = $("status").textContent; const wasCount = !st || st === countTxt || st === "Enregistré automatiquement";
@@ -2735,7 +2515,7 @@ function resaStatut(r, cm){ return cm[ck(r.x, r.y)] ? "fondee" : (r.statut || "r
     if (pts.size === 2){ const [a, b] = [...pts.values()]; pinch = {d:Math.hypot(a.x - b.x, a.y - b.y)}; drag = null; painting = false; return; }
     const pan = ev.button === 1 || ev.button === 2 || carteMode === "resa" || ev.pointerType === "touch" && carteMode !== "terr";
     drag = {x:ev.clientX, y:ev.clientY, sl:wrap.scrollLeft, st:wrap.scrollTop, moved:false, pan, cell:at(ev)};
-    if (!pan && carteMode === "terr" && canWrite !== false && drag.cell){ if ($("cBrushSize").value === "rect"){ rectSel = {a:drag.cell, b:drag.cell}; drawCarte(); } else { painting = true; paint(drag.cell); } } });
+    if (!pan && carteMode === "terr" && drag.cell){ if ($("cBrushSize").value === "rect"){ rectSel = {a:drag.cell, b:drag.cell}; drawCarte(); } else { painting = true; paint(drag.cell); } } });
   cv.addEventListener("pointermove", ev => { if (pts.has(ev.pointerId)) pts.set(ev.pointerId, {x:ev.clientX, y:ev.clientY});
     if (pinch && pts.size === 2){ const [a, b] = [...pts.values()], d = Math.hypot(a.x - b.x, a.y - b.y), r = d / pinch.d;
       if (r > 1.25 || r < 0.8){ const rc = wrap.getBoundingClientRect(); zoomStep(r > 1 ? 1 : -1, (a.x + b.x) / 2 - rc.left, (a.y + b.y) / 2 - rc.top); pinch.d = d; } return; }
@@ -2750,7 +2530,7 @@ function resaStatut(r, cm){ return cm[ck(r.x, r.y)] ? "fondee" : (r.statut || "r
   wrap.addEventListener("wheel", ev => { ev.preventDefault(); const rc = wrap.getBoundingClientRect(); zoomStep(ev.deltaY < 0 ? 1 : -1, ev.clientX - rc.left, ev.clientY - rc.top); }, {passive:false});
   wrap.addEventListener("scroll", () => requestAnimationFrame(drawRulers), {passive:true}); window.addEventListener("resize", () => drawRulers());
   $("cZoomIn").onclick = () => zoomStep(1); $("cZoomOut").onclick = () => zoomStep(-1);
-  $("cAutoMer").onclick = () => { if (canWrite === false || carteCont == null) return;
+  $("cAutoMer").onclick = () => { if (carteCont == null) return;
     const x0 = (carteCont % 10) * 100, y0 = Math.floor(carteCont / 10) * 100, cm = cityMap(); let n = 0;
     for (let x = x0; x < x0 + 100; x++) for (let y = y0; y < y0 + 100; y++){ const k = ck(x, y); if (terrain[k]) continue;
       let wet = false; for (let dx = -1; dx <= 1 && !wet; dx++) for (let dy = -1; dy <= 1; dy++) if ((dx || dy) && terrain[ck(x + dx, y + dy)] === "eau"){ wet = true; break; }
@@ -2771,7 +2551,7 @@ function zoomStep(dir, mx, my){
   drawCarte(); wrap.scrollLeft = fx * cCell + lab - mx; wrap.scrollTop = fy * cCell + lab - my; drawRulers();
 }
 function fillArea(a, b){
-  if (canWrite === false || carteCont == null) return;
+  if (carteCont == null) return;
   const x0 = (carteCont % 10) * 100, y0 = Math.floor(carteCont / 10) * 100;
   const xa = Math.max(x0, Math.min(a.x, b.x)), xb = Math.min(x0 + 99, Math.max(a.x, b.x)), ya = Math.max(y0, Math.min(a.y, b.y)), yb = Math.min(y0 + 99, Math.max(a.y, b.y));
   let n = 0;
@@ -2903,8 +2683,7 @@ function renderCarteCell(cm){
   if (!r && !ci && !au) h += `<span><strong>Non réservée</strong></span>`;
   if (r) h += `<span><strong>${resaStatut(r, cm) === "fondee" ? "Fondée" : "Réservée"} par ${pName(r.fiche)}</strong> · ${esc(r.type)}</span>` + (r.note ? `<span class="lbl">${esc(r.note)}</span>` : "") + (r.date ? `<span class="lbl">le ${new Date(r.date).toLocaleDateString("fr-FR")}</span>` : "");
   h += `</div>`;
-  const ro = !db || canWrite === false;
-  if (ro){ box.innerHTML = h + `<p class="chint">Lecture seule.</p>`; return; }
+  if (!db){ box.innerHTML = h; return; }
   h += `<label class="cform" style="margin-top:8px"><span class="lbl">Type de case</span><select id="cTerr">
     <option value=""${!t ? " selected" : ""}>Terrestre (constructible)</option>
     <option value="mer"${t === "mer" ? " selected" : ""}>Maritime (constructible, port possible)</option>
@@ -3065,7 +2844,7 @@ async function impSaveFond(){
 }
 async function impApply(){
   const cw = impCal(); if (cw && cw.warn){ $("cImpMsg").textContent = "⚠ " + cw.warn; return; }
-  if (!imp.res || canWrite === false) return;
+  if (!imp.res) return;
   const over = $("cImpOver").checked, byC = {};
   for (const k in imp.res){ const [x, y] = k.split("_").map(Number); (byC[contOf(x, y)] ||= {})[k] = imp.res[k]; }
   let n = 0;
@@ -3113,7 +2892,7 @@ async function impApply(){
   $("cImpRun").onclick = impClassify; $("cImpApply").onclick = impApply;
   $("cImpHide").addEventListener("change", impDraw);
   const clearCarte = async btn => {
-    if (carteCont == null || canWrite === false) return;
+    if (carteCont == null) return;
     const c = carteCont, lbl = "C" + String(c).padStart(2, "0");
     armDelete(btn, async () => {
       btn.disabled = true; btn.textContent = "Effacement…";
@@ -3166,8 +2945,7 @@ setInterval(renderAge, 60000);
 buildCompo(); buildForm(); buildTsGrid(); resetForm(); fillUnitSelect(""); render(); renderTabs(); renderBinome(); renderAttaques(); renderDefense(); renderNow();
 (async () => {
   try { db = await window.claude?.use?.("db"); } catch { db = null; }
-  if (!db){ setStatus("Registre indisponible ici : ouvre la page depuis claude.ai, connectée."); return; }
-  (async () => { try { const u = await window.claude?.use?.("user"); if (u){ const c = await u.can("data.write"); if (c === false || c === true) canWrite = c; } } catch {} renderRO(); })();
+  if (!db){ setStatus("Base indisponible : recharge la page."); return; }
   db.doc("reglages/poidsTs").onSnapshot(d => { tsW = {...TS_DEFAULT, ...((d.exists && d.data().poids) || {})}; buildTsGrid(); render(); renderBinome(); renderDefense(); }, () => {});
   db.doc("reglages/foi").onSnapshot(d => { foiAlliance = (d.exists && d.data().foi) || {}; renderRech(); renderDefense(); }, () => {});
   db.doc("reglages/objectif").onSnapshot(d => { if (d.exists){ objectif = {pct:+d.data().pct||50, ts:+d.data().ts||null};
