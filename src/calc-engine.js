@@ -84,10 +84,9 @@
       for (let n = 0; n <= nb; n += q.cabStep) for (let l = q.lvMin; l <= q.lvMax; l++) { out.push({ na, nb, n, l }); if (n === 0) break; } }
     return out;
   }
-  // Solveur : Arenas fixées (plan de la cité), on cherche le nombre et le niveau de Cabines qui remplissent le château
-  // (objectif de zerks) le plus tôt. Construire plus vite que le remplissage ne sert à rien : à délai égal,
-  // on garde la combinaison qui perd le moins de pierre, puis celle dont la construction finit le plus tôt.
-  // q.tol (jours) : délai de remplissage accepté en plus du meilleur pour gagner de la pierre (0 = délai strictement minimal).
+  // Solveur : Arenas fixées (plan de la cité). Le château est fini quand il est à la fois construit et rempli
+  // (objectif de zerks) : on minimise max(construction, remplissage). Construire plus vite que le remplissage ne sert
+  // à rien : parmi les combinaisons à q.tol jours du meilleur délai, on garde celle qui perd le moins de pierre.
   async function castleSolve(base, q, onProgress, top) {
     top = top || 5;
     const grid = castleGrid(q), res = [];
@@ -97,9 +96,10 @@
       if (onProgress && i % 50 === 49) await onProgress(i + 1, grid.length);
     }
     const k = v => isFinite(v) ? Math.round(v * 1e6) / 1e6 : Infinity;
-    const tol = Math.max(0, +q.tol || 0), min = Math.min(...res.map(r => r.days));
-    const ok = r => isFinite(r.days) && r.days <= min + tol + 1e-9;
-    res.sort((a, b) => (ok(b) - ok(a)) || (ok(a) ? a.loss - b.loss || k(a.days) - k(b.days) : k(a.days) - k(b.days) || a.loss - b.loss) || k(a.end) - k(b.end));
+    res.forEach(r => { r.fini = Math.max(r.days, r.end); });
+    const tol = Math.max(0, +q.tol || 0), min = Math.min(...res.map(r => r.fini));
+    const ok = r => isFinite(r.fini) && r.fini <= min + tol + 1e-9;
+    res.sort((a, b) => (ok(b) - ok(a)) || (ok(a) ? a.loss - b.loss || k(a.fini) - k(b.fini) : k(a.fini) - k(b.fini) || a.loss - b.loss));
     return { tested: grid.length, best: res.slice(0, top), min };
   }
 
