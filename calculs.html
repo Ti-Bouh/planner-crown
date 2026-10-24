@@ -206,9 +206,10 @@ svg.chart text{font-family:var(--f-body);font-size:11px;fill:var(--muted)}
       <h2>Solveur – Cabines pour un château fini le plus vite</h2>
       <p class="note" style="margin:0 0 10px" id="solveIntro"></p>
       <div class="form">
-        <label class="field"><span>Objectif (zerks)</span><input data-k="objectif" type="text" inputmode="decimal" data-num min="1" step="1000"></label>
-        <div class="field"><span>Fer envoyé par jour</span><button type="button" class="rappel" data-rappel="ferJour" data-goto="cite"></button><small>Réglé dans Ma cité (clique pour le modifier).</small></div>
-        <label class="field"><span>Stockage de fer de la cité</span><input data-k="stockage" type="text" inputmode="decimal" data-num min="0" step="1000"></label>
+        <label class="field"><span>Troupe du château</span><select data-k="troupe" id="troupeSel"></select><small id="troupeInfo"></small></label>
+        <label class="field"><span>Objectif (nombre de troupes)</span><input data-k="objectif" type="text" inputmode="decimal" data-num min="1" step="1000"><small id="objInfo"></small></label>
+        <div class="field"><span>Fer envoyé par jour</span><button type="button" class="rappel" data-rappel="ferJour" data-goto="cite"></button><small>Réglé dans Ma cité, comme le bois et la pierre (clique pour le modifier).</small></div>
+        <label class="field"><span>Stockage de la cité (par ressource)</span><input data-k="stockage" type="text" inputmode="decimal" data-num min="0" step="1000"></label>
       </div>
       <div class="btns" style="margin-top:12px"><button type="button" class="primary" id="solveBtn">Calculer</button><span class="status" id="solveInfo"></span></div>
       <div class="progress" id="solveProg" hidden><span></span></div>
@@ -222,11 +223,11 @@ svg.chart text{font-family:var(--f-body);font-size:11px;fill:var(--muted)}
     <div class="panel">
       <h2>Simulateur – une configuration</h2>
       <div class="form">
-        <label class="field"><span>Training Arenas</span><input id="simNa" type="text" inputmode="decimal" data-num min="0" step="1"></label>
+        <label class="field"><span id="simNaLbl">Bâtiments de recrutement</span><input id="simNa" type="text" inputmode="decimal" data-num min="0" step="1"></label>
         <label class="field"><span>Barracks (calcul)</span><input class="calc" id="simNb" readonly tabindex="-1"></label>
         <label class="field"><span>Cabines</span><input id="simN" type="text" inputmode="decimal" data-num min="0" step="1"></label>
         <label class="field"><span>Niveau des Cabines</span><select id="simL"></select></label>
-        <label class="field"><span>Fer</span><select id="simFer"><option value="libre">Ressources suffisantes</option><option value="mon">Mon fer par jour</option></select></label>
+        <label class="field"><span>Fer</span><select id="simFer"><option value="libre">Ressources suffisantes</option><option value="mon">Mes ressources par jour</option></select></label>
       </div>
       <div class="btns" style="margin-top:10px"><button type="button" id="simFromBest">↺ Reprendre la meilleure combinaison</button></div>
       <div id="simOut"></div>
@@ -343,7 +344,7 @@ const jours = v => v == null ? "—" : !isFinite(v) ? "jamais" : n1(v) + " j";
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
 /* ---------- réglages par défaut (valeurs des classeurs Crown) ---------- */
-const DEF = { res:0, autresBonus:0, groupes:5, ferJour:1000000, pierreJour:150000, boisJour:"", objectif:176000, stockage:575000,
+const DEF = { res:0, autresBonus:0, groupes:5, ferJour:1000000, pierreJour:150000, boisJour:"", objectif:176000, stockage:575000, troupe:"vanq",
   arenas:26, barracks:65, cabDepart:0, demSource:"optimum", rTroupesSrc:"__recrut", testCabines:50, testNiveau:8,
   solvCabPas:2, solvNiv:"4-10", solvTol:3, tolerance:0.5, seuilNiveau:0.5, basDepart:8, planAcademies:1, planForums:2, planEntrepots:2, planTours:1, planCastles:1, demRemplacer:"Barracks", demVise:10,
   lienVille:"", rCave:"Forêt", rNiveau:6, rPct:0.69, rMarge:1, rCoef:0.1, rValeurOr:1, rDispo:8000, tDispo:3000, sType:"Forêt", sNiveau:6, sPctMin:0, sPctMax:1,
@@ -386,7 +387,23 @@ const bonusVitesse = () => D.castle.RES[S.res] + num(S.autresBonus, 0);
 const mil = () => num(S.arenas, 0) + num(S.barracks, 0);
 const ferJ = () => S.ferJour === "" || S.ferJour == null ? Infinity : +S.ferJour;
 const unites = () => D.unites.map(u => ({...u, bonus: S.bonusUnites && S.bonusUnites[u.nom] != null ? +S.bonusUnites[u.nom] : u.bonus}));
-const castleBase = () => ({ grp: Math.max(1, num(S.groupes, 1)), bonus: bonusVitesse(), iron: ferJ(), store: num(S.stockage, 575000), goal: num(S.objectif, 176000) });
+const TRP = () => E.TROUPES_CASTLE[S.troupe] || E.TROUPES_CASTLE.vanq;
+const parJour = v => v === "" || v == null ? Infinity : +v;
+const castleBase = () => ({ grp: Math.max(1, num(S.groupes, 1)), bonus: bonusVitesse(), troupe: S.troupe || "vanq",
+  jour: { fer: ferJ(), bois: parJour(S.boisJour), pierre: parJour(S.pierreJour) }, store: num(S.stockage, 575000), goal: num(S.objectif, 176000) });
+const SANS_LIMITE = { fer: Infinity, bois: Infinity, pierre: Infinity };
+const RES_NOM = { fer: "fer", bois: "bois", pierre: "pierre", or: "or" };
+// délai minimal imposé par les ressources envoyées par jour : {jours, res} (la ressource la plus limitante)
+function planchers(base){ const U = TRP(); let m = {jours: 0, res: null};
+  for (const k of ["fer", "bois", "pierre"]) { const c = U.cout[k] || 0, j = base.jour[k]; if (c && isFinite(j) && j > 0){ const d = base.goal * c / j; if (d > m.jours) m = {jours: d, res: k}; } else if (c && isFinite(j) && j <= 0) m = {jours: Infinity, res: k}; }
+  return m; }
+function coutTxt(U){ return Object.entries(U.cout).map(([k, v]) => n0(v) + " " + RES_NOM[k]).join(" + "); }
+function renderTroupe(){ const sel = $("troupeSel"); if (!sel) return;
+  if (!sel.options.length) sel.innerHTML = Object.entries(E.TROUPES_CASTLE).map(([k, u]) => `<option value="${k}">${esc(u.nom)}</option>`).join("");
+  sel.value = S.troupe || "vanq"; const U = TRP(), Bt = E.BATS_CASTLE[U.bat];
+  $("troupeInfo").textContent = `${coutTxt(U)} · ${U.places} place${U.places > 1 ? "s" : ""} · ${n0(U.t)} s à la vitesse de base · recrutée dans les ${Bt.pl}.`;
+  const capMax = Math.floor(mil() > 0 ? (mil() - Math.min(num(S.arenas, 0), mil())) * D.castle.BC[10] * (1 + D.castle.CB[10]) / U.places : 0);
+  $("objInfo").textContent = capMax ? `Le château loge au plus ${n0(capMax)} ${U.pl} avec les Barracks de ton plan.` : ""; }
 
 /* ---------- MA CITÉ ---------- */
 function renderCite(){
@@ -400,7 +417,7 @@ function renderCite(){
 }
 function renderResume(){
   const r = [];
-  if (lastBest) r.push(["Castle", (lastLibre ? "ressources suffisantes : " + lastLibre.n + " Cabines niv. " + lastLibre.l + " → " + jours(lastLibre.fini) + " · " : "") + "avec ton fer : " + lastBest.n + " Cabines niv. " + lastBest.l + " → " + jours(lastBest.fini)]);
+  if (lastBest) r.push(["Castle", TRP().pl + " · " + (lastLibre ? "ressources suffisantes : " + lastLibre.n + " Cabines niv. " + lastLibre.l + " → " + jours(lastLibre.fini) + " · " : "") + "avec tes ressources : " + lastBest.n + " Cabines niv. " + lastBest.l + " → " + jours(lastBest.fini)]);
   else r.push(["Castle", "lance le Solveur dans l'onglet Castle."]);
   const o = cabOut; if (o) r.push(["Cabines", "niveau " + o.recommended.niveau + " × " + o.recommended.n + " Cabines → cité terminée en " + jours(o.recommended.delai)]);
   const rs = raidOut; if (rs) r.push(["Raids", rs.cave + " " + rs.niveau + " à " + Math.round(rs.pct * 100) + " % : " + rs.r.best.cavernes + " si les cavernes te limitent"]);
@@ -417,24 +434,26 @@ async function solve(){
   if (solving) return; solving = true; const btn = $("solveBtn"); btn.disabled = true;
   const prog = $("solveProg"); prog.hidden = false; const bar = prog.querySelector("span");
   const q = solverQuery(), base = castleBase(), t0 = performance.now();
-  $("solveIntro").textContent = `Arenas et Barracks de ton plan (Ma cité) : ${q.fixedNa} Training Arenas, ${q.mil - q.fixedNa} Barracks. On cherche le nombre et le niveau de Cabines pour que le château soit construit et rempli le plus tôt, sans construire plus vite que nécessaire : d'abord si les ressources ne limitent pas, puis avec ton fer par jour.`;
+  const Bt0 = E.BATS_CASTLE[TRP().bat];
+  $("solveIntro").textContent = `Plan de Ma cité : ${q.fixedNa} emplacements de recrutement (ici des ${Bt0.pl}), ${q.mil - q.fixedNa} Barracks. On cherche le nombre et le niveau de Cabines pour que le château soit construit et rempli le plus tôt, sans construire plus vite que nécessaire : d'abord si les ressources ne limitent pas, puis avec ce que tu envoies par jour. L'or n'est pas limité dans le calcul.`;
   try {
-    const libre = await E.castleSolve({...base, iron: Infinity}, q, async (i, n) => { bar.style.width = (50 * i / n) + "%"; await new Promise(res => setTimeout(res, 0)); }, 10);
+    const libre = await E.castleSolve({...base, jour: SANS_LIMITE}, q, async (i, n) => { bar.style.width = (50 * i / n) + "%"; await new Promise(res => setTimeout(res, 0)); }, 10);
     const r = await E.castleSolve(base, q, async (i, n) => { bar.style.width = (50 + 50 * i / n) + "%"; await new Promise(res => setTimeout(res, 0)); }, 10);
     lastBest = r.best[0] || null; lastLibre = libre.best[0] || null;
     $("solveInfo").textContent = n0(r.tested + libre.tested) + " combinaisons testées en " + n1((performance.now() - t0) / 1000) + " s";
     if (!r.best.length){ $("solveOut").innerHTML = `<p class="warn">Aucune combinaison à tester : vérifie le plan de la cité dans Ma cité.</p>`; }
     else {
-      const b = r.best[0], L = libre.best[0], ferMin = base.goal * D.castle.vqIron / base.iron, ferLimite = isFinite(b.days) && isFinite(ferMin) && b.days - ferMin < 1;
-      const trop = x => `<p class="warn" style="margin:0">Objectif de ${n0(base.goal)} zerks impossible : ${n0(x.cap)} places seulement avec ${x.nb} Barracks.</p>`;
-      const ligne = (x, fer) => isFinite(x.days) ? `<p class="note" style="margin:0">Rempli (${n0(base.goal)} zerks) en ${n1(x.days)} j, construit en ${n1(x.end)} j.${fer && ferLimite ? " C'est ton fer qui fixe ce délai : plus de Cabines ne le rempliraient pas plus vite." : ""}</p>` : trop(x);
+      const U = TRP(), pl = planchers(base);
+      const b = r.best[0], L = libre.best[0], resLimite = isFinite(b.days) && pl.res && b.days - pl.jours < 1;
+      const trop = x => `<p class="warn" style="margin:0">Objectif de ${n0(base.goal)} ${U.pl} impossible : le château n'en loge que ${n0(Math.floor(x.cap))} (${U.places} place${U.places > 1 ? "s" : ""} par unité, ${x.nb} Barracks). Mets au plus ${n0(Math.floor(x.cap))} dans l'objectif.</p>`;
+      const ligne = (x, lim) => isFinite(x.days) ? `<p class="note" style="margin:0">Rempli (${n0(base.goal)} ${U.pl}) en ${n1(x.days)} j, construit en ${n1(x.end)} j.${lim && resLimite ? ` C'est ton ${RES_NOM[pl.res]} envoyé par jour qui fixe ce délai : plus de Cabines ne le rempliraient pas plus vite.` : ""}</p>` : trop(x);
       const table = (res, id, fer) => detail(id, `<h3>Les ${res.best.length} meilleures <small style="font-weight:400;text-transform:none;letter-spacing:0">· clique une ligne pour la simuler ci-dessous</small></h3><div class="scroll"><table class="t"><thead><tr><th>Rang</th><th>Cabines</th><th>Niveau</th><th>Rempli (j)</th><th>Construit (j)</th><th>Pierre perdue</th></tr></thead><tbody>
         ${res.best.map((x, i) => `<tr class="${i ? "" : "best"} clic" data-sim="${x.na},${x.n},${x.l},${fer}" title="Simuler cette combinaison"><td>${i + 1}</td><td>${x.n}</td><td>${x.l}</td><td>${isFinite(x.days) ? n2(x.days) : "—"}</td><td>${n2(x.end)}</td><td>${n0(x.loss)}</td></tr>`).join("")}
         </tbody></table></div><p class="note">Parmi les combinaisons qui finissent le château (construit et rempli) à ${n0(num(S.solvTol, 3))} h près du meilleur délai (${n2(res.min)} j), celle qui perd le moins de pierre est en tête.</p>`, `Voir les ${res.best.length} meilleures combinaisons`);
-      $("solveOut").innerHTML = (L ? `<div class="reponse"><span class="lbl">Ressources suffisantes (le fer ne limite pas)</span>
-          <p class="big">${L.n} Cabines niveau ${L.l} → château construit et rempli en ${n1(L.fini)} jours</p>${ligne(L, 0)}</div>${table(libre, "castDetLibre", 0)}` : "")
-        + `<div class="reponse" style="margin-top:14px"><span class="lbl">Avec ton fer (${n0(base.iron)} par jour)</span>
-          <p class="big">${b.n} Cabines niveau ${b.l} → château construit et rempli en ${n1(b.fini)} jours</p>${ligne(b, 1)}</div>${table(r, "castDet", 1)}`;
+      $("solveOut").innerHTML = (L ? `<div class="reponse"><span class="lbl">Ressources suffisantes · ${esc(U.nom)}</span>
+          ${isFinite(L.fini) ? `<p class="big">${L.n} Cabines niveau ${L.l} → château construit et rempli en ${n1(L.fini)} jours</p>` : ""}${ligne(L, 0)}</div>${isFinite(L.fini) ? table(libre, "castDetLibre", 0) : ""}` : "")
+        + `<div class="reponse" style="margin-top:14px"><span class="lbl">Avec tes ressources par jour (${["fer", "bois", "pierre"].filter(k => U.cout[k]).map(k => RES_NOM[k] + " : " + (isFinite(base.jour[k]) ? n0(base.jour[k]) : "sans limite")).join(", ")})</span>
+          ${isFinite(b.fini) ? `<p class="big">${b.n} Cabines niveau ${b.l} → château construit et rempli en ${n1(b.fini)} jours</p>` : ""}${ligne(b, 1)}</div>${isFinite(b.fini) ? table(r, "castDet", 1) : ""}`;
       if (!$("simNa").value){ const x = L || b; setSim(x.na, x.n, x.l, L ? 0 : 1); }
     }
   } finally { solving = false; btn.disabled = false; prog.hidden = true; renderResume(); }
@@ -446,11 +465,12 @@ $("simFromBest").addEventListener("click", () => { const x = $("simFer").value =
 ["simNa", "simN", "simL", "simFer"].forEach(id => $(id).addEventListener("input", renderSim));
 function renderSim(){
   const na = num($("simNa").value, NaN), l = num($("simL").value, 8); let n = num($("simN").value, NaN);
+  $("simNaLbl").textContent = E.BATS_CASTLE[TRP().bat].pl;
   if (isNaN(na) || isNaN(n)){ $("simOut").innerHTML = ""; return; }
   const nb = mil() - na; $("simNb").value = nb;
   if (nb < 0){ $("simOut").innerHTML = `<p class="warn">Plus d'Arenas que d'emplacements militaires (${mil()}).</p>`; return; }
   let lim = ""; if (n > nb){ n = nb; lim = `<p class="note">Cabines limitées à ${nb} (une par emplacement de Barracks).</p>`; }
-  const base = {...castleBase(), ...($("simFer").value === "libre" ? {iron: Infinity} : {})}, r = E.castleCombo({...base, na, nb, n, l}, {trace:true});
+  const base = {...castleBase(), ...($("simFer").value === "libre" ? {jour: SANS_LIMITE} : {})}, r = E.castleCombo({...base, na, nb, n, l}, {trace:true}), U = TRP();
   const ok = r.cap >= base.goal;
   const pts = []; const tEnd = Math.max(isFinite(r.days) ? r.days : r.end, r.end), step = tEnd / 60;
   let j = 0; for (let k = 0; k <= 60; k++){ const t = k * step * 86400; while (j < r.trace.length - 1 && r.trace[j + 1].K <= t) j++; const s = r.trace[j]; if (t <= r.end * 86400 + 1) pts.push([k * step, s.O, s.M]); }
@@ -460,13 +480,13 @@ function renderSim(){
   $("simOut").innerHTML = `${lim}<div class="kpis" style="margin-top:12px">
       <div><span class="lbl">Objectif atteint en</span><b>${ok ? n1(r.days) + " <small>jours</small>" : "—"}</b></div>
       <div><span class="lbl">Construction terminée</span><b>${n1(r.end)} <small>jours</small></b></div>
-      <div><span class="lbl">Capacité finale</span><b>${n0(r.cap)}</b></div>
-      <div><span class="lbl">Zerks à la fin de la construction</span><b>${n0(r.trEnd)}</b></div></div>
+      <div><span class="lbl">Capacité finale</span><b>${n0(Math.floor(r.cap))} <small>${esc(U.pl)}</small></b></div>
+      <div><span class="lbl">${esc(U.pl)} à la fin de la construction</span><b>${n0(r.trEnd)}</b></div></div>
     ${detail("simDet", `<div class="kpis" style="margin-top:8px"><div><span class="lbl">Premier recrutement</span><b>${r.first == null ? "—" : n1(r.first) + " <small>j</small>"}</b></div>
       <div><span class="lbl">Enrôlement final</span><b>${n0(r.rate)} <small>/ jour</small></b></div>
-      <div><span class="lbl">Fer nécessaire</span><b>${n0(r.iron)}</b></div>
+      <div><span class="lbl">Ressources nécessaires</span><b style="font-size:1rem">${Object.entries(r.besoin).map(([k, v]) => n0(v) + " " + RES_NOM[k]).join("<br>")}</b></div>
       <div><span class="lbl">Pierre / bois perdus (Cabines)</span><b>${n0(r.loss)} <small>/ ${n0(r.lossW)}</small></b></div></div>`)}
-    ${ok ? "" : `<p class="warn">Castle trop petit : ${n0(r.cap)} places pour un objectif de ${n0(base.goal)}.</p>`}
+    ${ok ? "" : `<p class="warn">Castle trop petit : il loge ${n0(Math.floor(r.cap))} ${esc(U.pl)} pour un objectif de ${n0(base.goal)}.</p>`}
     ${chart(pts, base.goal)}
     <details style="margin-top:10px"><summary>Détail étape par étape (${n0(r.steps)} étapes)</summary><div class="scroll" style="max-height:420px;overflow-y:auto"><table class="t"><thead><tr><th>Étape</th><th class="l">Construction</th><th>Vitesse</th><th>Durée (h)</th><th>Début (j)</th><th>Capacité</th><th>Vanquishers</th><th>Fer</th></tr></thead><tbody>
     ${r.trace.map(s => `<tr><td>${s.a}</td><td class="l">${esc(s.desc)}</td><td>${n0(s.I * 100)} %</td><td>${n2(s.J / 3600)}</td><td>${n2(s.K / 86400)}</td><td>${n0(s.M)}</td><td>${n0(s.Q)}</td><td>${n0(s.R)}</td></tr>`).join("")}</tbody></table></div></details>`;
@@ -477,8 +497,8 @@ function chart(pts, goal){
   const x = v => L + (W - L - R) * v / xm, y = v => T + (H - T - B) * (1 - v / ym);
   const line = i => pts.map((p, k) => (k ? "L" : "M") + x(p[0]).toFixed(1) + " " + y(p[i]).toFixed(1)).join(" ");
   const ticks = [0, .25, .5, .75, 1].map(f => f * ym);
-  return `<div style="margin-top:12px"><span class="note"><span class="sw" style="background:var(--brass)"></span>Zerks <span class="sw" style="background:var(--def);margin-left:12px"></span>Capacité <span class="sw" style="background:var(--off);margin-left:12px"></span>Objectif</span>
-   <svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Zerks et capacité au fil des jours">
+  return `<div style="margin-top:12px"><span class="note"><span class="sw" style="background:var(--brass)"></span>Troupes <span class="sw" style="background:var(--def);margin-left:12px"></span>Capacité <span class="sw" style="background:var(--off);margin-left:12px"></span>Objectif</span>
+   <svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Troupes et capacité au fil des jours">
    ${ticks.map(t => `<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)"/><text x="${L - 6}" y="${y(t) + 4}" text-anchor="end">${n0(t / 1000)} k</text>`).join("")}
    ${[0, .25, .5, .75, 1].map(f => `<text x="${x(f * xm)}" y="${H - 10}" text-anchor="${f === 0 ? "start" : f === 1 ? "end" : "middle"}">${n1(f * xm)} j</text>`).join("")}
    <line x1="${L}" x2="${W - R}" y1="${y(goal)}" y2="${y(goal)}" stroke="var(--off)" stroke-dasharray="4 4"/>
@@ -990,12 +1010,12 @@ function renderRappels(){
 }
 document.addEventListener("click", e => { const b = e.target.closest("[data-goto]"); if (!b) return; showView(b.dataset.goto);
   const f = document.querySelector(`#view-${b.dataset.goto} [data-k="${b.dataset.focus || b.dataset.rappel}"]`); if (f){ f.scrollIntoView({block:"center"}); f.focus(); } });
-function renderAll(){ renderRappels(); renderPVilles(); renderCite(); renderCab(); renderDem(); renderRaidsAll(); if (!document.activeElement || !document.activeElement.closest("#unitsOut")) renderUnits(); renderSim(); renderResume(); renderRecrut(); renderLien(); }
+function renderAll(){ renderTroupe(); renderRappels(); renderPVilles(); renderCite(); renderCab(); renderDem(); renderRaidsAll(); if (!document.activeElement || !document.activeElement.closest("#unitsOut")) renderUnits(); renderSim(); renderResume(); renderRecrut(); renderLien(); }
 
 /* ---------- vues ---------- */
 const GUIDE = {
   cite: ["À quoi sert Ma cité", "les réglages communs, saisis une fois : recherche, fer / pierre / bois par jour, plan de la cité. Les autres onglets s'en servent. Colle un rapport de raid pour remplir le fer, la pierre et le bois automatiquement."],
-  castle: ["À quoi sert Castle", "trouver le nombre et le niveau de Cabines pour que le château soit construit et rempli (objectif de zerks) le plus vite, sans construire plus vite que nécessaire, avec les Arenas et Barracks de ton plan, puis simuler une configuration jour par jour."],
+  castle: ["À quoi sert Castle", "trouver le nombre et le niveau de Cabines pour que le château soit construit et rempli (objectif de troupes : zerks, mages, cavaliers…) le plus vite, sans construire plus vite que nécessaire, avec les bâtiments de recrutement et Barracks de ton plan, puis simuler une configuration jour par jour."],
   cabines: ["À quoi sert Cabines", "savoir combien de Cabines poser et à quel niveau pour construire toute la cité au niveau 10 le plus vite, puis préparer la démolition groupe par groupe."],
   raids: ["À quoi sert Raids", "savoir combien de troupes envoyer sur une caverne, quel mélange Rangers / Triaires rapporte le plus, et comparer tes raids dans le journal."],
   recrut: ["À quoi sert Recrutement", "coller un rapport de raid pour savoir combien de zerks ton fer paie à l'heure et à quel niveau mettre tes Training Arenas pour recruter sans arrêt."]

@@ -70,6 +70,10 @@ Même barre principale que le planner ; ses onglets propres sont en dessous :
   défaut), le moins de pierre perdue ; la réponse indique si c'est le fer qui fixe le délai ; clic sur une des 10
   meilleures lignes pour la simuler). Deux réponses : ressources suffisantes (fer sans limite) et avec le fer envoyé
   par jour. Simulateur détaillé avec courbe (choix « Ressources suffisantes » / « Mon fer par jour »).
+  Choix de la troupe du château (`TROUPES_CASTLE` dans `src/calc-engine.js`, fiches du jeu du 24/10) : temps
+  d'enrôlement, places par unité, coût et bâtiment de recrutement (Training Arena, Écurie, Tour du sorcier, Académie,
+  Forge ; même courbe de vitesse +5 % … +150 % pour tous). Les emplacements « Arenas » du plan deviennent les bâtiments
+  de la troupe choisie. Fer, bois et pierre par jour de Ma cité limitent le recrutement ; l'or n'est pas limité.
 - **Cabines** : niveau et nombre optimaux pour construire toute la cité au niveau 10 le plus vite possible
   (10 emplacements par niveau de Basilica), plan de démolition groupe par groupe (suit l'optimum par défaut,
   paramètre `gardees` de `cabDemolition` ; « Un autre cas » pour tester ses valeurs).

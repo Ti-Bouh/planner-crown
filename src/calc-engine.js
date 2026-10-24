@@ -7,25 +7,59 @@
 
   /* ================= CASTLE ================= */
   const C = D.castle; // tableaux indexés par niveau 0..10
+  // Troupes qu'un château peut recruter (fiches du jeu, captures du 24/10 ; Vanquisher : classeur Crown).
+  // t = temps d'enrôlement de base (s), places = emplacements de Barracks par unité, bat = bâtiment de recrutement.
+  // Tous les bâtiments de recrutement ont la même courbe de vitesse (C.AE : +5 % au niveau 1 … +150 % au niveau 10).
+  const FORGE_T = [0, 25, 180, 1200, 9000, 20250, 40500, 73800, 119250, 179550, 272250];
+  const BATS = {
+    arena:    { nom: "Training Arena",  pl: "Training Arenas",  bt: C.AT },
+    ecurie:   { nom: "Écurie",          pl: "Écuries",          bt: C.TT },
+    tour:     { nom: "Tour du sorcier", pl: "Tours du sorcier", bt: C.TT },
+    academie: { nom: "Académie",        pl: "Académies",        bt: [0].concat(D.batiments.academieT) },
+    forge:    { nom: "Forge",           pl: "Forges",           bt: FORGE_T }
+  };
+  const TROUPES = {
+    vanq:      { nom: "Vanquisher (zerk)", pl: "zerks",       t: 200,  places: 1,  cout: { fer: 150 },                        bat: "arena" },
+    ranger:    { nom: "Ranger",            pl: "Rangers",     t: 250,  places: 1,  cout: { bois: 160 },                       bat: "arena" },
+    triari:    { nom: "Triaire",           pl: "Triaires",    t: 300,  places: 1,  cout: { fer: 140, or: 40 },                bat: "arena" },
+    scout:     { nom: "Éclaireur",         pl: "Éclaireurs",  t: 300,  places: 2,  cout: { fer: 40, or: 120 },                bat: "ecurie" },
+    arba:      { nom: "Arbalétrier",       pl: "Arbalétriers", t: 600, places: 2,  cout: { bois: 150, or: 200 },              bat: "ecurie" },
+    cava:      { nom: "Cavalier",          pl: "Cavaliers",   t: 500,  places: 2,  cout: { fer: 250, or: 100 },               bat: "ecurie" },
+    sorc:      { nom: "Sorcière",          pl: "Sorcières",   t: 600,  places: 1,  cout: { fer: 50, or: 150 },                bat: "tour" },
+    druide:    { nom: "Druide",            pl: "Druides",     t: 1300, places: 2,  cout: { fer: 100, or: 350 },               bat: "tour" },
+    priestess: { nom: "Priestess",         pl: "Priestess",   t: 350,  places: 1,  cout: { fer: 90, or: 100 },                bat: "academie" },
+    praetor:   { nom: "Praetor",           pl: "Praetors",    t: 700,  places: 2,  cout: { fer: 200, or: 160 },               bat: "academie" },
+    belier:    { nom: "Bélier",            pl: "Béliers",     t: 2500, places: 10, cout: { bois: 500, fer: 300 },             bat: "forge" },
+    baliste:   { nom: "Baliste",           pl: "Balistes",    t: 3500, places: 10, cout: { bois: 400, fer: 600 },             bat: "forge" },
+    scorpion:  { nom: "Scorpion",          pl: "Scorpions",   t: 4000, places: 10, cout: { bois: 300, pierre: 600, fer: 200 }, bat: "forge" }
+  };
+  const RESS = ["fer", "bois", "pierre"]; // l'or (au niveau de l'empire) n'est pas limité dans le calcul
   function castleCombo(p, opt) {
-    // p : {na, nb, n, l, grp, bonus, iron (par jour, Infinity = sans limite), store, goal}
+    // p : {na, nb, n, l, grp, bonus, troupe, jour: {fer, bois, pierre} (par jour, Infinity = sans limite), store, goal}
+    // compatibilité : p.iron = fer par jour pour les zerks
     opt = opt || {};
     const { na, nb, n, l, grp, bonus, goal } = p;
-    const unlimited = !isFinite(p.iron);
-    const iron = unlimited ? 1e12 : p.iron, store = unlimited ? 1e15 : p.store;
+    const U = TROUPES[p.troupe] || TROUPES.vanq, Bt = BATS[U.bat];
+    const jour = p.jour || { fer: p.iron };
+    const R = RESS.filter(k => (U.cout[k] || 0) > 0 && isFinite(jour[k] == null ? Infinity : jour[k]))
+      .map(k => ({ k, c: U.cout[k], inc: +jour[k] / 86400, N: 0 }));
+    const store = isFinite(p.store) ? p.store : 1e15;
     const nbe = nb - n, nw = na + nbe + 6;
     const B0 = 5, B1 = B0 + l * n, B2 = B1 + 5, B3 = B2 + 10 * nw, B4 = B3 + 11 * n;
     const dem = sum(C.cabT.slice(1, l + 1)) / 2, bL = C.cabB[l];
     const others = [C.CT, C.TT, C.AT, C.AT, C.BT, C.BT];
     const othNames = ["Castle", "Sorcerer's Tower", "Forum", "Forum", "Entrepôt", "Entrepôt"];
-    let N = 0, O = 0, K = 0, S = null, first = null;
+    const cap1 = v => v / U.places; // places → unités
+    let O = 0, K = 0, S = null, first = null;
     const trace = opt.trace ? [] : null;
+    const payable = J => R.reduce((m, r) => Math.min(m, (r.N + r.inc * J) / r.c), Infinity);
+    const payer = (P, J) => R.forEach(r => { r.N = Math.min(store, r.N + r.inc * J - P * r.c); });
     for (let a = 1; a <= B4; a++) {
       let ph, start;
       if (a <= B0) { ph = 0; start = 0; } else if (a <= B1) { ph = 1; start = B0; } else if (a <= B2) { ph = 2; start = B1; }
       else if (a <= B3) { ph = 3; start = B2; } else { ph = 4; start = B3; }
       const c = a - start - 1;
-      let H = 0, I = 1 + bonus, L = 1 / C.vqTime, M = 0, desc = "";
+      let H = 0, I = 1 + bonus, L = 1 / U.t, M = 0, desc = "";
       if (ph === 0) { H = C.BAS[c + 1]; desc = "Basilica niv. " + (c + 1); }
       else if (ph === 1) {
         const Dl = Math.floor(c / n) + 1, E = c - (Dl - 1) * n;
@@ -33,44 +67,53 @@
       } else if (ph === 2) { H = C.BAS[c + 6]; I = 1 + bonus + n * bL; desc = "Basilica niv. " + (c + 6); }
       else if (ph === 3) {
         const Dl = Math.floor(c / nw) + 1, E = c % nw;
-        if (E < na) { H = C.AT[Dl]; desc = "Training Arena niv. " + Dl; }
+        if (E < na) { H = Bt.bt[Dl]; desc = Bt.nom + " niv. " + Dl; }
         else if (E < na + nbe) { H = C.BT[Dl]; desc = "Barracks niv. " + Dl; }
         else { const k = E - na - nbe; H = others[k][Dl]; desc = othNames[k] + " niv. " + Dl; }
         I = 1 + bonus + n * bL;
-        L = (1 + na * C.AE[Dl - 1] + Math.min(E, na) * (C.AE[Dl] - C.AE[Dl - 1])) / C.vqTime;
+        L = (1 + na * C.AE[Dl - 1] + Math.min(E, na) * (C.AE[Dl] - C.AE[Dl - 1])) / U.t;
         const cbl = E > na + nbe ? Dl : Dl - 1;
-        M = (nbe * C.BC[Dl - 1] + Math.max(0, Math.min(E - na, nbe)) * (C.BC[Dl] - C.BC[Dl - 1])) * (1 + C.CB[cbl]);
+        M = cap1((nbe * C.BC[Dl - 1] + Math.max(0, Math.min(E - na, nbe)) * (C.BC[Dl] - C.BC[Dl - 1])) * (1 + C.CB[cbl]));
       } else {
         const g = grp, Dl = Math.floor(c / (11 * g)), E = c - Dl * 11 * g, F = Math.min(g, n - Dl * g);
         const lvl = ((E - F) % 10 + 10) % 10 + 1;
         if (E < F) { H = dem; desc = "Démolition d'une Cabine"; } else { H = C.BT[lvl]; desc = "Barracks de remplacement niv. " + lvl; }
         I = 1 + bonus + (n - Dl * g - Math.min(E, F)) * bL;
-        L = (1 + na * C.AE[10]) / C.vqTime;
+        L = (1 + na * C.AE[10]) / U.t;
         const extra = E >= F ? Math.floor((E - F) / 10) * C.BC[10] + C.BC[lvl - 1] : 0;
-        M = ((nbe + Dl * g) * C.BC[10] + extra) * (1 + C.CB[10]);
+        M = cap1(((nbe + Dl * g) * C.BC[10] + extra) * (1 + C.CB[10]));
       }
       const J = H / I;
-      const P = Math.max(0, Math.min(M - O, L * J, (N + iron * J / 86400) / C.vqIron));
-      const Q = O + P, R = Math.min(store, N + iron * J / 86400 - P * C.vqIron);
+      const P = Math.max(0, Math.min(M - O, L * J, payable(J)));
+      const Q = O + P;
       if (first === null && P > 0 && O === 0) first = K;
       if (S === null && O < goal - 0.5 && Q >= goal - 0.5) {
         S = K + (goal - O) / (P / J);
         if (opt.stopAtGoal) return { days: S / 86400, partial: true };
       }
-      if (trace) trace.push({ a, ph, desc, H, I, J, K, L, M, N, O, P, Q, R });
-      O = Q; N = R; K += J;
+      payer(P, J);
+      if (trace) trace.push({ a, ph, desc, H, I, J, K, L, M, N: R.length ? R[0].N : 0, O, P, Q, R: R.length ? R[0].N : 0 });
+      O = Q; K += J;
     }
     const end = K / 86400;
-    const rate = (1 + na * C.AE[10]) / C.vqTime * 86400;
-    const cap = nb * C.BC[10] * (1 + C.CB[10]);
-    const need = goal - O, ir = iron / C.vqIron;
-    let tail;
-    if (O >= goal - 0.5) tail = 0;
-    else if (iron >= 1e11 || rate <= ir) tail = need / rate;
-    else { const x = rate * (N / C.vqIron) / (rate - ir); tail = x >= need ? need / rate : (N / C.vqIron) / (rate - ir) + (need - x) / ir; }
+    const rate = (1 + na * C.AE[10]) / U.t;           // unités / s une fois tout construit
+    const cap = cap1(nb * C.BC[10] * (1 + C.CB[10]));
+    let tail = 0;
+    if (O < goal - 0.5 && cap >= goal) {
+      // après la construction : recrutement à pleine vitesse, limité par les ressources (pas de 10 min)
+      const dt = 600; let o = O, t = 0;
+      for (let i = 0; i < 1e6 && o < goal - 1e-9; i++) {
+        const P = Math.min(rate * dt, payable(dt), goal - o);
+        if (P <= 0) { t = Infinity; break; }
+        const part = P < Math.min(rate * dt, payable(dt)) - 1e-9 ? (P / Math.min(rate * dt, payable(dt))) * dt : dt;
+        payer(P, part); o += P; t += part;
+      }
+      tail = t / 86400;
+    }
     const days = cap < goal ? Infinity : (S !== null ? S / 86400 : end + tail);
-    return { days, end, cap, loss: castleLoss(n, l), lossW: castleLossW(n, l), trEnd: O, feEnd: N, first: first === null ? null : first / 86400,
-             rate, tail, steps: B4, iron: goal * C.vqIron, trace };
+    const besoin = {}; RESS.concat(["or"]).forEach(k => { if (U.cout[k]) besoin[k] = goal * U.cout[k]; });
+    return { days, end, cap, loss: castleLoss(n, l), lossW: castleLossW(n, l), trEnd: O, first: first === null ? null : first / 86400,
+             rate: rate * 86400, tail, steps: B4, besoin, iron: besoin.fer || 0, troupe: U, bat: Bt, trace };
   }
   function castleLoss(n, l) { return n * (sum(C.cabS.slice(1, l + 1)) - sum(C.cabS.slice(1, l)) / 3); }
   function castleLossW(n, l) { return n * (sum(C.cabW.slice(1, l + 1)) - sum(C.cabW.slice(1, l)) / 3); }
@@ -373,5 +416,5 @@
              zerksReelsH, excedentFer: j(excedentFer), raffinage };
   }
 
-  root.CrownEngine = { castleCombo, castleGrid, castleSolve, castleLoss, citeTemps, citeOptimise, cabDemolition, raidSim, journalRow, raidSynthese, recrutement, heures, lireRapport, unitStats, butinBase, defenseParPoint, TYPES };
+  root.CrownEngine = { TROUPES_CASTLE: TROUPES, BATS_CASTLE: BATS, castleCombo, castleGrid, castleSolve, castleLoss, citeTemps, citeOptimise, cabDemolition, raidSim, journalRow, raidSynthese, recrutement, heures, lireRapport, unitStats, butinBase, defenseParPoint, TYPES };
 })(typeof window !== "undefined" ? window : globalThis);
