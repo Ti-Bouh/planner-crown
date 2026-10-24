@@ -103,6 +103,20 @@ table.reg{border-collapse:collapse;width:100%;min-width:980px;font-size:13px}
 .r-garder{background:var(--keep-soft);border-color:var(--line);color:var(--muted)}
 .rsel{font:inherit;font-size:12px;font-weight:600;padding:3px 22px 3px 8px;border-radius:5px;border:1px solid var(--line);min-width:96px;min-height:0;cursor:pointer}
 .rsel.r-afaire{border-style:dashed;background-color:transparent}
+.tabsep{width:1px;height:22px;background:var(--line);align-self:center;margin:0 6px}
+.rvgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.rvcard{background:var(--bg);border-radius:8px;padding:10px 12px}
+.rvcard b{display:block;font-size:12px;color:var(--muted);font-weight:600;margin-bottom:4px}
+.rvcard span{font-size:13px}
+.rvtab td,.rvtab th{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+.rvset{display:inline-flex;align-items:center;gap:3px}
+.rvb{font:inherit;font-size:12px;font-weight:700;min-height:0;width:30px;height:26px;padding:0;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--muted);cursor:pointer;box-shadow:none}
+.rvb.on-up{background:var(--hub-soft);border-color:var(--hub);color:var(--hub)}
+.rvb.on-r{background:var(--ref-soft);border-color:var(--ref);color:var(--ref)}
+.rvb.on-dn{background:var(--def-soft);border-color:var(--def);color:var(--def)}
+.rvsep{width:1px;height:16px;background:var(--line);margin:0 4px}
+.rvleg{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);margin-top:8px;align-items:center}
+.rvleg .rvb{width:22px;height:20px;font-size:11px;cursor:default;margin-right:4px}
 .refnote{font-size:11.5px;color:var(--muted);white-space:nowrap}
 .wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-top:12px}
 #rechPanel{margin-bottom:16px}
@@ -503,14 +517,6 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
       <div class="bar" id="barTs"></div>
       <div class="legend" id="legendTs"></div>
     </div>
-    <div class="panel">
-      <h2>Ressources</h2>
-      <table class="restab">
-        <thead><tr><th>Ressource</th><th style="color:var(--ref)">Raffiner</th><th style="color:var(--hub)">Hub</th><th>Garder</th><th>À définir</th></tr></thead>
-        <tbody id="resSummary"></tbody>
-      </table>
-      <p class="note">Choisis la destination de chaque ressource dans le menu de sa case, dans le registre.</p>
-    </div>
   </section>
 
   <section class="panel" aria-label="Registre des villes">
@@ -529,7 +535,7 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
       <table class="reg">
         <thead><tr>
           <th>Ville</th><th>Coordonnées</th><th>Rôle</th><th>Troupes</th><th>TS</th>
-          <th>Bois</th><th>Pierre</th><th>Fer</th><th>Nourriture</th><th>Hub</th><th></th>
+          <th>Hub</th><th></th>
         </tr></thead>
         <tbody id="regBody"></tbody>
       </table>
@@ -537,6 +543,24 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
     <div class="empty" id="emptyState">Aucune ville pour l'instant. Va dans Outils pour importer tes CSV du jeu ou ajouter une ville.</div>
   </section>
 
+  </div>
+
+  <div class="view" id="view-ravit" hidden>
+    <section class="panel" aria-label="Qui reçoit du hub">
+      <h2 id="rvTitle">Qui reçoit du hub</h2>
+      <div id="rvSummary"></div>
+    </section>
+    <section class="panel" aria-label="Réglages par ville">
+      <h2>Réglages par ville</h2>
+      <p class="note" id="rvNote" style="margin-top:0"></p>
+      <div class="scroll"><table class="rvtab" id="rvTable"></table></div>
+      <div class="rvleg">
+        <span><span class="rvb on-up">↑</span>surplus envoyé au hub</span>
+        <span><span class="rvb on-r">R</span>surplus raffiné</span>
+        <span><span class="rvb on-dn">↓</span>reçoit du hub</span>
+        <span>rien d'allumé : ni envoi ni demande</span>
+      </div>
+    </section>
   </div>
 
   <div class="view" id="view-binome" hidden>
@@ -883,8 +907,7 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
         <p class="note" style="margin:6px 0 0">Le niveau du mur est repris de l'export des troupes à chaque import. Les postes sont à saisir ici : si plusieurs postes n'ont pas le même niveau, mets le niveau le plus courant.</p>
       </fieldset>
       <fieldset><legend>Ressources</legend>
-        <div class="resrow" id="resSelects"></div>
-        <div class="row" style="margin-top:10px">
+        <div class="row">
           <label class="field w-sel"><span class="lbl">Hub de destination</span><select id="f-hub"></select></label>
         </div>
       </fieldset>
@@ -1139,8 +1162,6 @@ function buildForm(){
   const tc = $("troopChips"); const names = {off:"Offensives",def:"Défensives",neu:"Utilitaires"};
   tc.innerHTML = Object.keys(TROOPS).map(k => `<div><div class="ghead">${names[k]}</div><div class="chips">${
     TROOPS[k].map(t => `<label class="chip ${k}"><input type="checkbox" id="tr-${t}" value="${t}"><span>${t}</span></label>`).join("")}</div></div>`).join("");
-  $("resSelects").innerHTML = RES.map(([k,l]) => `<label class="field"><span class="lbl">${l}</span><select id="f-res-${k}">${
-    ["afaire",...MODES].map(m => `<option value="${m}">${MODE_LABEL[m]}</option>`).join("")}</select></label>`).join("");
 }
 const colOf = fid => db.collection(`fiches/${fid}/villes`);
 const isAll = () => viewAll && fiches.length > 1;
@@ -1159,7 +1180,6 @@ function homeForm(){
 }
 function resetForm(){
   editingId = null; $("cityForm").reset(); homeForm(); $("delZone").hidden = true; pendingCityDel = false; $("delCityBtn").textContent = "Supprimer cette ville du planner";
-  RES.forEach(([k]) => $("f-res-"+k).value = "afaire");
   $("formTitle").textContent = "Ajouter une ville"; $("saveBtn").textContent = "Enregistrer la ville"; $("cancelBtn").hidden = true;
   fillHubSelect("");
 }
@@ -1171,7 +1191,6 @@ function startEdit(id, fid){
   $("f-name").value = c.name; $("f-x").value = c.x; $("f-y").value = c.y; $("f-ts").value = c.ts || "";
   $("f-castle").value = c.castle ? "1" : "0"; $("f-milieu").value = milieuOf(c); $("f-role").value = c.role || "auto";
   document.querySelectorAll("#troopChips input").forEach(i => i.checked = (c.troops||[]).includes(i.value));
-  RES.forEach(([k]) => $("f-res-"+k).value = (c.res||{})[k] || "afaire");
   const po = c.postes || {};
   $("f-wall").value = c.wall ?? ""; $("f-rp-n").value = po.ranger?.n || ""; $("f-rp-l").value = po.ranger?.niv || ""; $("f-tp-n").value = po.triari?.n || ""; $("f-tp-l").value = po.triari?.niv || "";
   fillHubSelect(c.hubId);
@@ -1205,10 +1224,6 @@ function render(){
     .map(([l,c,v]) => `<span><i class="dot" style="background:var(${c})"></i>${l} ${v.toLocaleString("fr-FR")} TS (${pct(v)})</span>`).join("")
     + (unitsTot ? `<span>Troupes en ville : ${Math.round(unitsHome/unitsTot*100)} % (${unitsHome.toLocaleString("fr-FR")} / ${unitsTot.toLocaleString("fr-FR")} unités)</span>` : "");
 
-  $("resSummary").innerHTML = RES.map(([k,l]) => {
-    const n = {raffiner:0,hub:0,garder:0,afaire:0}; L.forEach(c => n[(c.res||{})[k]||"afaire"]++);
-    return `<tr><td>${l}</td><td>${n.raffiner}</td><td>${n.hub}</td><td>${n.garder}</td><td>${n.afaire}</td></tr>`;
-  }).join("");
 
   const conts = [...new Set(L.map(c => continentOf(c.x,c.y)).filter(v => v!==null))].sort((a,b)=>a-b);
   const fc = $("fl-cont"), keep = fc.value;
@@ -1237,8 +1252,6 @@ function render(){
       ? Object.entries(c.units).filter(([,u]) => +u.total>0).sort((a,b)=>b[1].total-a[1].total)
           .map(([t,u]) => `<span class="t ${TROOP_CLASS[t]||"neu"}" title="${(+u.home).toLocaleString("fr-FR")} en ville / ${(+u.total).toLocaleString("fr-FR")} au total">${esc(t)} ${(+u.total).toLocaleString("fr-FR")}</span>`).join("")
       : (c.troops||[]).map(t => `<span class="t ${TROOP_CLASS[t]||"neu"}">${esc(t)}</span>`).join("")) || `<span class="t neu">aucune</span>`;
-    const res = RES.map(([k]) => { const m = (c.res||{})[k]||"afaire";
-      return `<td><select class="rsel r-${m}" data-rsel="${esc(c.id)}" data-fid="${esc(c._fid)}" data-res="${k}" aria-label="${k} : destination">${["afaire",...MODES].map(o => `<option value="${o}"${o===m?" selected":""}>${MODE_LABEL[o]}</option>`).join("")}</select></td>`; }).join("");
     const hub = c.hubId && byId[c._fid + "/" + c.hubId] ? esc(byId[c._fid + "/" + c.hubId].name) : `<span style="color:var(--muted)">—</span>`;
     const F = `data-fid="${esc(c._fid)}"`;
     return `<tr class="c-${r}${editingId === c.id && c._fid === currentFiche ? " editing" : ""}">
@@ -1247,7 +1260,6 @@ function render(){
       <td><span class="pill p-${r}">${ROLE_LABEL[r]}${c.role==="auto"||!c.role ? "" : ""}</span></td>
       <td><div class="troops">${troops}</div></td>
       <td class="mono">${cityTs(c).toLocaleString("fr-FR")}</td>
-      ${res}
       <td style="white-space:nowrap">${hub}</td>
       <td style="white-space:nowrap"><button class="link" data-edit="${esc(c.id)}" ${F}>Modifier</button></td>
     </tr>`;
@@ -1289,13 +1301,6 @@ $("delCityBtn").addEventListener("click", async () => {
   try { await col().doc(id).delete(); resetForm(); render(); setStatus("Ville supprimée du planner : " + nom); }
   catch(err){ setStatus("Suppression impossible : " + (err.message||err.code)); }
 });
-$("regBody").addEventListener("change", async e => {
-  const sel = e.target.closest("select[data-rsel]"); if (!sel || !db) return;
-  const fid = sel.dataset.fid || currentFiche, k = sel.dataset.res, v = sel.value;
-  sel.className = "rsel r-" + v; sel.disabled = true;
-  try { await colOf(fid).doc(sel.dataset.rsel).update({res:{[k]:v}}); } catch(err){ setStatus("Changement non enregistré : " + (err.message||err.code)); }
-  sel.disabled = false;
-});
 $("cityForm").addEventListener("submit", async e => {
   e.preventDefault(); if (!db){ setStatus("Registre indisponible : ouvre la page en étant connecté à claude.ai."); return; }
   if (!currentFiche){ setStatus("Choisis ou crée une fiche d'abord."); return; }
@@ -1303,7 +1308,6 @@ $("cityForm").addEventListener("submit", async e => {
     name: $("f-name").value.trim(), x: +$("f-x").value, y: +$("f-y").value, ts: +$("f-ts").value || 0,
     castle: $("f-castle").value === "1", milieu: $("f-milieu").value, role: $("f-role").value,
     troops: [...document.querySelectorAll("#troopChips input:checked")].map(i => i.value),
-    res: Object.fromEntries(RES.map(([k]) => [k, $("f-res-"+k).value])),
     hubId: $("f-hub").value || "", updatedAt: new Date().toISOString(),
     postes: {ranger:{n:+$("f-rp-n").value||0, niv:Math.min(10, +$("f-rp-l").value||0)}, triari:{n:+$("f-tp-n").value||0, niv:Math.min(10, +$("f-tp-l").value||0)}}
   };
@@ -1504,11 +1508,13 @@ const COMMON_VIEWS = ["maintenant","binome","attaques","defense","barons","carte
 const countStatus = () => COMMON_VIEWS.includes(curView) ? "Enregistré automatiquement" : (countTxt || "Enregistré automatiquement");
 const col = () => db.collection(`fiches/${currentFiche}/villes`);
 function renderTabs(){
-  $("ficheTabs").innerHTML = (fiches.length > 1 ? `<button type="button" class="tab" role="tab" aria-selected="${isAll()}" data-fiche="__all">Tous</button>` : "") + fiches.map(f => `<button type="button" class="tab" role="tab" aria-selected="${!isAll() && f.id===currentFiche}" data-fiche="${esc(f.id)}"><i class="pdot" style="background:${pCol(f.id)}"></i>${esc(f.nom)}${f.id===moi ? " (moi)" : ""}</button>`).join("")
+  const rv = curView === "ravit";
+  $("ficheTabs").innerHTML = (fiches.length > 1 ? `<button type="button" class="tab" role="tab" aria-selected="${rv ? false : isAll()}" data-fiche="__all">Tous</button>` : "") + fiches.map(f => `<button type="button" class="tab" role="tab" aria-selected="${!rv && !isAll() && f.id===currentFiche}" data-fiche="${esc(f.id)}"><i class="pdot" style="background:${pCol(f.id)}"></i>${esc(f.nom)}${f.id===moi ? " (moi)" : ""}</button>`).join("")
+    + (fiches.length ? `<span class="tabsep" aria-hidden="true"></span><button type="button" class="tab" role="tab" aria-selected="${rv}" data-fiche="__ravit">Ravitaillement</button>` : "")
     || `<span class="note">Aucune fiche : crée la tienne dans Réglages.</span>`;
   const f = fiches.find(x => x.id === currentFiche);
   const common = COMMON_VIEWS.includes(curView);
-  document.querySelector("h1").textContent = common ? ({maintenant:"Maintenant", binome:"Binôme", attaques:"Attaques", defense:"Défense", barons:"Barons", carte:"Carte", plans:"Plans", outils:"Réglages"})[curView] : isAll() ? "Nos villes" : (f ? (f.id === moi ? "Mes villes" : "Villes de " + f.nom) : "Mes villes");
+  document.querySelector("h1").textContent = common ? ({maintenant:"Maintenant", binome:"Binôme", attaques:"Attaques", defense:"Défense", barons:"Barons", carte:"Carte", plans:"Plans", outils:"Réglages"})[curView] : rv ? "Ravitaillement" : isAll() ? "Nos villes" : (f ? (f.id === moi ? "Mes villes" : "Villes de " + f.nom) : "Mes villes");
   $("subTitle").textContent = curView === "maintenant" ? (moi ? "Ce que tu as à faire, en un coup d'œil." : "Choisis qui tu es en haut à droite pour voir tes ordres.")
     : curView === "binome" ? "Vue commune : équilibre off / def et troupes de tous les joueurs."
     : curView === "attaques" ? "Vue commune : opérations, plan de frappe et envois de chaque joueur."
@@ -1517,7 +1523,8 @@ function renderTabs(){
     : curView === "carte" ? "Vue commune : terrain du continent, cases réservées et villes des autres joueurs."
     : curView === "plans" ? "Vue commune : vos plans de ville, à coller et recopier dans le jeu."
     : curView === "outils" ? "Joueurs, import des exports du jeu, ajout de villes et poids TS."
-    : "Coordonnées, troupes, rôle off/def et destination des ressources, ville par ville.";
+    : rv ? "Tes villes uniquement : ce qui part au hub, ce qui est raffiné et qui reçoit du hub."
+    : "Coordonnées, troupes et rôle off/def, ville par ville. Les ressources sont dans Ravitaillement.";
   $("ficheNav").hidden = common;
   renderPlayers(); try { renderImpFor(); } catch {}
   $("outilsFiche").textContent = f ? "Import et ajout de villes : fiche « " + f.nom + " »" + (f.id === moi ? " (la tienne)." : ".") : "Crée ta fiche ci-dessous, puis choisis-la dans « Je suis ».";
@@ -1536,6 +1543,8 @@ function selectFiche(id){
   }, err => setStatus("Connexion au registre perdue (" + (err.code||"erreur") + "). Recharge la page."));
 }
 $("ficheTabs").addEventListener("click", e => { const b = e.target.closest("[data-fiche]"); if (!b) return;
+  if (b.dataset.fiche === "__ravit"){ showView("ravit"); return; }
+  if (curView === "ravit") showView("fiche");
   viewAll = b.dataset.fiche === "__all"; try { localStorage.setItem("villesTous", viewAll ? "1" : "0"); } catch {}
   if (!viewAll) selectFiche(b.dataset.fiche); render(); renderTabs(); renderRech(); });
 let canWrite = null;
@@ -1669,7 +1678,7 @@ let objTimer = null;
 }));
 function syncFicheSubs(){
   fiches.forEach(f => { if (subsFiche[f.id]) return;
-    subsFiche[f.id] = db.collection(`fiches/${f.id}/villes`).onSnapshot(snap => { allCities[f.id] = snap.docs.map(d => ({id:d.id, ...d.data()})); renderBinome(); renderAttaques(); renderDefense(); renderWelcome(); if (isAll()) render(); renderCarte(); }, () => {}); });
+    subsFiche[f.id] = db.collection(`fiches/${f.id}/villes`).onSnapshot(snap => { allCities[f.id] = snap.docs.map(d => ({id:d.id, ...d.data()})); renderBinome(); renderAttaques(); renderDefense(); renderWelcome(); if (isAll()) render(); renderCarte(); if (curView === "ravit") renderRavit(); }, () => {}); });
   renderBinome();
 }
 
@@ -1985,7 +1994,7 @@ function renderWelcome(){
 }
 $("welcomeClose").addEventListener("click", () => { try { localStorage.setItem("accueilVu", "1"); } catch {} $("welcome").hidden = true; });
 $("meSel").addEventListener("change", e => { moi = e.target.value; try { localStorage.setItem("moi", moi); } catch {}
-  if (moi) $("env-fiche").value = moi; renderTabs(); renderAttaques(); renderDefense(); renderWelcome(); });
+  if (moi) $("env-fiche").value = moi; renderTabs(); renderAttaques(); renderDefense(); renderWelcome(); if (curView === "ravit") renderRavit(); });
 
 /* ---------- vue défense ---------- */
 const DEF_UNITS = TROOPS.def;
@@ -2595,14 +2604,52 @@ $("nowOrders").addEventListener("click", async e => {
   try { await db.doc(r.ref).update({statut:next, maj:new Date().toISOString()}); } catch(err){ setStatus("Statut non enregistré : " + (err.message||err.code)); }
 });
 
+/* ---------- vue ravitaillement (fiche du joueur connecté uniquement) ---------- */
+function renderRavit(){
+  const sum = $("rvSummary"), tab = $("rvTable"), note = $("rvNote");
+  if (!moi){ sum.innerHTML = `<p class="note">Choisis qui tu es dans « Je suis » en haut à droite pour voir tes villes.</p>`; tab.innerHTML = ""; note.textContent = ""; $("rvTitle").textContent = "Qui reçoit du hub"; return; }
+  const all = allCities[moi] || (currentFiche === moi ? cities : []);
+  const hubs = all.filter(c => effRole(c) === "hub");
+  const byId = Object.fromEntries(all.map(c => [c.id, c]));
+  const hubOf = c => byId[c.hubId] && effRole(byId[c.hubId]) === "hub" ? byId[c.hubId] : (hubs.length === 1 ? hubs[0] : null);
+  const label = c => `${esc(c.name)} <span class="mono" style="color:var(--muted)">${c.x}:${c.y}</span>`;
+  const list = all.filter(c => effRole(c) !== "hub").sort((a,b) => (continentOf(a.x,a.y)-continentOf(b.x,b.y)) || a.name.localeCompare(b.name,"fr"));
+  const groups = new Map(); hubs.forEach(h => groups.set(h.id, {hub:h, rows:[]}));
+  list.forEach(c => { if (!RES.some(([k]) => (c.recoit||{})[k])) return; const h = hubOf(c), key = h ? h.id : "";
+    if (!groups.has(key)) groups.set(key, {hub:h, rows:[]}); groups.get(key).rows.push(c); });
+  const gs = [...groups.values()];
+  $("rvTitle").textContent = gs.length === 1 && gs[0].hub ? `Qui reçoit du hub ${gs[0].hub.name}` : "Qui reçoit du hub";
+  sum.innerHTML = gs.length ? gs.map(g => (gs.length > 1 ? `<h3 class="rgh">${g.hub ? "Hub " + esc(g.hub.name) : "Hub non choisi"}</h3>` : "")
+    + `<div class="rvgrid">${RES.map(([k,l]) => { const r = g.rows.filter(c => (c.recoit||{})[k]);
+      return `<div class="rvcard"><b>${l}</b><span>${r.length ? r.map(label).join(" · ") : `<span style="color:var(--muted)">Aucune ville</span>`}</span></div>`; }).join("")}</div>`).join("")
+    : `<p class="note">Aucune ville ne reçoit encore du hub. Allume ↓ sur une ressource ci-dessous.</p>`;
+  const ro = canWrite === false ? " disabled" : "";
+  tab.innerHTML = list.length ? `<thead><tr><th>Ville</th>${RES.map(([,l]) => `<th>${l}</th>`).join("")}</tr></thead><tbody>${list.map(c => `<tr><td>${label(c)}</td>${RES.map(([k,l]) => {
+      const m = (c.res||{})[k], d = !!(c.recoit||{})[k], A = `data-cid="${esc(c.id)}" data-res="${k}"${ro}`;
+      return `<td><span class="rvset"><button type="button" class="rvb${m==="hub"?" on-up":""}" data-rv="up" ${A} aria-pressed="${m==="hub"}" aria-label="${l} : surplus envoyé au hub">↑</button><button type="button" class="rvb${m==="raffiner"?" on-r":""}" data-rv="r" ${A} aria-pressed="${m==="raffiner"}" aria-label="${l} : surplus raffiné">R</button><span class="rvsep"></span><button type="button" class="rvb${d?" on-dn":""}" data-rv="dn" ${A} aria-pressed="${d}" aria-label="${l} : reçoit du hub">↓</button></span></td>`; }).join("")}</tr>`).join("")}</tbody>` : "";
+  note.textContent = !list.length ? "Aucune ville dans ta fiche pour l'instant : importe tes CSV d'abord."
+    : !hubs.length ? "Aucune de tes villes n'a le rôle Hub : choisis-le dans Mes villes (Modifier) pour que la liste du haut sache à quel hub rattacher les villes."
+    : "↑ et R s'excluent (c'est la destination du surplus dans le jeu). ↓ est indépendant : une ville peut demander au hub et envoyer son surplus.";
+}
+$("rvTable").addEventListener("click", async e => {
+  const b = e.target.closest("[data-rv]"); if (!b || !db || !moi) return;
+  const c = (allCities[moi] || []).find(x => x.id === b.dataset.cid); if (!c) return;
+  const k = b.dataset.res, m = (c.res||{})[k];
+  const upd = b.dataset.rv === "dn" ? {recoit:{[k]: !(c.recoit||{})[k]}}
+    : {res:{[k]: b.dataset.rv === "up" ? (m === "hub" ? "garder" : "hub") : (m === "raffiner" ? "garder" : "raffiner")}};
+  b.disabled = true;
+  try { await db.doc(`fiches/${moi}/villes/${c.id}`).update(upd); } catch(err){ setStatus("Changement non enregistré : " + (err.message||err.code)); }
+  b.disabled = false;
+});
+
 /* ---------- vues ---------- */
 function showView(v){
-  if (!["maintenant","fiche","binome","attaques","defense","barons","carte","plans","outils"].includes(v)) v = "maintenant";
+  if (!["maintenant","fiche","ravit","binome","attaques","defense","barons","carte","plans","outils"].includes(v)) v = "maintenant";
   if (v === "outils" && moi && !editingId && currentFiche !== moi && fiches.some(f => f.id === moi)) selectFiche(moi);
   const st = $("status").textContent; const wasCount = !st || st === countTxt || st === "Enregistré automatiquement";
   curView = v; renderTabs(); document.body.classList.toggle("wide", v === "attaques" || v === "carte"); if (wasCount && countTxt) setStatus(countStatus()); renderWelcome();
-  document.querySelectorAll(".vbtn").forEach(b => b.setAttribute("aria-selected", String(b.dataset.view === v)));
-  ["maintenant","fiche","binome","attaques","defense","barons","carte","plans","outils"].forEach(k => $("view-"+k).hidden = k !== v);
+  document.querySelectorAll(".vbtn").forEach(b => b.setAttribute("aria-selected", String(b.dataset.view === v || (v === "ravit" && b.dataset.view === "fiche"))));
+  ["maintenant","fiche","ravit","binome","attaques","defense","barons","carte","plans","outils"].forEach(k => $("view-"+k).hidden = k !== v);
   try { localStorage.setItem("vueActive", v); } catch {}
   if (v === "binome") renderBinome();
   if (v === "attaques") renderAttaques();
@@ -2611,6 +2658,7 @@ function showView(v){
   if (v === "carte") renderCarte();
   if (v === "plans") renderPlans();
   if (v === "maintenant") renderNow();
+  if (v === "ravit") renderRavit();
 }
 document.querySelector(".qbar").addEventListener("click", e => {
   const b = e.target.closest("[data-quick]"); if (!b) return; const q = b.dataset.quick;
