@@ -120,6 +120,12 @@ table.reg{border-collapse:collapse;width:100%;min-width:980px;font-size:13px}
 .refnote{font-size:11.5px;color:var(--muted);white-space:nowrap}
 .wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-top:12px}
 #rechPanel{margin-bottom:16px}
+.tright{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+details.addp:not([open]){display:none}
+details.addp>summary{list-style:none}
+details.addp>summary::-webkit-details-marker{display:none}
+details.addp>summary::after{content:"  ✕ fermer";font-weight:400;font-size:12px;color:var(--muted)}
+.addbtn{white-space:nowrap}
 #rechPanel .rgh{font-size:13px;font-weight:600;margin:14px 0 0}
 #rechPanel .wgrid{margin-top:6px}
 .seuil{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink);opacity:.55}
@@ -432,17 +438,16 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
     <div class="vgrp"><span class="glbl">Moi</span>
       <button type="button" class="vbtn" role="tab" data-view="maintenant" aria-selected="true">Maintenant</button>
       <button type="button" class="vbtn" role="tab" data-view="fiche" aria-selected="false">Mes villes</button>
+      <a class="vbtn" href="calculs.html" style="text-decoration:none">Début de serveur</a>
     </div>
     <div class="vgrp"><span class="glbl">Ensemble</span>
       <button type="button" class="vbtn" role="tab" data-view="binome" aria-selected="false">Binôme</button>
       <button type="button" class="vbtn" role="tab" data-view="attaques" aria-selected="false">Attaques</button>
       <button type="button" class="vbtn" role="tab" data-view="defense" aria-selected="false">Défense</button>
-      <button type="button" class="vbtn" role="tab" data-view="barons" aria-selected="false">Barons</button>
-      <button type="button" class="vbtn" role="tab" data-view="carte" aria-selected="false">Carte</button>
+      <button type="button" class="vbtn" role="tab" data-view="carte" aria-selected="false">Carte et barons</button>
       <button type="button" class="vbtn" role="tab" data-view="plans" aria-selected="false">Plans</button>
     </div>
     <div class="vgrp"><button type="button" class="vbtn" role="tab" data-view="outils" aria-selected="false">⚙ Réglages</button></div>
-    <div class="vgrp"><a class="vbtn" href="calculs.html" style="text-decoration:none">Début de serveur</a></div>
   </div>
 
   <nav class="fiches" id="ficheNav" aria-label="Fiches joueurs">
@@ -464,7 +469,7 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
           <p class="note">Attaques et renforts qui te sont attribués, du plus proche au plus lointain. Dans le jeu, règle l'heure d'arrivée indiquée. Clique le statut pour le faire avancer.</p>
         </section>
         <section class="panel" aria-label="Suggestions pour le site">
-          <div class="toolbar"><h2 style="margin:0">Suggestions pour le site</h2><label class="chk"><input type="checkbox" id="sug-done"> Voir les faites</label></div>
+          <div class="toolbar"><h2 style="margin:0">Suggestions pour le site</h2><label class="chk"><input type="checkbox" id="sug-done"> Voir les terminées</label></div>
           <div class="sugadd">
             <textarea id="sug-txt" maxlength="1000" placeholder="Une idée pour améliorer le site ? Écris-la ici, elle est gardée pour vous deux."></textarea>
             <div><button type="button" class="primary" id="sug-add">Ajouter</button></div>
@@ -486,20 +491,6 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
   </div>
 
   <div class="view" id="view-fiche" hidden>
-  <details class="panel" id="rechPanel">
-    <summary id="rechTitle">Recherches</summary>
-    <p class="note" id="rechNote"></p>
-    <div id="rechJoueur">
-      <h3 class="rgh">Recherches de combat par troupe</h3>
-      <div class="wgrid" id="rechGrid"></div>
-      <h3 class="rgh">Durabilité <span class="msub">(résistance au siège, pas comptée dans la def conseillée)</span></h3>
-      <div class="wgrid" id="durGrid"></div>
-    </div>
-    <div id="rechTous">
-      <div class="wgrid" id="foiGrid"></div>
-    </div>
-    <div class="btns" style="margin-top:12px"><button type="button" class="primary" id="rechSave">Enregistrer</button></div>
-  </details>
 
   <section class="grid" aria-label="Synthèse">
     <div class="panel">
@@ -521,7 +512,7 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
 
   <section class="panel" aria-label="Registre des villes">
     <div class="toolbar">
-      <div class="regh"><h2 style="margin:0">Registre</h2><div class="seg" id="roleTabs" role="tablist" aria-label="Filtrer par rôle"></div></div>
+      <div class="regh"><h2 style="margin:0">Registre</h2><div class="seg" id="roleTabs" role="tablist" aria-label="Filtrer par rôle"></div><button type="button" class="addbtn" data-open="formPanel">+ Ajouter une ville</button></div>
       <div class="row regf">
         <label class="field w-sel"><span class="lbl">Type</span>
           <select id="fl-milieu"><option value="">Tous</option><option value="terre">Terrestre</option><option value="mer">Maritime</option></select></label>
@@ -531,6 +522,53 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
           <select id="fl-sort"><option value="cont">Continent</option><option value="name">Nom</option><option value="ts">TS</option><option value="joueur">Joueur</option></select></label>
       </div>
     </div>
+    <div id="formHome"></div>
+    <details class="mform addp" id="formPanel">
+      <summary id="formTitle">Ajouter une ville</summary>
+      <form id="cityForm" autocomplete="off">
+        <div class="row">
+          <label class="field w-name"><span class="lbl">Nom</span><input id="f-name" required maxlength="40" placeholder="ex. Fort Nord"></label>
+          <label class="field w-num"><span class="lbl">X</span><input id="f-x" type="number" min="0" max="999" required></label>
+          <label class="field w-num"><span class="lbl">Y</span><input id="f-y" type="number" min="0" max="999" required></label>
+          <label class="field w-num"><span class="lbl">TS</span><input id="f-ts" type="number" min="0" step="1" placeholder="0"></label>
+          <label class="field w-sel"><span class="lbl">Type</span>
+            <select id="f-milieu"><option value="terre">Terrestre</option><option value="mer">Maritime</option></select></label>
+          <label class="field w-sel"><span class="lbl">Château</span>
+            <select id="f-castle"><option value="1">Oui</option><option value="0">Non</option></select></label>
+          <label class="field w-sel"><span class="lbl">Rôle</span>
+            <select id="f-role">
+              <option value="auto">Auto (d'après les troupes)</option>
+              <option value="off">Off</option><option value="def">Def</option>
+              <option value="mixte">Mixte</option><option value="hub">Hub</option>
+            </select></label>
+        </div>
+        <fieldset><legend>Troupes</legend><div class="groups" id="troopChips"></div></fieldset>
+        <fieldset><legend>Fortifications</legend>
+          <div class="row">
+            <label class="field w-num" style="flex-basis:110px"><span class="lbl">Mur (niveau)</span><input id="f-wall" type="number" min="0" max="10" step="1" placeholder="0"></label>
+            <label class="field w-num" style="flex-basis:150px"><span class="lbl">Postes de Rangers (nombre)</span><input id="f-rp-n" type="number" min="0" step="1" placeholder="0"></label>
+            <label class="field w-num" style="flex-basis:150px"><span class="lbl">Postes de Rangers (niveau)</span><input id="f-rp-l" type="number" min="0" max="10" step="1" placeholder="0"></label>
+            <label class="field w-num" style="flex-basis:150px"><span class="lbl">Postes de Triaires (nombre)</span><input id="f-tp-n" type="number" min="0" step="1" placeholder="0"></label>
+            <label class="field w-num" style="flex-basis:150px"><span class="lbl">Postes de Triaires (niveau)</span><input id="f-tp-l" type="number" min="0" max="10" step="1" placeholder="0"></label>
+          </div>
+          <p class="note" style="margin:6px 0 0">Le niveau du mur est repris de l'export des troupes à chaque import. Les postes sont à saisir ici : si plusieurs postes n'ont pas le même niveau, mets le niveau le plus courant.</p>
+        </fieldset>
+        <fieldset><legend>Ressources</legend>
+          <div class="row">
+            <label class="field w-sel"><span class="lbl">Hub de destination</span><select id="f-hub"></select></label>
+          </div>
+        </fieldset>
+        <div class="btns">
+          <button type="submit" class="primary" id="saveBtn">Enregistrer la ville</button>
+          <button type="button" id="cancelBtn" hidden>Annuler la modification</button>
+        </div>
+        <div class="dzone" id="delZone" hidden>
+          <span class="note" style="margin:0">La ville reste dans le jeu : seule sa ligne du planner disparaît.</span>
+          <button type="button" class="dbtn" id="delCityBtn">Supprimer cette ville du planner</button>
+        </div>
+      </form>
+    </details>
+
     <div class="scroll">
       <table class="reg">
         <thead><tr>
@@ -543,6 +581,24 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
     <div class="empty" id="emptyState">Aucune ville pour l'instant. Va dans Outils pour importer tes CSV du jeu ou ajouter une ville.</div>
   </section>
 
+  </div>
+
+  <div class="view" id="view-rech" hidden>
+  <section class="panel" id="rechPanel">
+    <h2 id="rechTitle">Recherches</h2>
+    <p class="note" id="rechNote"></p>
+    <div id="rechJoueur">
+      <h3 class="rgh">Recherches de combat par troupe</h3>
+      <div class="wgrid" id="rechGrid"></div>
+      <h3 class="rgh">Durabilité <span class="msub">(résistance au siège, pas comptée dans la def conseillée)</span></h3>
+      <div class="wgrid" id="durGrid"></div>
+    </div>
+    <div id="rechTous">
+      <h3 class="rgh">Foi des dieux <span class="msub">(commune à vous deux)</span></h3>
+      <div class="wgrid" id="foiGrid"></div>
+    </div>
+    <div class="btns" style="margin-top:12px"><button type="button" class="primary" id="rechSave">Enregistrer</button></div>
+  </section>
   </div>
 
   <div class="view" id="view-ravit" hidden>
@@ -675,10 +731,10 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
   <section class="panel" aria-label="Menaces">
     <div class="toolbar">
       <h2 style="margin:0">Menaces</h2>
-      <label class="chk"><input type="checkbox" id="df-done"> Afficher les menaces terminées</label>
+      <div class="tright"><label class="chk"><input type="checkbox" id="df-done"> Voir les terminées</label><button type="button" class="addbtn" data-open="menPanel">+ Signaler une menace</button></div>
     </div>
     <div class="kpis" id="df-kpis" style="margin-top:0"></div>
-    <details id="menPanel" class="mform">
+    <details id="menPanel" class="mform addp">
       <summary id="menTitle">Signaler une menace</summary>
       <form id="menForm" autocomplete="off">
         <div class="row">
@@ -719,33 +775,6 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
     </div>
     <div class="scroll"><table class="env" id="myRfTable"></table></div>
     <p class="note">Dans le jeu, règle l'heure d'arrivée sur celle indiquée : le jeu calcule le départ. Clique le statut pour le faire avancer : prévu → envoyé → arrivé.</p>
-  </section>
-  </div>
-
-  <div class="view" id="view-barons" hidden>
-  <section class="panel" aria-label="Barons envoyés">
-    <div class="toolbar">
-      <h2 style="margin:0">Spots visés par un baron</h2>
-      <label class="chk"><input type="checkbox" id="bn-done"> Afficher les spots réussis et ratés</label>
-    </div>
-    <div class="kpis" id="bn-kpis" style="margin-top:0"></div>
-    <details id="bnPanel" class="mform" open>
-      <summary id="bnTitle">Noter un baron envoyé</summary>
-      <form id="bnForm" autocomplete="off">
-        <div class="row">
-          <label class="field w-num"><span class="lbl">X</span><input id="bn-x" type="number" min="0" max="999" required></label>
-          <label class="field w-num"><span class="lbl">Y</span><input id="bn-y" type="number" min="0" max="999" required></label>
-          <label class="field w-sel" style="flex-basis:150px"><span class="lbl">Joueur</span><select id="bn-fiche"></select></label>
-          <label class="field w-sel" style="flex-basis:150px"><span class="lbl">Date d'arrivée</span><input id="bn-date" type="date"></label>
-          <label class="field w-sel" style="flex-basis:130px"><span class="lbl">Heure d'arrivée</span><input id="bn-heure" type="time" step="1"></label>
-          <label class="field w-name"><span class="lbl">Note</span><input id="bn-note" maxlength="80" placeholder="ex. spot côtier, envoyé depuis C33-002"></label>
-        </div>
-        <p class="fmsg" id="bn-warn"></p>
-        <div class="btns"><button type="submit" class="primary" id="bn-save">Ajouter le spot</button><button type="button" id="bn-cancel" hidden>Annuler</button></div>
-      </form>
-    </details>
-    <div class="scroll" style="margin-top:14px"><table class="env" id="bnTable"></table></div>
-    <p class="note">Clique le statut pour le faire avancer : en route → réussi → raté. Un spot visé deux fois est signalé.</p>
   </section>
   </div>
 
@@ -820,29 +849,57 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
     <p class="chint" id="cImpMsg">Aucune capture chargée.</p>
     <div class="cmapwrap" style="max-height:70vh"><canvas id="cImpCv" style="display:block;cursor:crosshair"></canvas></div>
   </section>
+  <section class="panel" aria-label="Barons envoyés">
+    <div class="toolbar">
+      <h2 style="margin:0">Barons envoyés</h2>
+      <div class="tright"><label class="chk"><input type="checkbox" id="bn-done"> Voir les terminés</label><button type="button" class="addbtn" data-open="bnPanel">+ Noter un baron</button></div>
+    </div>
+    <div class="kpis" id="bn-kpis" style="margin-top:0"></div>
+    <details id="bnPanel" class="mform addp">
+      <summary id="bnTitle">Noter un baron envoyé</summary>
+      <form id="bnForm" autocomplete="off">
+        <div class="row">
+          <label class="field w-num"><span class="lbl">X</span><input id="bn-x" type="number" min="0" max="999" required></label>
+          <label class="field w-num"><span class="lbl">Y</span><input id="bn-y" type="number" min="0" max="999" required></label>
+          <label class="field w-sel" style="flex-basis:150px"><span class="lbl">Joueur</span><select id="bn-fiche"></select></label>
+          <label class="field w-sel" style="flex-basis:150px"><span class="lbl">Date d'arrivée</span><input id="bn-date" type="date"></label>
+          <label class="field w-sel" style="flex-basis:130px"><span class="lbl">Heure d'arrivée</span><input id="bn-heure" type="time" step="1"></label>
+          <label class="field w-name"><span class="lbl">Note</span><input id="bn-note" maxlength="80" placeholder="ex. spot côtier, envoyé depuis C33-002"></label>
+        </div>
+        <p class="fmsg" id="bn-warn"></p>
+        <div class="btns"><button type="submit" class="primary" id="bn-save">Ajouter le spot</button><button type="button" id="bn-cancel" hidden>Annuler</button></div>
+      </form>
+    </details>
+    <div class="scroll" style="margin-top:14px"><table class="env" id="bnTable"></table></div>
+    <p class="note">Clique le statut pour le faire avancer : en route → réussi → raté. Un spot visé deux fois est signalé.</p>
+  </section>
   </div>
 
   <div class="view" id="view-plans" hidden>
-  <details class="panel mform" id="plPanel">
-    <summary id="plTitle">Ajouter un plan</summary>
-    <form id="plForm" autocomplete="off">
-      <div class="row">
-        <label class="field w-name"><span class="lbl">Nom du plan</span><input id="pl-nom" required maxlength="60" placeholder="ex. Château zerks 56 Barracks"></label>
-        <label class="field w-name"><span class="lbl">Note</span><input id="pl-note" maxlength="120" placeholder="facultatif"></label>
-      </div>
-      <label class="field"><span class="lbl">Sharestring (copié depuis le jeu ou CotG Optimizer)</span><textarea id="pl-txt" rows="3" spellcheck="false" placeholder="[ShareString.1.3]:########…[/ShareString]"></textarea></label>
-      <div id="plPreview"></div>
-      <div class="btns"><button type="submit" class="primary" id="pl-save" disabled>Enregistrer le plan</button><button type="button" id="pl-cancel" hidden>Annuler</button></div>
-    </form>
-  </details>
   <section class="panel" aria-label="Plans enregistrés">
     <div class="toolbar">
       <h2 style="margin:0">Plans enregistrés</h2>
-      <div class="plfilt">
-        <label class="field"><span class="lbl">Auteur</span><select id="pl-f-auteur"></select></label>
-        <label class="field"><span class="lbl">Chercher</span><input id="pl-f-q" placeholder="nom ou note"></label>
+      <div class="tright">
+        <div class="plfilt">
+          <label class="field"><span class="lbl">Auteur</span><select id="pl-f-auteur"></select></label>
+          <label class="field"><span class="lbl">Chercher</span><input id="pl-f-q" placeholder="nom ou note"></label>
+        </div>
+        <button type="button" class="addbtn" data-open="plPanel">+ Ajouter un plan</button>
       </div>
     </div>
+    <details class="mform addp" id="plPanel">
+      <summary id="plTitle">Ajouter un plan</summary>
+      <form id="plForm" autocomplete="off">
+        <div class="row">
+          <label class="field w-name"><span class="lbl">Nom du plan</span><input id="pl-nom" required maxlength="60" placeholder="ex. Château zerks 56 Barracks"></label>
+          <label class="field w-name"><span class="lbl">Note</span><input id="pl-note" maxlength="120" placeholder="facultatif"></label>
+        </div>
+        <label class="field"><span class="lbl">Sharestring (copié depuis le jeu ou CotG Optimizer)</span><textarea id="pl-txt" rows="3" spellcheck="false" placeholder="[ShareString.1.3]:########…[/ShareString]"></textarea></label>
+        <div id="plPreview"></div>
+        <div class="btns"><button type="submit" class="primary" id="pl-save" disabled>Enregistrer le plan</button><button type="button" id="pl-cancel" hidden>Annuler</button></div>
+      </form>
+    </details>
+
     <div class="plgrid" id="plList"></div>
   </section>
   </div>
@@ -875,52 +932,6 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
     <p class="note" style="margin-top:4px">La date du dernier import s'affiche en haut à droite. Elle passe en orange au-delà de ce délai.</p>
   </section>
 
-  <div id="formHome"></div>
-  <details class="panel" id="formPanel">
-    <summary id="formTitle">Ajouter une ville</summary>
-    <form id="cityForm" autocomplete="off">
-      <div class="row">
-        <label class="field w-name"><span class="lbl">Nom</span><input id="f-name" required maxlength="40" placeholder="ex. Fort Nord"></label>
-        <label class="field w-num"><span class="lbl">X</span><input id="f-x" type="number" min="0" max="999" required></label>
-        <label class="field w-num"><span class="lbl">Y</span><input id="f-y" type="number" min="0" max="999" required></label>
-        <label class="field w-num"><span class="lbl">TS</span><input id="f-ts" type="number" min="0" step="1" placeholder="0"></label>
-        <label class="field w-sel"><span class="lbl">Type</span>
-          <select id="f-milieu"><option value="terre">Terrestre</option><option value="mer">Maritime</option></select></label>
-        <label class="field w-sel"><span class="lbl">Château</span>
-          <select id="f-castle"><option value="1">Oui</option><option value="0">Non</option></select></label>
-        <label class="field w-sel"><span class="lbl">Rôle</span>
-          <select id="f-role">
-            <option value="auto">Auto (d'après les troupes)</option>
-            <option value="off">Off</option><option value="def">Def</option>
-            <option value="mixte">Mixte</option><option value="hub">Hub</option>
-          </select></label>
-      </div>
-      <fieldset><legend>Troupes</legend><div class="groups" id="troopChips"></div></fieldset>
-      <fieldset><legend>Fortifications</legend>
-        <div class="row">
-          <label class="field w-num" style="flex-basis:110px"><span class="lbl">Mur (niveau)</span><input id="f-wall" type="number" min="0" max="10" step="1" placeholder="0"></label>
-          <label class="field w-num" style="flex-basis:150px"><span class="lbl">Postes de Rangers (nombre)</span><input id="f-rp-n" type="number" min="0" step="1" placeholder="0"></label>
-          <label class="field w-num" style="flex-basis:150px"><span class="lbl">Postes de Rangers (niveau)</span><input id="f-rp-l" type="number" min="0" max="10" step="1" placeholder="0"></label>
-          <label class="field w-num" style="flex-basis:150px"><span class="lbl">Postes de Triaires (nombre)</span><input id="f-tp-n" type="number" min="0" step="1" placeholder="0"></label>
-          <label class="field w-num" style="flex-basis:150px"><span class="lbl">Postes de Triaires (niveau)</span><input id="f-tp-l" type="number" min="0" max="10" step="1" placeholder="0"></label>
-        </div>
-        <p class="note" style="margin:6px 0 0">Le niveau du mur est repris de l'export des troupes à chaque import. Les postes sont à saisir ici : si plusieurs postes n'ont pas le même niveau, mets le niveau le plus courant.</p>
-      </fieldset>
-      <fieldset><legend>Ressources</legend>
-        <div class="row">
-          <label class="field w-sel"><span class="lbl">Hub de destination</span><select id="f-hub"></select></label>
-        </div>
-      </fieldset>
-      <div class="btns">
-        <button type="submit" class="primary" id="saveBtn">Enregistrer la ville</button>
-        <button type="button" id="cancelBtn" hidden>Annuler la modification</button>
-      </div>
-      <div class="dzone" id="delZone" hidden>
-        <span class="note" style="margin:0">La ville reste dans le jeu : seule sa ligne du planner disparaît.</span>
-        <button type="button" class="dbtn" id="delCityBtn">Supprimer cette ville du planner</button>
-      </div>
-    </form>
-  </details>
 
   <details class="panel" id="tsPanel">
     <summary>Poids TS par unité</summary>
@@ -1180,7 +1191,8 @@ function homeForm(){
 }
 function resetForm(){
   editingId = null; $("cityForm").reset(); homeForm(); $("delZone").hidden = true; pendingCityDel = false; $("delCityBtn").textContent = "Supprimer cette ville du planner";
-  $("formTitle").textContent = "Ajouter une ville"; $("saveBtn").textContent = "Enregistrer la ville"; $("cancelBtn").hidden = true;
+  $("formPanel").open = false; const fN = fiches.find(x => x.id === currentFiche);
+  $("formTitle").textContent = fN ? "Ajouter une ville à la fiche de " + fN.nom : "Ajouter une ville"; $("saveBtn").textContent = "Enregistrer la ville"; $("cancelBtn").hidden = true;
   fillHubSelect("");
 }
 function startEdit(id, fid){
@@ -1270,7 +1282,7 @@ function render(){
     if (actIn && document.contains(actIn)){ actIn.focus({preventScroll:true}); if (selS) try { actIn.setSelectionRange(...selS); } catch {} } }
   if (curView === "fiche" && countTxt) setStatus(isAll() ? `${L.length} villes (tous les joueurs) · enregistré automatiquement` : countTxt);
   $("emptyState").hidden = rows.length > 0;
-  $("emptyState").textContent = L.length ? "Aucune ville ne correspond à ce filtre." : (isAll() ? "Aucune ville importée pour l'instant." : "Aucune ville pour l'instant. Clique « Importer mes CSV » en haut à droite, ou ajoute une ville dans ⚙ Réglages.");
+  $("emptyState").textContent = L.length ? "Aucune ville ne correspond à ce filtre." : (isAll() ? "Aucune ville importée pour l'instant." : "Aucune ville pour l'instant. Clique « Importer mes CSV » en haut à droite, ou « + Ajouter une ville ».");
   if (!editingId) fillHubSelect($("f-hub").value);
 }
 
@@ -1359,31 +1371,28 @@ function bonusRech(f, u){   /* bonus total en % pour l'unité u : recherche du j
 }
 function renderRech(){
   if (!$("rechGrid")) return;
-  const tous = isAll(), cle = tous ? "__all" : (currentFiche || "");
+  const cle = moi || "";
   if ($("rechGrid").dataset.fiche === cle && $("rechPanel").contains(document.activeElement) && document.activeElement.matches("input,select")) return;
   $("rechGrid").dataset.fiche = cle;
-  const f = fiches.find(x => x.id === currentFiche), r = (f && f.recherches) || {}, fo = foiAlliance;
-  $("rechJoueur").hidden = tous; $("rechTous").hidden = !tous;
-  $("rechTitle").textContent = tous ? "Foi des dieux (commune à vous deux)" : f ? `Recherches de ${f.nom}` : "Recherches";
-  $("rechNote").textContent = tous ? "La foi est commune à l'alliance : elle est saisie ici, une fois pour vous deux, et comptée dans la def conseillée."
-    : "Propres à ce joueur, valables pour toutes ses villes. Les recherches de combat sont comptées dans la def conseillée. La foi des dieux se saisit dans l'onglet « Tous ».";
+  const f = fiches.find(x => x.id === moi), r = (f && f.recherches) || {}, fo = foiAlliance;
+  $("rechJoueur").hidden = !f; $("rechTous").hidden = false;
+  $("rechTitle").textContent = f ? `Recherches de ${f.nom}` : "Recherches";
+  $("rechNote").textContent = f ? "Tes recherches valent pour toutes tes villes et sont comptées dans la def conseillée. La foi des dieux, en bas, est commune à vous deux."
+    : "Choisis qui tu es dans « Je suis » en haut à droite pour saisir tes recherches. La foi des dieux, en bas, est commune à vous deux.";
   $("foiGrid").innerHTML = DIEUX.map(([k,l]) => `<label class="field"><span class="lbl">${l} (%)</span><input type="number" min="0" max="100" step="1" data-foi="${k}" value="${fo[k] || ""}" placeholder="0"></label>`).join("");
   $("durGrid").innerHTML = [["batiments","Bâtiments"],["fortifs","Fortifications"]].map(([k,l]) => `<label class="field"><span class="lbl">${l}</span><select data-dur="${k}">${RES_PCT.map((pc, n) => `<option value="${n}"${(+((f && f.durabilite)||{})[k]||0) === n ? " selected" : ""}>niv. ${n} · +${pc} %</option>`).join("")}</select></label>`).join("");
   $("rechGrid").innerHTML = RECH_UNITS.map(u => `<label class="field"><span class="lbl">${UNIT_FR[u] || u}</span><select data-rech="${u}">${RES_PCT.map((pc, n) => `<option value="${n}"${(+r[u]||0) === n ? " selected" : ""}>niv. ${n} · +${pc} %</option>`).join("")}</select></label>`).join("");
 }
 $("rechSave").addEventListener("click", async () => {
   if (!db){ setStatus("Registre indisponible ici."); return; }
-  if (isAll()){   /* onglet Tous : seulement la foi, commune */
-    const fo = {}; document.querySelectorAll("[data-foi]").forEach(i => { const v = Math.max(0, Math.min(100, +i.value || 0)); if (v) fo[i.dataset.foi] = v; });
-    try { await db.doc("reglages/foi").set({foi:fo, maj:new Date().toISOString()}); setStatus("Foi enregistrée."); }
-    catch(err){ setStatus("Foi non enregistrée : " + (err.message||err.code)); }
-    return;
-  }
-  if (!currentFiche){ setStatus("Choisis ou crée une fiche d'abord."); return; }
+  const fo = {}; document.querySelectorAll("[data-foi]").forEach(i => { const v = Math.max(0, Math.min(100, +i.value || 0)); if (v) fo[i.dataset.foi] = v; });
+  try { await db.doc("reglages/foi").set({foi:fo, maj:new Date().toISOString()}); }
+  catch(err){ setStatus("Foi non enregistrée : " + (err.message||err.code)); return; }
+  if (!moi){ setStatus("Foi enregistrée. Choisis qui tu es dans « Je suis » pour enregistrer tes recherches."); return; }
   const r = {}, du = {};
   document.querySelectorAll("[data-dur]").forEach(i => { du[i.dataset.dur] = +i.value || 0; });   /* zéros compris : la base fusionne les mises à jour */
   document.querySelectorAll("[data-rech]").forEach(i => { r[i.dataset.rech] = +i.value || 0; });
-  try { await db.doc("fiches/" + currentFiche).update({recherches:r, durabilite:du}); setStatus("Recherches enregistrées."); }
+  try { await db.doc("fiches/" + moi).update({recherches:r, durabilite:du}); setStatus("Recherches et foi enregistrées."); }
   catch(err){ setStatus("Recherches non enregistrées : " + (err.message||err.code)); }
 });
 function buildTsGrid(){
@@ -1504,30 +1513,30 @@ $("impApply").addEventListener("click", async () => {
 
 /* ---------- fiches ---------- */
 let fiches = [], currentFiche = null, unsubVilles = null, curView = "fiche", countTxt = "";
-const COMMON_VIEWS = ["maintenant","binome","attaques","defense","barons","carte","plans","outils"];
+const COMMON_VIEWS = ["maintenant","binome","attaques","defense","carte","plans","outils"];
 const countStatus = () => COMMON_VIEWS.includes(curView) ? "Enregistré automatiquement" : (countTxt || "Enregistré automatiquement");
 const col = () => db.collection(`fiches/${currentFiche}/villes`);
 function renderTabs(){
-  const rv = curView === "ravit";
-  $("ficheTabs").innerHTML = (fiches.length > 1 ? `<button type="button" class="tab" role="tab" aria-selected="${rv ? false : isAll()}" data-fiche="__all">Tous</button>` : "") + fiches.map(f => `<button type="button" class="tab" role="tab" aria-selected="${!rv && !isAll() && f.id===currentFiche}" data-fiche="${esc(f.id)}"><i class="pdot" style="background:${pCol(f.id)}"></i>${esc(f.nom)}${f.id===moi ? " (moi)" : ""}</button>`).join("")
-    + (fiches.length ? `<span class="tabsep" aria-hidden="true"></span><button type="button" class="tab" role="tab" aria-selected="${rv}" data-fiche="__ravit">Ravitaillement</button>` : "")
+  const rv = curView === "ravit", sub = rv || curView === "rech";
+  $("ficheTabs").innerHTML = (fiches.length > 1 ? `<button type="button" class="tab" role="tab" aria-selected="${sub ? false : isAll()}" data-fiche="__all">Tous</button>` : "") + fiches.map(f => `<button type="button" class="tab" role="tab" aria-selected="${!sub && !isAll() && f.id===currentFiche}" data-fiche="${esc(f.id)}"><i class="pdot" style="background:${pCol(f.id)}"></i>${esc(f.nom)}${f.id===moi ? " (moi)" : ""}</button>`).join("")
+    + (fiches.length ? `<span class="tabsep" aria-hidden="true"></span><button type="button" class="tab" role="tab" aria-selected="${rv}" data-fiche="__ravit">Ravitaillement</button><button type="button" class="tab" role="tab" aria-selected="${curView === "rech"}" data-fiche="__rech">Recherches</button>` : "")
     || `<span class="note">Aucune fiche : crée la tienne dans Réglages.</span>`;
   const f = fiches.find(x => x.id === currentFiche);
   const common = COMMON_VIEWS.includes(curView);
-  document.querySelector("h1").textContent = common ? ({maintenant:"Maintenant", binome:"Binôme", attaques:"Attaques", defense:"Défense", barons:"Barons", carte:"Carte", plans:"Plans", outils:"Réglages"})[curView] : rv ? "Ravitaillement" : isAll() ? "Nos villes" : (f ? (f.id === moi ? "Mes villes" : "Villes de " + f.nom) : "Mes villes");
+  document.querySelector("h1").textContent = common ? ({maintenant:"Maintenant", binome:"Binôme", attaques:"Attaques", defense:"Défense", carte:"Carte et barons", plans:"Plans", outils:"Réglages"})[curView] : rv ? "Ravitaillement" : curView === "rech" ? "Recherches" : isAll() ? "Nos villes" : (f ? (f.id === moi ? "Mes villes" : "Villes de " + f.nom) : "Mes villes");
   $("subTitle").textContent = curView === "maintenant" ? (moi ? "Ce que tu as à faire, en un coup d'œil." : "Choisis qui tu es en haut à droite pour voir tes ordres.")
     : curView === "binome" ? "Vue commune : équilibre off / def et troupes de tous les joueurs."
     : curView === "attaques" ? "Vue commune : opérations, plan de frappe et envois de chaque joueur."
     : curView === "defense" ? "Vue commune : villes menacées, renforts engagés et ce que chacun doit envoyer."
-    : curView === "barons" ? "Vue commune : les spots où chacun a envoyé un baron."
-    : curView === "carte" ? "Vue commune : terrain du continent, cases réservées et villes des autres joueurs."
+    : curView === "carte" ? "Vue commune : terrain du continent, cases réservées, villes des autres joueurs et barons envoyés."
     : curView === "plans" ? "Vue commune : vos plans de ville, à coller et recopier dans le jeu."
-    : curView === "outils" ? "Joueurs, import des exports du jeu, ajout de villes et poids TS."
+    : curView === "outils" ? "Joueurs, import des exports du jeu et poids TS."
+    : curView === "rech" ? "Tes recherches de combat et de durabilité, et la foi des dieux commune à vous deux."
     : rv ? "Tes villes uniquement : ce qui part au hub, ce qui est raffiné et qui reçoit du hub."
     : "Coordonnées, troupes et rôle off/def, ville par ville. Les ressources sont dans Ravitaillement.";
   $("ficheNav").hidden = common;
   renderPlayers(); try { renderImpFor(); } catch {}
-  $("outilsFiche").textContent = f ? "Import et ajout de villes : fiche « " + f.nom + " »" + (f.id === moi ? " (la tienne)." : ".") : "Crée ta fiche ci-dessous, puis choisis-la dans « Je suis ».";
+  $("outilsFiche").textContent = f ? "Import : fiche « " + f.nom + " »" + (f.id === moi ? " (la tienne)." : ".") : "Crée ta fiche ci-dessous, puis choisis-la dans « Je suis ».";
 }
 function selectFiche(id){
   if (id === currentFiche && unsubVilles) return;
@@ -1543,8 +1552,8 @@ function selectFiche(id){
   }, err => setStatus("Connexion au registre perdue (" + (err.code||"erreur") + "). Recharge la page."));
 }
 $("ficheTabs").addEventListener("click", e => { const b = e.target.closest("[data-fiche]"); if (!b) return;
-  if (b.dataset.fiche === "__ravit"){ showView("ravit"); return; }
-  if (curView === "ravit") showView("fiche");
+  if (b.dataset.fiche === "__ravit" || b.dataset.fiche === "__rech"){ showView(b.dataset.fiche.slice(2)); return; }
+  if (curView === "ravit" || curView === "rech") showView("fiche");
   viewAll = b.dataset.fiche === "__all"; try { localStorage.setItem("villesTous", viewAll ? "1" : "0"); } catch {}
   if (!viewAll) selectFiche(b.dataset.fiche); render(); renderTabs(); renderRech(); });
 let canWrite = null;
@@ -1994,7 +2003,7 @@ function renderWelcome(){
 }
 $("welcomeClose").addEventListener("click", () => { try { localStorage.setItem("accueilVu", "1"); } catch {} $("welcome").hidden = true; });
 $("meSel").addEventListener("change", e => { moi = e.target.value; try { localStorage.setItem("moi", moi); } catch {}
-  if (moi) $("env-fiche").value = moi; renderTabs(); renderAttaques(); renderDefense(); renderWelcome(); if (curView === "ravit") renderRavit(); });
+  if (moi) $("env-fiche").value = moi; renderTabs(); renderAttaques(); renderDefense(); renderWelcome(); if (curView === "ravit") renderRavit(); if (curView === "rech") renderRech(); });
 
 /* ---------- vue défense ---------- */
 const DEF_UNITS = TROOPS.def;
@@ -2384,7 +2393,7 @@ $("bnTable").addEventListener("click", async e => {
   if (del) armDelete(del, async () => { try { await db.doc("barons/" + del.dataset.bndel).delete(); if (editBn === del.dataset.bndel) resetBn(); setStatus("Spot supprimé."); } catch(err){ setStatus("Suppression impossible : " + (err.message || err.code)); } });
 });
 function startBarons(){
-  db.collection("barons").onSnapshot(s => { barons = s.docs.map(d => ({id:d.id, ...d.data()})); if (curView === "barons") renderBarons(); if (curView === "carte") renderCarte(); }, () => {});
+  db.collection("barons").onSnapshot(s => { barons = s.docs.map(d => ({id:d.id, ...d.data()})); if (curView === "carte"){ renderBarons(); renderCarte(); } }, () => {});
 }
 
 /* ---------- suggestions pour le site (collection partagée « suggestions ») ---------- */
@@ -2642,34 +2651,45 @@ $("rvTable").addEventListener("click", async e => {
   b.disabled = false;
 });
 
+/* ---------- boutons « + Ajouter » : ouvrent / ferment le formulaire de la liste ---------- */
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-open]"); if (!b) return;
+  const d = $(b.dataset.open); if (!d) return;
+  if (d.id === "formPanel" && editingId){ resetForm(); render(); d.open = true; }
+  else d.open = !d.open;
+  if (d.open) requestAnimationFrame(() => { const i = d.querySelector("input:not([type=hidden]):not([type=checkbox]),select,textarea"); d.scrollIntoView({block:"nearest"}); if (i) i.focus({preventScroll:true}); });
+});
+
 /* ---------- vues ---------- */
 function showView(v){
-  if (!["maintenant","fiche","ravit","binome","attaques","defense","barons","carte","plans","outils"].includes(v)) v = "maintenant";
+  if (v === "barons") v = "carte";
+  if (!["maintenant","fiche","rech","ravit","binome","attaques","defense","carte","plans","outils"].includes(v)) v = "maintenant";
   if (v === "outils" && moi && !editingId && currentFiche !== moi && fiches.some(f => f.id === moi)) selectFiche(moi);
   const st = $("status").textContent; const wasCount = !st || st === countTxt || st === "Enregistré automatiquement";
   curView = v; renderTabs(); document.body.classList.toggle("wide", v === "attaques" || v === "carte"); if (wasCount && countTxt) setStatus(countStatus()); renderWelcome();
-  document.querySelectorAll(".vbtn").forEach(b => b.setAttribute("aria-selected", String(b.dataset.view === v || (v === "ravit" && b.dataset.view === "fiche"))));
-  ["maintenant","fiche","ravit","binome","attaques","defense","barons","carte","plans","outils"].forEach(k => $("view-"+k).hidden = k !== v);
+  document.querySelectorAll(".vbtn").forEach(b => b.setAttribute("aria-selected", String(b.dataset.view === v || ((v === "ravit" || v === "rech") && b.dataset.view === "fiche"))));
+  ["maintenant","fiche","rech","ravit","binome","attaques","defense","carte","plans","outils"].forEach(k => $("view-"+k).hidden = k !== v);
   try { localStorage.setItem("vueActive", v); } catch {}
   if (v === "binome") renderBinome();
   if (v === "attaques") renderAttaques();
   if (v === "defense") renderDefense();
-  if (v === "barons") renderBarons();
-  if (v === "carte") renderCarte();
+  if (v === "carte"){ renderCarte(); renderBarons(); }
   if (v === "plans") renderPlans();
   if (v === "maintenant") renderNow();
   if (v === "ravit") renderRavit();
+  if (v === "rech") renderRech();
 }
 document.querySelector(".qbar").addEventListener("click", e => {
   const b = e.target.closest("[data-quick]"); if (!b) return; const q = b.dataset.quick;
   const go = (view, panel, field) => { showView(view); if (panel) $(panel).open = true;
     requestAnimationFrame(() => { const f = $(field); if (f){ f.scrollIntoView({block:"center"}); f.focus(); } }); };
   if (q === "menace") go("defense", "menPanel", "m-ville");
-  else if (q === "baron") go("barons", "bnPanel", "bn-x");
+  else if (q === "baron") go("carte", "bnPanel", "bn-x");
   else go("attaques", null, "op-nom");
 });
 document.querySelector(".views").addEventListener("click", e => { const b = e.target.closest("[data-view]"); if (b) showView(b.dataset.view); });
 showView("maintenant");
+if (location.hash.length > 1) setTimeout(() => showView(location.hash.slice(1)), 0);   /* liens depuis Début de serveur */
 document.addEventListener("click", e => { const g = e.target.closest("[data-goto]"); if (g){ if (g.dataset.goto === "fiche" && moi){ viewAll = false; if (currentFiche !== moi) selectFiche(moi); render(); } showView(g.dataset.goto); window.scrollTo({top:0}); } });
 $("quickImport").addEventListener("click", () => {
   if (!moi){ setStatus("Choisis d'abord qui tu es dans « Je suis »."); $("meSel").focus(); return; }
@@ -3161,7 +3181,7 @@ buildCompo(); buildForm(); buildTsGrid(); resetForm(); fillUnitSelect(""); rende
     if (!fiches.some(f => f.id === want)) want = fiches[0]?.id || null;
     if (want !== currentFiche || !unsubVilles) selectFiche(want); else renderTabs();
     if (!fiches.length) setStatus("Crée une première fiche pour commencer.");
-    syncFicheSubs(); renderAttaques(); if (curView === "barons") renderBarons();
+    syncFicheSubs(); renderAttaques(); if (curView === "carte") renderBarons();
   }, err => setStatus("Connexion au registre perdue (" + (err.code||"erreur") + "). Recharge la page."));
 })();
 </script>

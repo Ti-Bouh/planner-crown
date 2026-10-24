@@ -25,6 +25,13 @@ Enregistrement Firestore : `fiches/{fiche}/calculs/reglages` (réglages) `fiches
 
 ## Planner : modifications faites directement dans index.html
 
+**Organisation (octobre 2026)** : barre Moi = Maintenant, Mes villes, Début de serveur ; Ensemble = Binôme, Attaques,
+Défense, Carte et barons (les barons sont un panneau de la Carte), Plans ; puis Réglages. Sous la ligne « Voir la fiche
+de » : Ravitaillement et Recherches (fiche du joueur « Je suis » + foi commune). Toutes les listes suivent le même
+en-tête : titre, case « Voir les terminé(e)s », bouton « + Ajouter… » qui ouvre le formulaire (`details.addp`, attribut
+`data-open`). « + Ajouter une ville » est dans l'en-tête du registre. `index.html#vue` ouvre directement une vue
+(liens de la barre sur `calculs.html`).
+
 **Ravitaillement** (onglet au bout de la ligne « Voir la fiche de ») : uniquement les villes du joueur choisi dans
 « Je suis ». Par ressource, ↑ = surplus envoyé au hub, R = surplus raffiné (les deux s'excluent, champ `res.{ressource}`
 = `hub` / `raffiner` / `garder`), ↓ = reçoit du hub (champ `recoit.{ressource}`, indépendant). En haut, la liste des

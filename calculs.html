@@ -123,6 +123,8 @@ svg.chart{width:100%;height:auto;display:block}
 svg.chart text{font-family:var(--f-body);font-size:11px;fill:var(--muted)}
 .sw{display:inline-block;width:10px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
 @media (max-width:600px){.vbtn{padding:7px 12px}h1{font-size:1.6rem}}
+.subviews{border-bottom:1px solid var(--line);padding-bottom:12px}
+.subviews .vgrp{background:transparent;padding:0}
 </style>
 </head>
 <body>
@@ -138,7 +140,23 @@ svg.chart text{font-family:var(--f-body);font-size:11px;fill:var(--muted)}
     </div>
   </header>
 
-  <div class="views" role="tablist" aria-label="Outils">
+  <nav class="views" aria-label="Planner">
+    <div class="vgrp"><span class="glbl">Moi</span>
+      <a class="vbtn" href="index.html#maintenant" style="text-decoration:none">Maintenant</a>
+      <a class="vbtn" href="index.html#fiche" style="text-decoration:none">Mes villes</a>
+      <span class="vbtn" aria-current="page" style="background:var(--panel);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)">Début de serveur</span>
+    </div>
+    <div class="vgrp"><span class="glbl">Ensemble</span>
+      <a class="vbtn" href="index.html#binome" style="text-decoration:none">Binôme</a>
+      <a class="vbtn" href="index.html#attaques" style="text-decoration:none">Attaques</a>
+      <a class="vbtn" href="index.html#defense" style="text-decoration:none">Défense</a>
+      <a class="vbtn" href="index.html#carte" style="text-decoration:none">Carte et barons</a>
+      <a class="vbtn" href="index.html#plans" style="text-decoration:none">Plans</a>
+    </div>
+    <div class="vgrp"><a class="vbtn" href="index.html#outils" style="text-decoration:none">⚙ Réglages</a></div>
+  </nav>
+
+  <div class="views subviews" role="tablist" aria-label="Outils">
     <div class="vgrp"><span class="glbl">Au quotidien</span>
       <button type="button" class="vbtn" role="tab" data-view="recrut" aria-selected="false">Recrutement</button>
       <button type="button" class="vbtn" role="tab" data-view="raids" aria-selected="false">Raids</button>
@@ -148,7 +166,6 @@ svg.chart text{font-family:var(--f-body);font-size:11px;fill:var(--muted)}
       <button type="button" class="vbtn" role="tab" data-view="cabines" aria-selected="false">Cabines</button>
       <button type="button" class="vbtn" role="tab" data-view="castle" aria-selected="false">Castle</button>
     </div>
-    <div class="vgrp"><a class="vbtn" href="./" style="text-decoration:none">← Planner</a></div>
   </div>
 
   <p class="panel" id="guideBox" aria-live="polite" style="margin:0;padding:12px 16px;border-left:3px solid var(--brass)"><b id="guideTitre"></b> <span id="guideTexte" style="color:var(--muted)"></span></p>
@@ -981,11 +998,11 @@ const GUIDE = {
   recrut: ["À quoi sert Recrutement", "coller un rapport de raid pour savoir combien de zerks ton fer paie à l'heure et à quel niveau mettre tes Training Arenas pour recruter sans arrêt."]
 };
 function showView(v){ if (!["cite","castle","cabines","raids","recrut"].includes(v)) v = "cite";
-  const G = GUIDE[v]; $("guideTitre").textContent = G[0] + " :"; $("guideTexte").textContent = G[1]; document.querySelectorAll(".vbtn").forEach(b => b.setAttribute("aria-selected", String(b.dataset.view === v)));
+  const G = GUIDE[v]; $("guideTitre").textContent = G[0] + " :"; $("guideTexte").textContent = G[1]; document.querySelectorAll(".subviews .vbtn").forEach(b => b.setAttribute("aria-selected", String(b.dataset.view === v)));
   ["cite","castle","cabines","raids","recrut"].forEach(k => $("view-" + k).hidden = k !== v); try { localStorage.setItem("calcView", v); } catch {}
   if (v === "raids"){ renderPVilles(); renderRaidsAll(); }
   if (v === "castle" && !lastBest && !solving) solve(); }
-document.querySelector(".views").addEventListener("click", e => { const b = e.target.closest("[data-view]"); if (b) showView(b.dataset.view); });
+document.querySelector(".subviews").addEventListener("click", e => { const b = e.target.closest("[data-view]"); if (b) showView(b.dataset.view); });
 
 /* ---------- enregistrement ---------- */
 function setStatus(t){ $("status").textContent = t; }
