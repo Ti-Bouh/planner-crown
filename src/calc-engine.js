@@ -84,20 +84,23 @@
       for (let n = 0; n <= nb; n += q.cabStep) for (let l = q.lvMin; l <= q.lvMax; l++) { out.push({ na, nb, n, l }); if (n === 0) break; } }
     return out;
   }
-  // Solveur : classement par durée (à 1e-9 j près), puis pierre perdue, puis construction la plus courte, puis moins d'Arenas
+  // Solveur : Arenas fixées (plan de la cité), on cherche le nombre et le niveau de Cabines qui remplissent le château
+  // (objectif de zerks) le plus tôt. Construire plus vite que le remplissage ne sert à rien : à délai égal,
+  // on garde la combinaison qui perd le moins de pierre, puis celle dont la construction finit le plus tôt.
+  // q.tol (jours) : délai de remplissage accepté en plus du meilleur pour gagner de la pierre (0 = délai strictement minimal).
   async function castleSolve(base, q, onProgress, top) {
     top = top || 5;
     const grid = castleGrid(q), res = [];
     for (let i = 0; i < grid.length; i++) {
-      const g = grid[i], r = castleCombo({ ...base, ...g }, { stopAtGoal: true });
-      res.push({ ...g, days: r.days, loss: castleLoss(g.n, g.l) });
-      if (onProgress && i % 150 === 149) await onProgress(i + 1, grid.length);
+      const g = grid[i];
+      res.push({ ...g, ...castleCombo({ ...base, ...g }) });
+      if (onProgress && i % 50 === 49) await onProgress(i + 1, grid.length);
     }
-    const key = r => Math.round(r.days * 1e9) / 1e9;
-    res.sort((a, b) => key(a) - key(b) || a.loss - b.loss);
-    const cand = res.slice(0, Math.max(top * 6, 30)).map(r => ({ ...r, ...castleCombo({ ...base, na: r.na, nb: r.nb, n: r.n, l: r.l }) }));
-    cand.sort((a, b) => key(a) - key(b) || a.loss - b.loss || a.end - b.end || a.na - b.na);
-    return { tested: grid.length, best: cand.slice(0, top).filter(r => isFinite(r.days)) };
+    const k = v => isFinite(v) ? Math.round(v * 1e6) / 1e6 : Infinity;
+    const tol = Math.max(0, +q.tol || 0), min = Math.min(...res.map(r => r.days));
+    const ok = r => isFinite(r.days) && r.days <= min + tol + 1e-9;
+    res.sort((a, b) => (ok(b) - ok(a)) || (ok(a) ? a.loss - b.loss || k(a.days) - k(b.days) : k(a.days) - k(b.days) || a.loss - b.loss) || k(a.end) - k(b.end));
+    return { tested: grid.length, best: res.slice(0, top), min };
   }
 
   /* ================= CABINES ================= */
