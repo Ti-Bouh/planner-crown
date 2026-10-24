@@ -1,4 +1,4 @@
-/* Planner Crown — couche Firebase pour la version hébergée hors de Claude.
+/* Planner Crown — couche Firebase (Cloud Firestore + connexion Google), partagée par index.html et calculs.html.
    Elle recrée l'interface window.claude.use("db" | "user") utilisée par la page,
    au-dessus de Cloud Firestore et de la connexion Google (Firebase Auth). */
 (function(){
@@ -13,7 +13,7 @@
     appId: "1:978521794830:web:095b92c86ed017b7f04f5f"
   };
 
-  let ready = null, canWrite = null, currentUser = null;
+  let ready = null, currentUser = null;
 
   /* ---------- écran de connexion ---------- */
   function styles(){
@@ -51,7 +51,7 @@
 
   /* ---------- adaptateur Firestore ---------- */
   function isPlain(v){ return v && typeof v === "object" && !Array.isArray(v) && Object.getPrototypeOf(v) === Object.prototype; }
-  // la base Claude fusionne les objets imbriqués lors d'un update ; Firestore les remplace.
+  // la page attend qu'un update fusionne les objets imbriqués ; Firestore les remplace.
   // On aplatit donc en chemins de champs pour garder le même comportement.
   function flatten(obj, prefix, out){
     out = out || [];
@@ -123,7 +123,7 @@
     const dbApi = { doc: docRef, collection: p => colRef(p) };
 
     // vérifier que ce compte a accès
-    try { await F.getDoc(F.doc(fdb, "reglages/acces")); canWrite = true; }
+    try { await F.getDoc(F.doc(fdb, "reglages/acces")); }
     catch(e){
       if (e && e.code === "permission-denied"){
         const g = gate();
@@ -132,55 +132,15 @@
         b.replaceWith(b.cloneNode(true)); g.querySelector("#fbGateBtn").addEventListener("click", async () => { await A.signOut(auth); location.reload(); });
         return new Promise(() => {}); // reste bloqué sur l'écran
       }
-      canWrite = null;
     }
     const g = document.getElementById("fbGate"); if (g) g.remove();
     showUserBadge(auth, A.signOut);
-    window.__fbImport = async docs => { // import unique d'une sauvegarde { "chemin/doc": {...} }
-      const paths = Object.keys(docs); let n = 0;
-      for (let i = 0; i < paths.length; i += 400){
-        const b = F.writeBatch(fdb);
-        paths.slice(i, i + 400).forEach(p => b.set(F.doc(fdb, p), docs[p]));
-        await b.commit(); n += Math.min(400, paths.length - i);
-      }
-      return n;
-    };
-    // base vide : proposer l'import unique de la sauvegarde
-    try {
-      const fs = await F.getDocs(F.collection(fdb, "fiches"));
-      if (fs.empty) importBanner();
-    } catch {}
     return dbApi;
   }
 
-  function importBanner(){
-    const b = document.createElement("div"); b.id = "fbImport";
-    b.style.cssText = "position:fixed;left:16px;right:16px;bottom:16px;z-index:40;max-width:560px;margin:0 auto;background:var(--panel,#fff);color:var(--ink,#1c2230);border:2px solid var(--brass,#9a6b12);border-radius:10px;padding:14px 16px;display:grid;gap:8px;font-size:14px;box-shadow:0 6px 24px rgba(0,0,0,.15)";
-    b.innerHTML = `<strong>Le planner est vide.</strong><span>Si tu as le fichier de sauvegarde (planner-crown-sauvegarde.json), importe-le une seule fois pour récupérer les villes, opérations et menaces.</span><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input type="file" accept=".json,application/json"><button type="button" style="font:inherit;border:none;background:none;text-decoration:underline;cursor:pointer;color:inherit">Ignorer</button></div><span class="msg"></span>`;
-    const msg = b.querySelector(".msg");
-    b.querySelector("button").addEventListener("click", () => b.remove());
-    b.querySelector("input").addEventListener("change", async e => {
-      const f = e.target.files[0]; if (!f) return;
-      try {
-        const data = JSON.parse(await f.text());
-        const docs = data && data.docs ? data.docs : data;
-        msg.textContent = "Import en cours…";
-        const n = await window.__fbImport(docs);
-        msg.textContent = n + " éléments importés. Rechargement…";
-        setTimeout(() => location.reload(), 900);
-      } catch(err){ msg.textContent = "Import impossible : " + (err.message || err); }
-    });
-    document.body.appendChild(b);
-  }
-
-  const userApi = {
-    can: async name => name === "data.write" ? canWrite : null,
-    isOwner: async () => false, canEdit: async () => !!canWrite
-  };
   window.claude = {
     use: async name => {
       if (name === "db"){ if (!ready) ready = build().catch(e => { console.error(e); return null; }); return ready; }
-      if (name === "user"){ if (ready) await ready; return userApi; }
       return null;
     }
   };
