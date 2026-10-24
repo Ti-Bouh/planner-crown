@@ -68,7 +68,8 @@ Même barre principale que le planner ; ses onglets propres sont en dessous :
   soit construit et rempli — objectif de zerks — le plus tôt, soit max(construction, remplissage) minimal ; construire
   plus vite que le remplissage ne sert à rien, donc parmi les combinaisons à quelques heures du meilleur délai (3 h par
   défaut), le moins de pierre perdue ; la réponse indique si c'est le fer qui fixe le délai ; clic sur une des 10
-  meilleures lignes pour la simuler) et Simulateur détaillé avec courbe.
+  meilleures lignes pour la simuler). Deux réponses : ressources suffisantes (fer sans limite) et avec le fer envoyé
+  par jour. Simulateur détaillé avec courbe (choix « Ressources suffisantes » / « Mon fer par jour »).
 - **Cabines** : niveau et nombre optimaux pour construire toute la cité au niveau 10 le plus vite possible
   (10 emplacements par niveau de Basilica), plan de démolition groupe par groupe (suit l'optimum par défaut,
   paramètre `gardees` de `cabDemolition` ; « Un autre cas » pour tester ses valeurs).
