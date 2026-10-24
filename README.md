@@ -25,6 +25,11 @@ Enregistrement Firestore : `fiches/{fiche}/calculs/reglages` (réglages) `fiches
 
 ## Planner : modifications faites directement dans index.html
 
+**Ravitaillement** (onglet au bout de la ligne « Voir la fiche de ») : uniquement les villes du joueur choisi dans
+« Je suis ». Par ressource, ↑ = surplus envoyé au hub, R = surplus raffiné (les deux s'excluent, champ `res.{ressource}`
+= `hub` / `raffiner` / `garder`), ↓ = reçoit du hub (champ `recoit.{ressource}`, indépendant). En haut, la liste des
+villes qui reçoivent du hub, par ressource. Pas de quantités. Les menus de ressources ont été retirés de Mes villes.
+
 Depuis la mise à jour « ergonomie 2 », `index.html` est modifié directement : onglets groupés Moi / Ensemble,
 menu déroulant par ressource dans le registre, alertes de ville retirées, âge du dernier import
 (stocké dans `fiches/{fiche}.importVilles` et `.importTroupes`, délai d'alerte dans Réglages),
