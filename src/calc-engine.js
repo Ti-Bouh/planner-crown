@@ -34,32 +34,56 @@
     scorpion:  { nom: "Scorpion",          pl: "Scorpions",   t: 4000, places: 10, cout: { bois: 300, pierre: 600, fer: 200 }, bat: "forge" }
   };
   const RESS = ["fer", "bois", "pierre"]; // l'or (au niveau de l'empire) n'est pas limité dans le calcul
-  function castleCombo(p, opt) {
-    // p : {na, nb, n, l, grp, bonus, troupe, jour: {fer, bois, pierre} (par jour, Infinity = sans limite), store, goal}
-    // compatibilité : p.iron = fer par jour pour les zerks
+
+  /* Château mixte : plusieurs types de bâtiments de recrutement, chacun avec sa file (sa troupe et son objectif),
+     qui recrutent en parallèle. Places des Barracks et ressources partagées.
+     p : {lignes: [{bat, nombre, troupe, objectif}], nbar (Barracks au total, Cabines comprises), n, l, grp, bonus,
+          jour: {fer, bois, pierre} (par jour, Infinity = sans limite), store} */
+  function castleMix(p, opt) {
     opt = opt || {};
-    const { na, nb, n, l, grp, bonus, goal } = p;
-    const U = TROUPES[p.troupe] || TROUPES.vanq, Bt = BATS[U.bat];
-    const jour = p.jour || { fer: p.iron };
-    const R = RESS.filter(k => (U.cout[k] || 0) > 0 && isFinite(jour[k] == null ? Infinity : jour[k]))
-      .map(k => ({ k, c: U.cout[k], inc: +jour[k] / 86400, N: 0 }));
+    const { n, l, grp, bonus } = p, nbar = p.nbar;
+    const Q = p.lignes.filter(x => (+x.nombre || 0) > 0 || (+x.objectif || 0) > 0).map(x => {
+      const U = TROUPES[x.troupe] || TROUPES.vanq;
+      return { U, Bt: BATS[x.bat || U.bat], count: Math.max(0, Math.round(+x.nombre || 0)), goal: Math.max(0, +x.objectif || 0), O: 0, S: null };
+    });
+    const jour = p.jour || {};
+    const R = RESS.map(k => ({ k, inc: (isFinite(jour[k] == null ? Infinity : jour[k]) ? +jour[k] : Infinity) / 86400, N: 0 }))
+      .filter(r => isFinite(r.inc) && Q.some(q => q.U.cout[r.k]));
     const store = isFinite(p.store) ? p.store : 1e15;
-    const nbe = nb - n, nw = na + nbe + 6;
+    const rb = []; Q.forEach((q, qi) => { for (let k = 0; k < q.count; k++) rb.push(qi); });   // bâtiments de recrutement, dans l'ordre
+    const na = rb.length, nbe = nbar - n, nw = na + nbe + 6;
+    const pref = Q.map((_, qi) => { const a = [0]; rb.forEach((x, e) => a.push(a[e] + (x === qi ? 1 : 0))); return a; });
     const B0 = 5, B1 = B0 + l * n, B2 = B1 + 5, B3 = B2 + 10 * nw, B4 = B3 + 11 * n;
     const dem = sum(C.cabT.slice(1, l + 1)) / 2, bL = C.cabB[l];
     const others = [C.CT, C.TT, C.AT, C.AT, C.BT, C.BT];
     const othNames = ["Castle", "Sorcerer's Tower", "Forum", "Forum", "Entrepôt", "Entrepôt"];
-    const cap1 = v => v / U.places; // places → unités
-    let O = 0, K = 0, S = null, first = null;
+    let K = 0, first = null;
     const trace = opt.trace ? [] : null;
-    const payable = J => R.reduce((m, r) => Math.min(m, (r.N + r.inc * J) / r.c), Infinity);
-    const payer = (P, J) => R.forEach(r => { r.N = Math.min(store, r.N + r.inc * J - P * r.c); });
+    const placesPrises = () => Q.reduce((s, q) => s + q.O * q.U.places, 0);
+    // un pas de J secondes avec les vitesses L[q] (unités / s) et la capacité M (places) : renvoie les recrues par file
+    function pas(L, M, J) {
+      const d = Q.map((q, qi) => q.S !== null && q.O >= q.goal - 0.5 ? 0 : Math.max(0, L[qi] * J));
+      let f = 1;
+      const pl = d.reduce((s, x, qi) => s + x * Q[qi].U.places, 0);
+      if (pl > 0) f = Math.min(f, Math.max(0, M - placesPrises()) / pl);
+      for (const r of R) { const c = d.reduce((s, x, qi) => s + x * (Q[qi].U.cout[r.k] || 0), 0); if (c > 0) f = Math.min(f, Math.max(0, r.N + r.inc * J) / c); }
+      return d.map(x => Math.max(0, x * f));
+    }
+    function avancer(P, J) {
+      Q.forEach((q, qi) => {
+        let x = P[qi];
+        if (q.S === null && q.goal > 0 && q.O < q.goal - 0.5 && q.O + x >= q.goal - 0.5) { q.S = K + (q.goal - q.O) / (x / J); x = q.goal - q.O; }
+        P[qi] = x; q.O += x;
+      });
+      R.forEach(r => { const c = P.reduce((s, x, qi) => s + x * (Q[qi].U.cout[r.k] || 0), 0); r.N = Math.min(store, r.N + r.inc * J - c); });
+    }
+    const fini = () => Q.every(q => q.goal <= 0 || q.S !== null);
     for (let a = 1; a <= B4; a++) {
       let ph, start;
       if (a <= B0) { ph = 0; start = 0; } else if (a <= B1) { ph = 1; start = B0; } else if (a <= B2) { ph = 2; start = B1; }
       else if (a <= B3) { ph = 3; start = B2; } else { ph = 4; start = B3; }
       const c = a - start - 1;
-      let H = 0, I = 1 + bonus, L = 1 / U.t, M = 0, desc = "";
+      let H = 0, I = 1 + bonus, L = Q.map(q => 1 / q.U.t), M = 0, desc = "";
       if (ph === 0) { H = C.BAS[c + 1]; desc = "Basilica niv. " + (c + 1); }
       else if (ph === 1) {
         const Dl = Math.floor(c / n) + 1, E = c - (Dl - 1) * n;
@@ -67,53 +91,59 @@
       } else if (ph === 2) { H = C.BAS[c + 6]; I = 1 + bonus + n * bL; desc = "Basilica niv. " + (c + 6); }
       else if (ph === 3) {
         const Dl = Math.floor(c / nw) + 1, E = c % nw;
-        if (E < na) { H = Bt.bt[Dl]; desc = Bt.nom + " niv. " + Dl; }
+        if (E < na) { const q = Q[rb[E]]; H = q.Bt.bt[Dl]; desc = q.Bt.nom + " niv. " + Dl; }
         else if (E < na + nbe) { H = C.BT[Dl]; desc = "Barracks niv. " + Dl; }
         else { const k = E - na - nbe; H = others[k][Dl]; desc = othNames[k] + " niv. " + Dl; }
         I = 1 + bonus + n * bL;
-        L = (1 + na * C.AE[Dl - 1] + Math.min(E, na) * (C.AE[Dl] - C.AE[Dl - 1])) / U.t;
+        const e = Math.min(E, na);
+        L = Q.map((q, qi) => (1 + q.count * C.AE[Dl - 1] + pref[qi][e] * (C.AE[Dl] - C.AE[Dl - 1])) / q.U.t);
         const cbl = E > na + nbe ? Dl : Dl - 1;
-        M = cap1((nbe * C.BC[Dl - 1] + Math.max(0, Math.min(E - na, nbe)) * (C.BC[Dl] - C.BC[Dl - 1])) * (1 + C.CB[cbl]));
+        M = (nbe * C.BC[Dl - 1] + Math.max(0, Math.min(E - na, nbe)) * (C.BC[Dl] - C.BC[Dl - 1])) * (1 + C.CB[cbl]);
       } else {
         const g = grp, Dl = Math.floor(c / (11 * g)), E = c - Dl * 11 * g, F = Math.min(g, n - Dl * g);
         const lvl = ((E - F) % 10 + 10) % 10 + 1;
         if (E < F) { H = dem; desc = "Démolition d'une Cabine"; } else { H = C.BT[lvl]; desc = "Barracks de remplacement niv. " + lvl; }
         I = 1 + bonus + (n - Dl * g - Math.min(E, F)) * bL;
-        L = (1 + na * C.AE[10]) / U.t;
+        L = Q.map(q => (1 + q.count * C.AE[10]) / q.U.t);
         const extra = E >= F ? Math.floor((E - F) / 10) * C.BC[10] + C.BC[lvl - 1] : 0;
-        M = cap1(((nbe + Dl * g) * C.BC[10] + extra) * (1 + C.CB[10]));
+        M = ((nbe + Dl * g) * C.BC[10] + extra) * (1 + C.CB[10]);
       }
       const J = H / I;
-      const P = Math.max(0, Math.min(M - O, L * J, payable(J)));
-      const Q = O + P;
-      if (first === null && P > 0 && O === 0) first = K;
-      if (S === null && O < goal - 0.5 && Q >= goal - 0.5) {
-        S = K + (goal - O) / (P / J);
-        if (opt.stopAtGoal) return { days: S / 86400, partial: true };
-      }
-      payer(P, J);
-      if (trace) trace.push({ a, ph, desc, H, I, J, K, L, M, N: R.length ? R[0].N : 0, O, P, Q, R: R.length ? R[0].N : 0 });
-      O = Q; K += J;
+      const P = pas(L, M, J);
+      if (first === null && P.some(x => x > 0)) first = K;
+      avancer(P, J);
+      if (opt.stopAtGoal && fini()) return { days: Math.max(...Q.map(q => q.goal > 0 ? q.S : 0)) / 86400, partial: true };
+      if (trace) trace.push({ a, ph, desc, H, I, J, K, L: L[0] || 0, M: Q.length === 1 ? M / Q[0].U.places : M, Mp: M, O: Q.length ? Q[0].O - P[0] : 0,
+        Op: placesPrises(), P: P[0] || 0, Q: Q.length ? Q[0].O : 0, R: R.length ? R[0].N : 0, N: R.length ? R[0].N : 0 });
+      K += J;
     }
     const end = K / 86400;
-    const rate = (1 + na * C.AE[10]) / U.t;           // unités / s une fois tout construit
-    const cap = cap1(nb * C.BC[10] * (1 + C.CB[10]));
-    let tail = 0;
-    if (O < goal - 0.5 && cap >= goal) {
-      // après la construction : recrutement à pleine vitesse, limité par les ressources (pas de 10 min)
-      const dt = 600; let o = O, t = 0;
-      for (let i = 0; i < 1e6 && o < goal - 1e-9; i++) {
-        const P = Math.min(rate * dt, payable(dt), goal - o);
-        if (P <= 0) { t = Infinity; break; }
-        const part = P < Math.min(rate * dt, payable(dt)) - 1e-9 ? (P / Math.min(rate * dt, payable(dt))) * dt : dt;
-        payer(P, part); o += P; t += part;
+    const capPlaces = nbar * C.BC[10] * (1 + C.CB[10]);
+    const besoinPlaces = Q.reduce((s, q) => s + q.goal * q.U.places, 0);
+    const trEnd = Q.length ? Q[0].O : 0;
+    let tailInf = besoinPlaces > capPlaces + 0.5 || Q.some(q => q.goal > 0 && q.count === 0);
+    if (!tailInf && !fini()) {
+      const L = Q.map(q => (1 + q.count * C.AE[10]) / q.U.t), dt = 600;
+      for (let i = 0; i < 2e6 && !fini(); i++) {
+        const P = pas(L, capPlaces, dt);
+        if (!P.some(x => x > 0)) { tailInf = true; break; }
+        avancer(P, dt); K += dt;
       }
-      tail = t / 86400;
     }
-    const days = cap < goal ? Infinity : (S !== null ? S / 86400 : end + tail);
-    const besoin = {}; RESS.concat(["or"]).forEach(k => { if (U.cout[k]) besoin[k] = goal * U.cout[k]; });
-    return { days, end, cap, loss: castleLoss(n, l), lossW: castleLossW(n, l), trEnd: O, first: first === null ? null : first / 86400,
-             rate: rate * 86400, tail, steps: B4, besoin, iron: besoin.fer || 0, troupe: U, bat: Bt, trace };
+    const parFile = Q.map(q => ({ troupe: q.U, bat: q.Bt, nombre: q.count, objectif: q.goal, days: q.goal <= 0 ? 0 : (tailInf && q.S === null ? Infinity : q.S / 86400) }));
+    const days = tailInf ? Infinity : Math.max(0, ...parFile.map(x => x.days));
+    const besoin = {}; Q.forEach(q => Object.entries(q.U.cout).forEach(([k, v]) => { besoin[k] = (besoin[k] || 0) + q.goal * v; }));
+    const U0 = Q.length ? Q[0].U : TROUPES.vanq;
+    return { days, end, capPlaces, besoinPlaces, cap: Q.length === 1 ? capPlaces / U0.places : capPlaces, parFile,
+             loss: castleLoss(n, l), lossW: castleLossW(n, l), trEnd, first: first === null ? null : first / 86400,
+             rate: Q.length ? (1 + Q[0].count * C.AE[10]) / U0.t * 86400 : 0, steps: B4, besoin, iron: besoin.fer || 0,
+             troupe: U0, bat: Q.length ? Q[0].Bt : BATS.arena, trace };
+  }
+  // Une seule troupe (Solveur) : na bâtiments de recrutement de la troupe, nb Barracks.
+  function castleCombo(p, opt) {
+    const U = TROUPES[p.troupe] || TROUPES.vanq;
+    const jour = p.jour || { fer: p.iron };
+    return castleMix({ ...p, jour, nbar: p.nb, lignes: [{ bat: U.bat, nombre: p.na, troupe: p.troupe || "vanq", objectif: p.goal }] }, opt);
   }
   function castleLoss(n, l) { return n * (sum(C.cabS.slice(1, l + 1)) - sum(C.cabS.slice(1, l)) / 3); }
   function castleLossW(n, l) { return n * (sum(C.cabW.slice(1, l + 1)) - sum(C.cabW.slice(1, l)) / 3); }
@@ -416,5 +446,5 @@
              zerksReelsH, excedentFer: j(excedentFer), raffinage };
   }
 
-  root.CrownEngine = { TROUPES_CASTLE: TROUPES, BATS_CASTLE: BATS, castleCombo, castleGrid, castleSolve, castleLoss, citeTemps, citeOptimise, cabDemolition, raidSim, journalRow, raidSynthese, recrutement, heures, lireRapport, unitStats, butinBase, defenseParPoint, TYPES };
+  root.CrownEngine = { TROUPES_CASTLE: TROUPES, BATS_CASTLE: BATS, castleMix, castleCombo, castleGrid, castleSolve, castleLoss, citeTemps, citeOptimise, cabDemolition, raidSim, journalRow, raidSynthese, recrutement, heures, lireRapport, unitStats, butinBase, defenseParPoint, TYPES };
 })(typeof window !== "undefined" ? window : globalThis);

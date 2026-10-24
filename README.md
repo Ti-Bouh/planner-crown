@@ -74,6 +74,9 @@ Même barre principale que le planner ; ses onglets propres sont en dessous :
   d'enrôlement, places par unité, coût et bâtiment de recrutement (Training Arena, Écurie, Tour du sorcier, Académie,
   Forge ; même courbe de vitesse +5 % … +150 % pour tous). Les emplacements « Arenas » du plan deviennent les bâtiments
   de la troupe choisie. Fer, bois et pierre par jour de Ma cité limitent le recrutement ; l'or n'est pas limité.
+  Simulateur : nombre de chaque bâtiment militaire saisi à la main (Training Arenas, Écuries, Tours du sorcier,
+  Académies, Forges, Barracks), avec une troupe et un objectif par type de bâtiment ; les files recrutent en parallèle,
+  places et ressources partagées (`castleMix` ; `castleCombo` = une seule file, pour le Solveur).
 - **Cabines** : niveau et nombre optimaux pour construire toute la cité au niveau 10 le plus vite possible
   (10 emplacements par niveau de Basilica), plan de démolition groupe par groupe (suit l'optimum par défaut,
   paramètre `gardees` de `cabDemolition` ; « Un autre cas » pour tester ses valeurs).

@@ -222,13 +222,15 @@ svg.chart text{font-family:var(--f-body);font-size:11px;fill:var(--muted)}
     </div>
     <div class="panel">
       <h2>Simulateur – une configuration</h2>
-      <div class="form">
-        <label class="field"><span id="simNaLbl">Bâtiments de recrutement</span><input id="simNa" type="text" inputmode="decimal" data-num min="0" step="1"></label>
-        <label class="field"><span>Barracks (calcul)</span><input class="calc" id="simNb" readonly tabindex="-1"></label>
+      <p class="note" style="margin:0 0 10px">Saisis le nombre de chaque bâtiment militaire, avec la troupe qu'il recrute et l'objectif. Chaque type de bâtiment recrute en parallèle ; les places des Barracks et les ressources sont partagées.</p>
+      <div class="scroll"><table class="t" style="max-width:720px"><thead><tr><th class="l">Bâtiment de recrutement</th><th>Nombre</th><th class="l">Troupe</th><th>Objectif</th></tr></thead><tbody id="simBats"></tbody></table></div>
+      <div class="form" style="margin-top:10px">
+        <label class="field"><span>Barracks (Cabines comprises)</span><input id="simNb" type="text" inputmode="decimal" data-num min="0" step="1"></label>
         <label class="field"><span>Cabines</span><input id="simN" type="text" inputmode="decimal" data-num min="0" step="1"></label>
         <label class="field"><span>Niveau des Cabines</span><select id="simL"></select></label>
-        <label class="field"><span>Fer</span><select id="simFer"><option value="libre">Ressources suffisantes</option><option value="mon">Mes ressources par jour</option></select></label>
+        <label class="field"><span>Ressources</span><select id="simFer"><option value="libre">Ressources suffisantes</option><option value="mon">Mes ressources par jour</option></select></label>
       </div>
+      <p class="note" id="simTot" style="margin:6px 0 0"></p>
       <div class="btns" style="margin-top:10px"><button type="button" id="simFromBest">↺ Reprendre la meilleure combinaison</button></div>
       <div id="simOut"></div>
     </div>
@@ -454,42 +456,67 @@ async function solve(){
           ${isFinite(L.fini) ? `<p class="big">${L.n} Cabines niveau ${L.l} → château construit et rempli en ${n1(L.fini)} jours</p>` : ""}${ligne(L, 0)}</div>${isFinite(L.fini) ? table(libre, "castDetLibre", 0) : ""}` : "")
         + `<div class="reponse" style="margin-top:14px"><span class="lbl">Avec tes ressources par jour (${["fer", "bois", "pierre"].filter(k => U.cout[k]).map(k => RES_NOM[k] + " : " + (isFinite(base.jour[k]) ? n0(base.jour[k]) : "sans limite")).join(", ")})</span>
           ${isFinite(b.fini) ? `<p class="big">${b.n} Cabines niveau ${b.l} → château construit et rempli en ${n1(b.fini)} jours</p>` : ""}${ligne(b, 1)}</div>${isFinite(b.fini) ? table(r, "castDet", 1) : ""}`;
-      if (!$("simNa").value){ const x = L || b; setSim(x.na, x.n, x.l, L ? 0 : 1); }
+      if (!simInit){ const x = isFinite(L.fini) ? L : b; setSim(x.na, x.n, x.l, x === L ? 0 : 1); }
     }
   } finally { solving = false; btn.disabled = false; prog.hidden = true; renderResume(); }
 }
 $("solveBtn").addEventListener("click", solve);
 $("solveOut").addEventListener("click", e => { const b = e.target.closest("[data-sim]"); if (!b) return; const [na, n, l, fer] = b.dataset.sim.split(",").map(Number); setSim(na, n, l, fer); $("simOut").scrollIntoView({behavior:"smooth", block:"start"}); });
-function setSim(na, n, l, fer){ $("simNa").value = na; $("simN").value = n; $("simL").value = l; if (fer != null) $("simFer").value = fer ? "mon" : "libre"; renderSim(); }
+/* ---------- Simulateur : chaque bâtiment militaire saisi à la main (château mixte possible) ---------- */
+let simInit = false;
+function buildSimBats(){
+  if ($("simBats").children.length) return;
+  $("simBats").innerHTML = Object.entries(E.BATS_CASTLE).map(([b, B]) => {
+    const tr = Object.entries(E.TROUPES_CASTLE).filter(([, u]) => u.bat === b);
+    return `<tr><td class="l">${esc(B.pl)}</td><td><input data-sb-n="${b}" type="text" inputmode="decimal" data-num style="width:80px" value="0"></td>
+      <td class="l"><select data-sb-t="${b}" style="width:auto;min-width:0">${tr.map(([k, u]) => `<option value="${k}">${esc(u.nom)}</option>`).join("")}</select></td>
+      <td><input data-sb-o="${b}" type="text" inputmode="decimal" data-num style="width:110px" value="0"></td></tr>`; }).join("");
+}
+function setSim(na, n, l, fer){
+  buildSimBats(); simInit = true; const U = TRP();
+  Object.keys(E.BATS_CASTLE).forEach(b => { document.querySelector(`[data-sb-n="${b}"]`).value = 0; document.querySelector(`[data-sb-o="${b}"]`).value = 0; });
+  document.querySelector(`[data-sb-n="${U.bat}"]`).value = na; document.querySelector(`[data-sb-t="${U.bat}"]`).value = S.troupe || "vanq";
+  document.querySelector(`[data-sb-o="${U.bat}"]`).value = n0(num(S.objectif, 176000));
+  $("simNb").value = Math.max(0, mil() - na); $("simN").value = n; $("simL").value = l;
+  if (fer != null) $("simFer").value = fer ? "mon" : "libre";
+  renderSim();
+}
 $("simFromBest").addEventListener("click", () => { const x = $("simFer").value === "libre" ? lastLibre : lastBest; if (x) setSim(x.na, x.n, x.l); else solve(); });
-["simNa", "simN", "simL", "simFer"].forEach(id => $(id).addEventListener("input", renderSim));
+document.querySelector("#view-castle").addEventListener("input", e => { if (e.target.closest("#simBats") || ["simNb", "simN", "simL", "simFer"].includes(e.target.id)) renderSim(); });
+document.querySelector("#view-castle").addEventListener("change", e => { if (e.target.closest("#simBats")) renderSim(); });
+function simLignes(){ return Object.keys(E.BATS_CASTLE).map(b => ({ bat: b, nombre: num(document.querySelector(`[data-sb-n="${b}"]`).value, 0),
+  troupe: document.querySelector(`[data-sb-t="${b}"]`).value, objectif: num(document.querySelector(`[data-sb-o="${b}"]`).value, 0) })); }
 function renderSim(){
-  const na = num($("simNa").value, NaN), l = num($("simL").value, 8); let n = num($("simN").value, NaN);
-  $("simNaLbl").textContent = E.BATS_CASTLE[TRP().bat].pl;
-  if (isNaN(na) || isNaN(n)){ $("simOut").innerHTML = ""; return; }
-  const nb = mil() - na; $("simNb").value = nb;
-  if (nb < 0){ $("simOut").innerHTML = `<p class="warn">Plus d'Arenas que d'emplacements militaires (${mil()}).</p>`; return; }
-  let lim = ""; if (n > nb){ n = nb; lim = `<p class="note">Cabines limitées à ${nb} (une par emplacement de Barracks).</p>`; }
-  const base = {...castleBase(), ...($("simFer").value === "libre" ? {jour: SANS_LIMITE} : {})}, r = E.castleCombo({...base, na, nb, n, l}, {trace:true}), U = TRP();
-  const ok = r.cap >= base.goal;
+  buildSimBats();
+  if (!simInit){ $("simOut").innerHTML = ""; $("simTot").textContent = ""; return; }
+  const lignes = simLignes(), l = num($("simL").value, 8), nbar = Math.max(0, Math.round(num($("simNb").value, 0)));
+  let n = Math.max(0, Math.round(num($("simN").value, 0)));
+  const nRec = lignes.reduce((s, x) => s + x.nombre, 0), tot = nRec + nbar;
+  $("simTot").textContent = `${n0(tot)} emplacements militaires (${n0(nRec)} de recrutement + ${n0(nbar)} Barracks)` + (mil() && tot !== mil() ? ` · ton plan dans Ma cité en compte ${n0(mil())}.` : ".");
+  if (!lignes.some(x => x.objectif > 0)){ $("simOut").innerHTML = `<p class="note">Mets un objectif sur au moins une ligne.</p>`; return; }
+  let lim = ""; if (n > nbar){ n = nbar; lim = `<p class="note">Cabines limitées à ${nbar} (une par emplacement de Barracks).</p>`; }
+  const base = {...castleBase(), ...($("simFer").value === "libre" ? {jour: SANS_LIMITE} : {})};
+  const r = E.castleMix({...base, lignes, nbar, n, l}, {trace:true});
+  const fini = Math.max(r.days, r.end), tropPetit = r.besoinPlaces > r.capPlaces + 0.5;
   const pts = []; const tEnd = Math.max(isFinite(r.days) ? r.days : r.end, r.end), step = tEnd / 60;
-  let j = 0; for (let k = 0; k <= 60; k++){ const t = k * step * 86400; while (j < r.trace.length - 1 && r.trace[j + 1].K <= t) j++; const s = r.trace[j]; if (t <= r.end * 86400 + 1) pts.push([k * step, s.O, s.M]); }
-  // après la fin de la construction, la courbe va jusqu'au jour où l'objectif est atteint
-  if (ok && isFinite(r.days) && pts.length && r.days > pts[pts.length - 1][0] + 1e-9){
-    if (pts[pts.length - 1][0] < r.end) pts.push([r.end, r.trEnd, r.cap]); pts.push([r.days, base.goal, r.cap]); }
+  let j = 0; for (let k = 0; k <= 60; k++){ const t = k * step * 86400; while (j < r.trace.length - 1 && r.trace[j + 1].K <= t) j++; const s = r.trace[j]; if (t <= r.end * 86400 + 1) pts.push([k * step, s.Op, s.Mp]); }
+  if (isFinite(r.days) && pts.length && r.days > pts[pts.length - 1][0] + 1e-9){
+    const last = r.trace[r.trace.length - 1]; if (pts[pts.length - 1][0] < r.end) pts.push([r.end, last.Op, r.capPlaces]); pts.push([r.days, r.besoinPlaces, r.capPlaces]); }
+  const files = r.parFile.filter(f => f.objectif > 0).map(f => `<div><span class="lbl">${n0(f.objectif)} ${esc(f.troupe.pl)} · ${n0(f.nombre)} ${esc(f.bat.pl)}</span><b>${isFinite(f.days) ? n1(f.days) + " <small>jours</small>" : "—"}</b></div>`).join("");
+  const sansBat = r.parFile.filter(f => f.objectif > 0 && f.nombre === 0).map(f => esc(f.troupe.pl));
   $("simOut").innerHTML = `${lim}<div class="kpis" style="margin-top:12px">
-      <div><span class="lbl">Objectif atteint en</span><b>${ok ? n1(r.days) + " <small>jours</small>" : "—"}</b></div>
+      <div><span class="lbl">Château fini (construit et rempli)</span><b>${isFinite(fini) ? n1(fini) + " <small>jours</small>" : "—"}</b></div>
       <div><span class="lbl">Construction terminée</span><b>${n1(r.end)} <small>jours</small></b></div>
-      <div><span class="lbl">Capacité finale</span><b>${n0(Math.floor(r.cap))} <small>${esc(U.pl)}</small></b></div>
-      <div><span class="lbl">${esc(U.pl)} à la fin de la construction</span><b>${n0(r.trEnd)}</b></div></div>
+      <div><span class="lbl">Places</span><b>${n0(r.besoinPlaces)} <small>/ ${n0(r.capPlaces)}</small></b></div></div>
+    <div class="kpis" style="margin-top:8px">${files}</div>
+    ${tropPetit ? `<p class="warn">Castle trop petit : les objectifs demandent ${n0(r.besoinPlaces)} places pour ${n0(r.capPlaces)} disponibles avec ${n0(nbar)} Barracks.</p>` : ""}
+    ${sansBat.length ? `<p class="warn">Aucun bâtiment de recrutement pour : ${sansBat.join(", ")}.</p>` : ""}
     ${detail("simDet", `<div class="kpis" style="margin-top:8px"><div><span class="lbl">Premier recrutement</span><b>${r.first == null ? "—" : n1(r.first) + " <small>j</small>"}</b></div>
-      <div><span class="lbl">Enrôlement final</span><b>${n0(r.rate)} <small>/ jour</small></b></div>
       <div><span class="lbl">Ressources nécessaires</span><b style="font-size:1rem">${Object.entries(r.besoin).map(([k, v]) => n0(v) + " " + RES_NOM[k]).join("<br>")}</b></div>
       <div><span class="lbl">Pierre / bois perdus (Cabines)</span><b>${n0(r.loss)} <small>/ ${n0(r.lossW)}</small></b></div></div>`)}
-    ${ok ? "" : `<p class="warn">Castle trop petit : il loge ${n0(Math.floor(r.cap))} ${esc(U.pl)} pour un objectif de ${n0(base.goal)}.</p>`}
-    ${chart(pts, base.goal)}
-    <details style="margin-top:10px"><summary>Détail étape par étape (${n0(r.steps)} étapes)</summary><div class="scroll" style="max-height:420px;overflow-y:auto"><table class="t"><thead><tr><th>Étape</th><th class="l">Construction</th><th>Vitesse</th><th>Durée (h)</th><th>Début (j)</th><th>Capacité</th><th>Vanquishers</th><th>Fer</th></tr></thead><tbody>
-    ${r.trace.map(s => `<tr><td>${s.a}</td><td class="l">${esc(s.desc)}</td><td>${n0(s.I * 100)} %</td><td>${n2(s.J / 3600)}</td><td>${n2(s.K / 86400)}</td><td>${n0(s.M)}</td><td>${n0(s.Q)}</td><td>${n0(s.R)}</td></tr>`).join("")}</tbody></table></div></details>`;
+    ${chart(pts, r.besoinPlaces)}
+    <details style="margin-top:10px"><summary>Détail étape par étape (${n0(r.steps)} étapes)</summary><div class="scroll" style="max-height:420px;overflow-y:auto"><table class="t"><thead><tr><th>Étape</th><th class="l">Construction</th><th>Vitesse</th><th>Durée (h)</th><th>Début (j)</th><th>Capacité (places)</th><th>Places occupées</th></tr></thead><tbody>
+    ${r.trace.map(s => `<tr><td>${s.a}</td><td class="l">${esc(s.desc)}</td><td>${n0(s.I * 100)} %</td><td>${n2(s.J / 3600)}</td><td>${n2(s.K / 86400)}</td><td>${n0(s.Mp)}</td><td>${n0(s.Op)}</td></tr>`).join("")}</tbody></table></div></details>`;
 }
 function chart(pts, goal){
   if (pts.length < 2) return "";
@@ -497,7 +524,7 @@ function chart(pts, goal){
   const x = v => L + (W - L - R) * v / xm, y = v => T + (H - T - B) * (1 - v / ym);
   const line = i => pts.map((p, k) => (k ? "L" : "M") + x(p[0]).toFixed(1) + " " + y(p[i]).toFixed(1)).join(" ");
   const ticks = [0, .25, .5, .75, 1].map(f => f * ym);
-  return `<div style="margin-top:12px"><span class="note"><span class="sw" style="background:var(--brass)"></span>Troupes <span class="sw" style="background:var(--def);margin-left:12px"></span>Capacité <span class="sw" style="background:var(--off);margin-left:12px"></span>Objectif</span>
+  return `<div style="margin-top:12px"><span class="note"><span class="sw" style="background:var(--brass)"></span>Places occupées <span class="sw" style="background:var(--def);margin-left:12px"></span>Capacité (places) <span class="sw" style="background:var(--off);margin-left:12px"></span>Objectif</span>
    <svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Troupes et capacité au fil des jours">
    ${ticks.map(t => `<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)"/><text x="${L - 6}" y="${y(t) + 4}" text-anchor="end">${n0(t / 1000)} k</text>`).join("")}
    ${[0, .25, .5, .75, 1].map(f => `<text x="${x(f * xm)}" y="${H - 10}" text-anchor="${f === 0 ? "start" : f === 1 ? "end" : "middle"}">${n1(f * xm)} j</text>`).join("")}
