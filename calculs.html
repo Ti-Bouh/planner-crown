@@ -203,7 +203,7 @@ svg.chart text{font-family:var(--f-body);font-size:11px;fill:var(--muted)}
   <!-- ================= CASTLE ================= -->
   <section class="view" id="view-castle" hidden>
     <div class="panel">
-      <h2>Solveur – Cabines pour un château construit le plus vite</h2>
+      <h2>Solveur – Cabines pour un château rempli le plus vite</h2>
       <p class="note" style="margin:0 0 10px" id="solveIntro"></p>
       <div class="form">
         <label class="field"><span>Objectif (zerks)</span><input data-k="objectif" type="text" inputmode="decimal" data-num min="1" step="1000"></label>
@@ -214,6 +214,7 @@ svg.chart text{font-family:var(--f-body);font-size:11px;fill:var(--muted)}
       <div class="progress" id="solveProg" hidden><span></span></div>
       <div id="solveOut"></div>
       <details class="avance"><summary>Réglages avancés</summary><div class="form">
+        <label class="field"><span>Délai accepté en plus du meilleur (heures)</span><input data-k="solvTol" type="text" inputmode="decimal" data-num min="0" step="1"><small>Pour garder moins de Cabines quand elles ne font gagner que quelques heures.</small></label>
         <label class="field"><span>Cabines par pas de</span><input data-k="solvCabPas" type="text" inputmode="decimal" data-num min="1" step="1"></label>
         <label class="field"><span>Niveaux de Cabines</span><select data-k="solvNiv"><option value="4-10">4 à 10</option><option value="1-10">1 à 10</option><option value="6-10">6 à 10</option></select></label>
       </div></details>
@@ -343,7 +344,7 @@ const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp
 /* ---------- réglages par défaut (valeurs des classeurs Crown) ---------- */
 const DEF = { res:0, autresBonus:0, groupes:5, ferJour:1000000, pierreJour:150000, boisJour:"", objectif:176000, stockage:575000,
   arenas:26, barracks:65, cabDepart:0, demSource:"optimum", rTroupesSrc:"__recrut", testCabines:50, testNiveau:8,
-  solvCabPas:2, solvNiv:"4-10", tolerance:0.5, seuilNiveau:0.5, basDepart:8, planAcademies:1, planForums:2, planEntrepots:2, planTours:1, planCastles:1, demRemplacer:"Barracks", demVise:10,
+  solvCabPas:2, solvNiv:"4-10", solvTol:3, tolerance:0.5, seuilNiveau:0.5, basDepart:8, planAcademies:1, planForums:2, planEntrepots:2, planTours:1, planCastles:1, demRemplacer:"Barracks", demVise:10,
   lienVille:"", rCave:"Forêt", rNiveau:6, rPct:0.69, rMarge:1, rCoef:0.1, rValeurOr:1, rDispo:8000, tDispo:3000, sType:"Forêt", sNiveau:6, sPctMin:0, sPctMax:1,
   bonusUnites:{}, demTypes:{} };
 let lastSaved = "";
@@ -398,7 +399,7 @@ function renderCite(){
 }
 function renderResume(){
   const r = [];
-  if (lastBest) r.push(["Castle", lastBest.n + " Cabines niv. " + lastBest.l + " → château construit en " + jours(lastBest.end)]);
+  if (lastBest) r.push(["Castle", lastBest.n + " Cabines niv. " + lastBest.l + " → château rempli en " + jours(lastBest.days)]);
   else r.push(["Castle", "lance le Solveur dans l'onglet Castle."]);
   const o = cabOut; if (o) r.push(["Cabines", "niveau " + o.recommended.niveau + " × " + o.recommended.n + " Cabines → cité terminée en " + jours(o.recommended.delai)]);
   const rs = raidOut; if (rs) r.push(["Raids", rs.cave + " " + rs.niveau + " à " + Math.round(rs.pct * 100) + " % : " + rs.r.best.cavernes + " si les cavernes te limitent"]);
@@ -408,14 +409,14 @@ function renderResume(){
 /* ---------- CASTLE ---------- */
 function solverQuery(){
   const [lvMin, lvMax] = String(S.solvNiv || "4-10").split("-").map(Number);
-  return { mil: mil(), cabStep: Math.max(1, num(S.solvCabPas, 2)), lvMin, lvMax, fixedNa: Math.min(num(S.arenas, 0), mil()) };
+  return { mil: mil(), cabStep: Math.max(1, num(S.solvCabPas, 2)), lvMin, lvMax, fixedNa: Math.min(num(S.arenas, 0), mil()), tol: Math.max(0, num(S.solvTol, 3)) / 24 };
 }
 let solving = false;
 async function solve(){
   if (solving) return; solving = true; const btn = $("solveBtn"); btn.disabled = true;
   const prog = $("solveProg"); prog.hidden = false; const bar = prog.querySelector("span");
   const q = solverQuery(), base = castleBase(), t0 = performance.now();
-  $("solveIntro").textContent = `Arenas et Barracks de ton plan (Ma cité) : ${q.fixedNa} Training Arenas, ${q.mil - q.fixedNa} Barracks. On cherche le nombre et le niveau de Cabines qui finissent la construction le plus tôt.`;
+  $("solveIntro").textContent = `Arenas et Barracks de ton plan (Ma cité) : ${q.fixedNa} Training Arenas, ${q.mil - q.fixedNa} Barracks. On cherche le nombre et le niveau de Cabines qui remplissent le château le plus tôt, sans construire plus vite que nécessaire.`;
   try {
     const r = await E.castleSolve(base, q, async (i, n) => { bar.style.width = (100 * i / n) + "%"; await new Promise(res => setTimeout(res, 0)); }, 10);
     lastBest = r.best[0] || null;
@@ -423,12 +424,13 @@ async function solve(){
     if (!r.best.length){ $("solveOut").innerHTML = `<p class="warn">Aucune combinaison à tester : vérifie le plan de la cité dans Ma cité.</p>`; }
     else {
       const b = r.best[0], ferMin = base.goal * D.castle.vqIron / base.iron, ferLimite = isFinite(b.days) && isFinite(ferMin) && b.days - ferMin < 1;
+      const ecart = b.end - b.days;
       const obj = !isFinite(b.days) ? `<p class="warn" style="margin:0">Objectif de ${n0(base.goal)} zerks impossible : ${n0(b.cap)} places seulement avec ${b.nb} Barracks.</p>`
-        : `<p class="note" style="margin:0">Objectif de ${n0(base.goal)} zerks atteint en ${n1(b.days)} j.${isFinite(ferMin) ? ` Avec ton fer (${n0(base.iron)} par jour), il ne peut pas l'être avant ${n1(ferMin)} j${ferLimite ? " : c'est le fer qui fixe ce délai, pas la construction" : ""}.` : ""}</p>`;
-      $("solveOut").innerHTML = `<div class="reponse"><span class="lbl">Réponse</span><p class="big">${b.n} Cabines niveau ${b.l} → château construit en ${n1(b.end)} jours</p>${obj}</div>
-        ${detail("castDet", `<h3>Les ${r.best.length} meilleures <small style="font-weight:400;text-transform:none;letter-spacing:0">· clique une ligne pour la simuler ci-dessous</small></h3><div class="scroll"><table class="t"><thead><tr><th>Rang</th><th>Cabines</th><th>Niveau</th><th>Château construit (j)</th><th>Objectif zerks (j)</th><th>Pierre perdue</th></tr></thead><tbody>
-        ${r.best.map((x, i) => `<tr class="${i ? "" : "best"} clic" data-sim="${x.na},${x.n},${x.l}" title="Simuler cette combinaison"><td>${i + 1}</td><td>${x.n}</td><td>${x.l}</td><td>${n2(x.end)}</td><td>${isFinite(x.days) ? n2(x.days) : "—"}</td><td>${n0(x.loss)}</td></tr>`).join("")}
-        </tbody></table></div><p class="note">Classées par date de fin de construction ; à égalité, l'objectif de zerks le plus tôt, puis le moins de pierre perdue.</p>`, `Voir les ${r.best.length} meilleures combinaisons`)}`;
+        : `<p class="note" style="margin:0">Construction terminée en ${n1(b.end)} j${Math.abs(ecart) < 1 ? " : elle colle au remplissage" : ecart > 0 ? `, ${n1(ecart)} j après le remplissage (le château se remplit pendant la construction)` : `, ${n1(-ecart)} j avant le remplissage`}.${ferLimite ? ` C'est ton fer (${n0(base.iron)} par jour) qui fixe ce délai : plus de Cabines ne rempliraient pas plus vite.` : ""}</p>`;
+      $("solveOut").innerHTML = `<div class="reponse"><span class="lbl">Réponse</span><p class="big">${b.n} Cabines niveau ${b.l} → ${n0(base.goal)} zerks en ${n1(b.days)} jours</p>${obj}</div>
+        ${detail("castDet", `<h3>Les ${r.best.length} meilleures <small style="font-weight:400;text-transform:none;letter-spacing:0">· clique une ligne pour la simuler ci-dessous</small></h3><div class="scroll"><table class="t"><thead><tr><th>Rang</th><th>Cabines</th><th>Niveau</th><th>Rempli (j)</th><th>Construit (j)</th><th>Pierre perdue</th></tr></thead><tbody>
+        ${r.best.map((x, i) => `<tr class="${i ? "" : "best"} clic" data-sim="${x.na},${x.n},${x.l}" title="Simuler cette combinaison"><td>${i + 1}</td><td>${x.n}</td><td>${x.l}</td><td>${isFinite(x.days) ? n2(x.days) : "—"}</td><td>${n2(x.end)}</td><td>${n0(x.loss)}</td></tr>`).join("")}
+        </tbody></table></div><p class="note">Parmi les combinaisons qui remplissent le château à ${n0(num(S.solvTol, 3))} h près du meilleur délai (${n2(r.min)} j), celle qui perd le moins de pierre est en tête.</p>`, `Voir les ${r.best.length} meilleures combinaisons`)}`;
       if (!$("simNa").value) setSim(b.na, b.n, b.l);
     }
   } finally { solving = false; btn.disabled = false; prog.hidden = true; renderResume(); }
@@ -989,7 +991,7 @@ function renderAll(){ renderRappels(); renderPVilles(); renderCite(); renderCab(
 /* ---------- vues ---------- */
 const GUIDE = {
   cite: ["À quoi sert Ma cité", "les réglages communs, saisis une fois : recherche, fer / pierre / bois par jour, plan de la cité. Les autres onglets s'en servent. Colle un rapport de raid pour remplir le fer, la pierre et le bois automatiquement."],
-  castle: ["À quoi sert Castle", "trouver le nombre et le niveau de Cabines qui finissent la construction du château le plus vite, avec les Arenas et Barracks de ton plan, puis simuler une configuration jour par jour."],
+  castle: ["À quoi sert Castle", "trouver le nombre et le niveau de Cabines qui remplissent le château le plus vite (objectif de zerks), sans construire plus vite que nécessaire, avec les Arenas et Barracks de ton plan, puis simuler une configuration jour par jour."],
   cabines: ["À quoi sert Cabines", "savoir combien de Cabines poser et à quel niveau pour construire toute la cité au niveau 10 le plus vite, puis préparer la démolition groupe par groupe."],
   raids: ["À quoi sert Raids", "savoir combien de troupes envoyer sur une caverne, quel mélange Rangers / Triaires rapporte le plus, et comparer tes raids dans le journal."],
   recrut: ["À quoi sert Recrutement", "coller un rapport de raid pour savoir combien de zerks ton fer paie à l'heure et à quel niveau mettre tes Training Arenas pour recruter sans arrêt."]
