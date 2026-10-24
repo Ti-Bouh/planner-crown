@@ -758,6 +758,30 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
   </div>
 
   <div class="view" id="view-carte" hidden>
+  <section class="panel" aria-label="Barons envoyés">
+    <div class="toolbar">
+      <h2 style="margin:0">Barons envoyés</h2>
+      <div class="tright"><label class="chk"><input type="checkbox" id="bn-done"> Voir les terminés</label><button type="button" class="addbtn" data-open="bnPanel">+ Noter un baron</button></div>
+    </div>
+    <div class="kpis" id="bn-kpis" style="margin-top:0"></div>
+    <details id="bnPanel" class="mform addp">
+      <summary id="bnTitle">Noter un baron envoyé</summary>
+      <form id="bnForm" autocomplete="off">
+        <div class="row">
+          <label class="field w-num"><span class="lbl">X</span><input id="bn-x" type="number" min="0" max="999" required></label>
+          <label class="field w-num"><span class="lbl">Y</span><input id="bn-y" type="number" min="0" max="999" required></label>
+          <label class="field w-sel" style="flex-basis:150px"><span class="lbl">Joueur</span><select id="bn-fiche"></select></label>
+          <label class="field w-sel" style="flex-basis:150px"><span class="lbl">Date d'arrivée</span><input id="bn-date" type="date"></label>
+          <label class="field w-sel" style="flex-basis:130px"><span class="lbl">Heure d'arrivée</span><input id="bn-heure" type="time" step="1"></label>
+          <label class="field w-name"><span class="lbl">Note</span><input id="bn-note" maxlength="80" placeholder="ex. spot côtier, envoyé depuis C33-002"></label>
+        </div>
+        <p class="fmsg" id="bn-warn"></p>
+        <div class="btns"><button type="submit" class="primary" id="bn-save">Ajouter le spot</button><button type="button" id="bn-cancel" hidden>Annuler</button></div>
+      </form>
+    </details>
+    <div class="scroll" style="margin-top:14px"><table class="env" id="bnTable"></table></div>
+    <p class="note">Clique le statut pour le faire avancer : en route → réussi → raté. Un spot visé deux fois est signalé.</p>
+  </section>
   <section class="panel" aria-label="Carte des réservations">
     <h2>Carte des réservations</h2>
     <div class="ctool">
@@ -827,30 +851,6 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
     <label style="display:flex;gap:6px;align-items:center;margin:4px 0"><input type="checkbox" id="cImpHide"><span class="chint" style="margin:0">Masquer l'analyse pour comparer avec la capture</span></label>
     <p class="chint" id="cImpMsg">Aucune capture chargée.</p>
     <div class="cmapwrap" style="max-height:70vh"><canvas id="cImpCv" style="display:block;cursor:crosshair"></canvas></div>
-  </section>
-  <section class="panel" aria-label="Barons envoyés">
-    <div class="toolbar">
-      <h2 style="margin:0">Barons envoyés</h2>
-      <div class="tright"><label class="chk"><input type="checkbox" id="bn-done"> Voir les terminés</label><button type="button" class="addbtn" data-open="bnPanel">+ Noter un baron</button></div>
-    </div>
-    <div class="kpis" id="bn-kpis" style="margin-top:0"></div>
-    <details id="bnPanel" class="mform addp">
-      <summary id="bnTitle">Noter un baron envoyé</summary>
-      <form id="bnForm" autocomplete="off">
-        <div class="row">
-          <label class="field w-num"><span class="lbl">X</span><input id="bn-x" type="number" min="0" max="999" required></label>
-          <label class="field w-num"><span class="lbl">Y</span><input id="bn-y" type="number" min="0" max="999" required></label>
-          <label class="field w-sel" style="flex-basis:150px"><span class="lbl">Joueur</span><select id="bn-fiche"></select></label>
-          <label class="field w-sel" style="flex-basis:150px"><span class="lbl">Date d'arrivée</span><input id="bn-date" type="date"></label>
-          <label class="field w-sel" style="flex-basis:130px"><span class="lbl">Heure d'arrivée</span><input id="bn-heure" type="time" step="1"></label>
-          <label class="field w-name"><span class="lbl">Note</span><input id="bn-note" maxlength="80" placeholder="ex. spot côtier, envoyé depuis C33-002"></label>
-        </div>
-        <p class="fmsg" id="bn-warn"></p>
-        <div class="btns"><button type="submit" class="primary" id="bn-save">Ajouter le spot</button><button type="button" id="bn-cancel" hidden>Annuler</button></div>
-      </form>
-    </details>
-    <div class="scroll" style="margin-top:14px"><table class="env" id="bnTable"></table></div>
-    <p class="note">Clique le statut pour le faire avancer : en route → réussi → raté. Un spot visé deux fois est signalé.</p>
   </section>
   </div>
 
@@ -2165,7 +2165,7 @@ $("bnForm").addEventListener("submit", async e => {
 });
 $("bnTable").addEventListener("click", async e => {
   const mp = e.target.closest("[data-bnmap]");
-  if (mp){ const b = barons.find(x => x.id === mp.dataset.bnmap); if (!b) return; showView("carte"); window.scrollTo({top:0}); carteSelect(+b.x, +b.y); return; }
+  if (mp){ const b = barons.find(x => x.id === mp.dataset.bnmap); if (!b) return; showView("carte"); carteSelect(+b.x, +b.y); document.querySelector('#view-carte [aria-label="Carte des réservations"]').scrollIntoView({block:"start"}); return; }
   const st = e.target.closest("[data-bnst]"), ed = e.target.closest("[data-bnedit]"), del = e.target.closest("[data-bndel]");
   if (st){ const b = barons.find(x => x.id === st.dataset.bnst); if (!b || !db) return;
     try { await db.doc("barons/" + b.id).update({statut:BN_NEXT[b.statut||"envoye"], maj:new Date().toISOString()}); } catch(err){ setStatus("Statut non enregistré : " + (err.message || err.code)); } return; }

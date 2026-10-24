@@ -48,7 +48,7 @@ Ligne « Voir la fiche de » : Tous, une fiche par joueur, puis deux sous-onglet
 
 ### Carte et barons
 Terrain du continent, cases réservées, villes des autres joueurs, import du terrain depuis une capture. Panneau
-« Barons envoyés » (collection `barons`) sous la carte ; les barons en route apparaissent aussi sur la carte.
+« Barons envoyés » (collection `barons`) au-dessus de la carte ; les barons en route apparaissent aussi sur la carte.
 
 ### Plans
 On colle un sharestring de plan de ville (`[ShareString.1.3]`, celui du jeu et de CotG Optimizer), avec un nom et une
