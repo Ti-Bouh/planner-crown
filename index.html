@@ -234,6 +234,15 @@ body.wide .wrap{max-width:1880px}
 /* ---------- vue attaques ---------- */
 .opbar{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:end;justify-content:space-between}
 .opbar form,.opbar .row{align-items:end}
+#tcGrid h3{margin:12px 0 6px;font-size:13px;color:var(--muted);font-weight:600}
+#tcGrid .wgrid input{width:100%;min-width:0;box-sizing:border-box}
+#tcTable td.n,#tcTable th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+#tcTable tr.tot td{font-weight:700;border-top:2px solid var(--line)}
+.tcchip{display:inline-block;margin:2px 6px 2px 0;padding:2px 8px;border-radius:999px;font-size:12px;white-space:nowrap;border:1px solid var(--line);background:var(--panel)}
+.tcchip b{font-variant-numeric:tabular-nums}
+.tcchip.off{border-color:color-mix(in srgb,var(--off,#b23a3a) 45%,transparent)}
+.tcchip.def{border-color:color-mix(in srgb,var(--def,#2f6db3) 45%,transparent)}
+.tcchip.hl{background:color-mix(in srgb,var(--brass) 18%,transparent);border-color:var(--brass)}
 .kpis{display:flex;flex-wrap:wrap;gap:10px 26px;margin-top:16px}
 .kpis div{display:grid}
 .kpis b{font-size:1.4rem;font-variant-numeric:tabular-nums;line-height:1.15}
@@ -425,6 +434,7 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
       <button type="button" class="vbtn" role="tab" data-view="defense" aria-selected="false">Défense</button>
       <button type="button" class="vbtn" role="tab" data-view="carte" aria-selected="false">Carte et barons</button>
       <button type="button" class="vbtn" role="tab" data-view="plans" aria-selected="false">Plans</button>
+      <button type="button" class="vbtn" role="tab" data-view="c33" aria-selected="false">Troupes C33</button>
     </div>
     <div class="vgrp"><button type="button" class="vbtn" role="tab" data-view="outils" aria-selected="false">⚙ Réglages</button></div>
   </div>
@@ -851,6 +861,37 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
     <label style="display:flex;gap:6px;align-items:center;margin:4px 0"><input type="checkbox" id="cImpHide"><span class="chint" style="margin:0">Masquer l'analyse pour comparer avec la capture</span></label>
     <p class="chint" id="cImpMsg">Aucune capture chargée.</p>
     <div class="cmapwrap" style="max-height:70vh"><canvas id="cImpCv" style="display:block;cursor:crosshair"></canvas></div>
+  </section>
+  </div>
+
+  <div class="view" id="view-c33" hidden>
+  <section class="panel" aria-label="Troupes des membres du C33">
+    <div class="toolbar">
+      <h2 style="margin:0">Troupes des membres du C33</h2>
+      <div class="seg" id="tcRoleTabs" role="tablist" aria-label="Filtrer par rôle"></div>
+      <div class="tright">
+        <div class="plfilt">
+          <label class="field"><span class="lbl">Troupe</span><select id="tc-f-unit"></select></label>
+          <label class="field"><span class="lbl">Chercher</span><input id="tc-f-q" placeholder="pseudo"></label>
+        </div>
+        <button type="button" class="addbtn" data-open="tcPanel">+ Ajouter un joueur</button>
+      </div>
+    </div>
+    <div class="kpis" id="tc-kpis" style="margin-top:0"></div>
+    <details class="mform addp" id="tcPanel">
+      <summary id="tcTitle">Ajouter un joueur</summary>
+      <form id="tcForm" autocomplete="off">
+        <div class="row">
+          <label class="field w-name"><span class="lbl">Pseudo</span><input id="tc-nom" maxlength="30" required placeholder="pseudo dans le jeu"></label>
+          <label class="field w-name"><span class="lbl">Note</span><input id="tc-note" maxlength="80" placeholder="ex. 2 châteaux zerks, dispo le soir"></label>
+        </div>
+        <div id="tcGrid"></div>
+        <p class="fmsg" id="tc-warn"></p>
+        <div class="btns"><button type="submit" class="primary" id="tc-save">Ajouter le joueur</button><button type="button" id="tc-cancel" hidden>Annuler</button></div>
+      </form>
+    </details>
+    <div class="scroll" style="margin-top:14px"><table class="env" id="tcTable"></table></div>
+    <p class="note">Laisse vide une troupe que le joueur n'a pas. Off ou Def en haut : n'affiche que ces troupes, chez les joueurs qui en ont, du plus gros TS au plus petit. Bordure rouge = off, bleue = def. Choisis une troupe dans le filtre pour voir qui en a, du plus gros au plus petit.</p>
   </section>
   </div>
 
@@ -1301,7 +1342,7 @@ $("impApply").addEventListener("click", async () => {
 
 /* ---------- fiches ---------- */
 let fiches = [], currentFiche = null, unsubVilles = null, curView = "fiche", countTxt = "";
-const COMMON_VIEWS = ["maintenant","binome","attaques","defense","carte","plans","outils"];
+const COMMON_VIEWS = ["maintenant","binome","attaques","defense","carte","plans","c33","outils"];
 const countStatus = () => COMMON_VIEWS.includes(curView) ? "Enregistré automatiquement" : (countTxt || "Enregistré automatiquement");
 const col = () => db.collection(`fiches/${currentFiche}/villes`);
 function renderTabs(){
@@ -1311,13 +1352,14 @@ function renderTabs(){
     || `<span class="note">Aucune fiche : crée la tienne dans Réglages.</span>`;
   const f = fiches.find(x => x.id === currentFiche);
   const common = COMMON_VIEWS.includes(curView);
-  document.querySelector("h1").textContent = common ? ({maintenant:"Maintenant", binome:"Binôme", attaques:"Attaques", defense:"Défense", carte:"Carte et barons", plans:"Plans", outils:"Réglages"})[curView] : rv ? "Ravitaillement" : curView === "rech" ? "Recherches" : isAll() ? "Nos villes" : (f ? (f.id === moi ? "Mes villes" : "Villes de " + f.nom) : "Mes villes");
+  document.querySelector("h1").textContent = common ? ({maintenant:"Maintenant", binome:"Binôme", attaques:"Attaques", defense:"Défense", carte:"Carte et barons", plans:"Plans", c33:"Troupes C33", outils:"Réglages"})[curView] : rv ? "Ravitaillement" : curView === "rech" ? "Recherches" : isAll() ? "Nos villes" : (f ? (f.id === moi ? "Mes villes" : "Villes de " + f.nom) : "Mes villes");
   $("subTitle").textContent = curView === "maintenant" ? (moi ? "Ce que tu as à faire, en un coup d'œil." : "Choisis qui tu es en haut à droite pour voir tes ordres.")
     : curView === "binome" ? "Vue commune : équilibre off / def et troupes de tous les joueurs."
     : curView === "attaques" ? "Vue commune : opérations, plan de frappe et envois de chaque joueur."
     : curView === "defense" ? "Vue commune : villes menacées, renforts engagés et ce que chacun doit envoyer."
     : curView === "carte" ? "Vue commune : terrain du continent, cases réservées, villes des autres joueurs et barons envoyés."
     : curView === "plans" ? "Vue commune : vos plans de ville, à coller et recopier dans le jeu."
+    : curView === "c33" ? "Vue commune : les troupes que les membres du continent C33 vous ont données, joueur par joueur."
     : curView === "outils" ? "Joueurs, import des exports du jeu et poids TS."
     : curView === "rech" ? "Tes recherches de combat et de durabilité, et la foi des dieux commune à vous deux."
     : rv ? "Tes villes uniquement : ce qui part au hub, ce qui est raffiné et qui reçoit du hub."
@@ -2441,20 +2483,94 @@ document.addEventListener("click", e => {
   if (d.open) requestAnimationFrame(() => { const i = d.querySelector("input:not([type=hidden]):not([type=checkbox]),select,textarea"); d.scrollIntoView({block:"nearest"}); if (i) i.focus({preventScroll:true}); });
 });
 
+/* ---------- vue troupes C33 (membres du continent, hors fiches du site) ---------- */
+let tcList = [], editTc = null;
+const TC_GROUPS = [["Offensives",["Vanquisher","Sorcerer","Horseman","Druid"]],["Siège",["Ram","Scorpion"]],
+  ["Défensives",["Guard","Ranger","Triari","Priestess","Arbalist","Praetor","Ballista"]],["Navales",["Warship","Stinger","Galley"]],["Autres",["Scout","Senator"]]];
+const TC_UNITS = TC_GROUPS.flatMap(g => g[1]);
+const TC_FR = {...UNIT_FR, Vanquisher:"Vanquisher (zerk)", Guard:"Garde", Scout:"Éclaireur", Galley:"Galère", Senator:"Sénateur"};
+const tcN = (p, u) => Math.max(0, +((p.troupes||{})[u]) || 0);
+const tcTs = (p, cls) => TC_UNITS.reduce((t, u) => t + (!cls || TROOP_CLASS[u] === cls ? tcN(p, u) * (+tsW[u]||0) : 0), 0);
+const TC_ROLE_TABS = [["tous","Off et def"],["off","Off"],["def","Def"]];
+let tcRoleF = "tous";
+const tcIn = u => tcRoleF === "tous" || TROOP_CLASS[u] === tcRoleF;
+const tcKey = s => String(s||"").trim().toLowerCase();
+const tcDate = iso => iso ? new Date(iso).toLocaleDateString("fr-FR", {day:"2-digit", month:"2-digit"}) : "—";
+function buildTcGrid(){
+  if ($("tcGrid").childElementCount) return;
+  $("tcGrid").innerHTML = TC_GROUPS.map(([g, list]) => `<h3>${g}</h3><div class="wgrid">${list.map(u => `<label class="field"><span class="lbl">${TC_FR[u]||u}</span><input type="number" min="0" step="1" inputmode="numeric" data-tc="${u}" placeholder="0"></label>`).join("")}</div>`).join("");
+}
+function renderTc(){
+  if (!$("tcTable")) return;
+  buildTcGrid();
+  const fu = $("tc-f-unit"), keep = fu.value;
+  const owned = TC_UNITS.filter(u => tcIn(u) && tcList.some(p => tcN(p, u) > 0));
+  fu.innerHTML = `<option value="">Toutes</option>` + owned.map(u => `<option value="${u}"${u===keep?" selected":""}>${TC_FR[u]||u}</option>`).join("");
+  const unit = owned.includes(keep) ? keep : "", q = tcKey($("tc-f-q").value);
+  const tsOff = tcList.reduce((t, p) => t + tcTs(p, "off"), 0), tsDef = tcList.reduce((t, p) => t + tcTs(p, "def"), 0);
+  $("tc-kpis").innerHTML = `<div><span class="lbl">Joueurs</span><b>${tcList.length}</b></div><div><span class="lbl">TS off</span><b>${fmt(tsOff)}</b></div><div><span class="lbl">TS def</span><b>${fmt(tsDef)}</b></div>`
+    + (unit ? `<div><span class="lbl">${esc(TC_FR[unit]||unit)}</span><b>${fmt(tcList.reduce((t, p) => t + tcN(p, unit), 0))} <small>chez ${tcList.filter(p => tcN(p, unit) > 0).length} joueur(s)</small></b></div>` : "");
+  $("tcRoleTabs").innerHTML = TC_ROLE_TABS.map(([k, l]) => `<button type="button" role="tab" data-tcrole="${k}" aria-selected="${k === tcRoleF}">${l}<small>${k === "tous" ? tcList.length : tcList.filter(p => tcTs(p, k) > 0).length}</small></button>`).join("");
+  let list = tcList.filter(p => (!q || tcKey(p.nom).includes(q)) && (!unit || tcN(p, unit) > 0) && (tcRoleF === "tous" || tcTs(p, tcRoleF) > 0));
+  list.sort(unit ? (a, b) => tcN(b, unit) - tcN(a, unit) : tcRoleF !== "tous" ? (a, b) => tcTs(b, tcRoleF) - tcTs(a, tcRoleF) : (a, b) => tcKey(a.nom).localeCompare(tcKey(b.nom)));
+  if (!list.length){ $("tcTable").innerHTML = `<tbody><tr><td class="empty">${tcList.length ? "Aucun joueur ne correspond au filtre." : "Aucun joueur noté pour l'instant : clique « + Ajouter un joueur »."}</td></tr></tbody>`; return; }
+  const chips = (get) => { const us = (unit ? [unit] : []).concat(TC_UNITS.filter(u => u !== unit)).filter(u => tcIn(u) && get(u) > 0);
+    return us.length ? us.map(u => `<span class="tcchip ${TROOP_CLASS[u]||"neu"}${u === unit ? " hl" : ""}"><b>${fmt(get(u))}</b> ${esc(TC_FR[u]||u)}</span>`).join("") : `<span class="note">aucune troupe notée</span>`; };
+  $("tcTable").innerHTML = `<thead><tr><th>Joueur</th><th>Troupes</th><th class="n">TS off</th><th class="n">TS def</th><th>Mis à jour</th><th>Note</th><th></th></tr></thead><tbody>`
+    + list.map(p => `<tr><td><strong>${esc(p.nom)}</strong></td><td>${chips(u => tcN(p, u))}</td><td class="n">${fmt(tcTs(p, "off"))}</td><td class="n">${fmt(tcTs(p, "def"))}</td><td class="mono">${tcDate(p.maj)}</td><td>${esc(p.note||"")}</td>
+      <td style="white-space:nowrap"><button class="link" data-tcedit="${esc(p.id)}">Modifier</button><button class="link danger" data-tcdel="${esc(p.id)}">Supprimer</button></td></tr>`).join("")
+    + (list.length > 1 ? `<tr class="tot"><td>Total (${list.length})</td><td>${chips(u => list.reduce((t, p) => t + tcN(p, u), 0))}</td><td class="n">${fmt(list.reduce((t, p) => t + tcTs(p, "off"), 0))}</td><td class="n">${fmt(list.reduce((t, p) => t + tcTs(p, "def"), 0))}</td><td></td><td></td><td></td></tr>` : "")
+    + `</tbody>`;
+}
+function resetTc(){ editTc = null; $("tc-nom").value = ""; $("tc-note").value = ""; document.querySelectorAll("[data-tc]").forEach(i => i.value = ""); $("tc-warn").textContent = "";
+  $("tc-save").textContent = "Ajouter le joueur"; $("tc-cancel").hidden = true; $("tcTitle").textContent = "Ajouter un joueur"; }
+function tcFill(p){ editTc = p.id; $("tc-nom").value = p.nom || ""; $("tc-note").value = p.note || "";
+  document.querySelectorAll("[data-tc]").forEach(i => { const n = tcN(p, i.dataset.tc); i.value = n ? n : ""; });
+  $("tc-save").textContent = "Enregistrer le joueur"; $("tc-cancel").hidden = false; $("tcTitle").textContent = "Modifier " + (p.nom || "le joueur"); $("tc-warn").textContent = ""; $("tcPanel").open = true; }
+$("tc-nom").addEventListener("change", () => {
+  if (editTc) return; const p = tcList.find(x => tcKey(x.nom) === tcKey($("tc-nom").value)); if (!p) return;
+  tcFill(p); $("tc-warn").className = "fmsg"; $("tc-warn").textContent = p.nom + " est déjà noté : ses troupes sont chargées, modifie-les puis enregistre.";
+});
+["tc-f-unit","tc-f-q"].forEach(id => $(id).addEventListener("input", renderTc));
+$("tcRoleTabs").addEventListener("click", e => { const b = e.target.closest("[data-tcrole]"); if (b){ tcRoleF = b.dataset.tcrole; renderTc(); } });
+$("tc-cancel").addEventListener("click", resetTc);
+$("tcForm").addEventListener("submit", async e => {
+  e.preventDefault(); if (!db) return;
+  const nom = $("tc-nom").value.trim(); if (!nom) return;
+  const twin = tcList.find(x => x.id !== editTc && tcKey(x.nom) === tcKey(nom));
+  if (twin){ $("tc-warn").className = "fmsg ko"; $("tc-warn").textContent = nom + " est déjà dans la liste : modifie sa ligne plutôt que d'en créer une deuxième."; return; }
+  const troupes = {}; document.querySelectorAll("[data-tc]").forEach(i => { troupes[i.dataset.tc] = Math.max(0, Math.round(+i.value || 0)); });
+  const data = {nom, note:$("tc-note").value.trim(), troupes, par:moi || "", maj:new Date().toISOString()};
+  try {
+    if (editTc) await db.doc("troupesC33/" + editTc).update(data);
+    else await db.collection("troupesC33").add({...data, creeLe:new Date().toISOString()});
+    setStatus((editTc ? "Troupes mises à jour : " : "Joueur ajouté : ") + nom); resetTc(); $("tcPanel").open = false;
+  } catch(err){ setStatus("Joueur non enregistré : " + (err.message || err.code)); }
+});
+$("tcTable").addEventListener("click", e => {
+  const ed = e.target.closest("[data-tcedit]"), del = e.target.closest("[data-tcdel]");
+  if (ed){ const p = tcList.find(x => x.id === ed.dataset.tcedit); if (!p) return; tcFill(p); requestAnimationFrame(() => { $("tcPanel").scrollIntoView({block:"nearest"}); $("tc-nom").focus(); }); return; }
+  if (del) armDelete(del, async () => { try { await db.doc("troupesC33/" + del.dataset.tcdel).delete(); if (editTc === del.dataset.tcdel) resetTc(); setStatus("Joueur retiré de la liste."); } catch(err){ setStatus("Suppression impossible : " + (err.message || err.code)); } });
+});
+function startTc(){
+  db.collection("troupesC33").onSnapshot(s => { tcList = s.docs.map(d => ({id:d.id, ...d.data()})); if (curView === "c33") renderTc(); }, () => {});
+}
+
 /* ---------- vues ---------- */
 function showView(v){
-  if (!["maintenant","fiche","rech","ravit","binome","attaques","defense","carte","plans","outils"].includes(v)) v = "maintenant";
+  if (!["maintenant","fiche","rech","ravit","binome","attaques","defense","carte","plans","c33","outils"].includes(v)) v = "maintenant";
   if (v === "outils" && moi && !editingId && currentFiche !== moi && fiches.some(f => f.id === moi)) selectFiche(moi);
   const st = $("status").textContent; const wasCount = !st || st === countTxt || st === "Enregistré automatiquement";
   curView = v; renderTabs(); document.body.classList.toggle("wide", v === "attaques" || v === "carte"); if (wasCount && countTxt) setStatus(countStatus()); renderWelcome();
   document.querySelectorAll(".vbtn").forEach(b => b.setAttribute("aria-selected", String(b.dataset.view === v || ((v === "ravit" || v === "rech") && b.dataset.view === "fiche"))));
-  ["maintenant","fiche","rech","ravit","binome","attaques","defense","carte","plans","outils"].forEach(k => $("view-"+k).hidden = k !== v);
+  ["maintenant","fiche","rech","ravit","binome","attaques","defense","carte","plans","c33","outils"].forEach(k => $("view-"+k).hidden = k !== v);
   try { localStorage.setItem("vueActive", v); } catch {}
   if (v === "binome") renderBinome();
   if (v === "attaques") renderAttaques();
   if (v === "defense") renderDefense();
   if (v === "carte"){ renderCarte(); renderBarons(); }
   if (v === "plans") renderPlans();
+  if (v === "c33") renderTc();
   if (v === "maintenant") renderNow();
   if (v === "ravit") renderRavit();
   if (v === "rech") renderRech();
@@ -2950,7 +3066,7 @@ buildCompo(); buildForm(); buildTsGrid(); resetForm(); fillUnitSelect(""); rende
   db.doc("reglages/foi").onSnapshot(d => { foiAlliance = (d.exists && d.data().foi) || {}; renderRech(); renderDefense(); }, () => {});
   db.doc("reglages/objectif").onSnapshot(d => { if (d.exists){ objectif = {pct:+d.data().pct||50, ts:+d.data().ts||null};
     if (document.activeElement?.id !== "obj-pct") $("obj-pct").value = objectif.pct; if (document.activeElement?.id !== "obj-ts") $("obj-ts").value = objectif.ts || ""; renderBinome(); } }, () => {});
-  startAttaques(); startDefense(); startBarons(); startCarte(); startSuggestions(); startPlans();
+  startAttaques(); startDefense(); startBarons(); startCarte(); startSuggestions(); startPlans(); startTc();
   db.collection("fiches").orderBy("creeLe").onSnapshot(snap => {
     fiches = snap.docs.map(d => ({id:d.id, nom:d.data().nom || d.id, importVilles:d.data().importVilles || "", importTroupes:d.data().importTroupes || "", recherches:d.data().recherches || {}, durabilite:d.data().durabilite || {}}));
     renderAge(); renderRech(); renderDefense();
