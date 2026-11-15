@@ -2680,11 +2680,13 @@ function rvBoxes(im){
       if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
       for (const q of [j - 1, j + 1, j - W, j + W]){ if (q < 0 || q >= W * H || seen[q] || !m[q]) continue; if ((q === j - 1 && x === 0) || (q === j + 1 && x === W - 1)) continue; seen[q] = 1; st.push(q); } }
     const w = x1 - x0 + 1, h = y1 - y0 + 1;
-    if (w > W * 0.08 && w < W * 0.4 && h > 10 && w / h > 2.5 && w / h < 9 && n > w * h * 0.5) boxes.push({x:x0/k, y:y0/k, w:w/k, h:h/k});
+    // un menu normal (1 ressource) ou un menu large (case « … from/to same city » cochée : 1 menu pour les 4 ressources)
+    const ok1 = w > W * 0.08 && w < W * 0.4 && w / h > 2.5 && w / h < 9, ok4 = w >= W * 0.45 && w / h >= 9 && w / h < 40;
+    if (h > 10 && (ok1 || ok4) && n > w * h * 0.5) boxes.push({x:x0/k, y:y0/k, w:w/k, h:h/k, large:ok4});
   }
   boxes.sort((a,b) => a.y - b.y); const rows = [];
   boxes.forEach(b => { const r = rows.find(r => Math.abs(r.cy - (b.y + b.h/2)) < b.h * 0.5); if (r) r.b.push(b); else rows.push({cy:b.y + b.h/2, b:[b]}); });
-  return rows.filter(r => r.b.length >= 4).map(r => r.b.sort((a,b) => a.x - b.x).slice(0, 4));
+  return rows.map(r => r.b.sort((a,b) => a.x - b.x)).filter(b => b.length >= 4 || (b.length === 1 && b[0].large)).map(b => b.length === 1 ? b : b.slice(0, 4));
 }
 function rvCrop(im, b){
   const pad = 2, S = 4, w = Math.round(b.w - 2*pad), h = Math.round(b.h - 2*pad);
@@ -2707,7 +2709,8 @@ async function rvRead(im, id){
     const w = await T.createWorker("eng", 1, window.__TESS_OPTS__ || {});
     await w.setParameters({tessedit_char_whitelist:"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789- ", tessedit_pageseg_mode:"7"});
     const lus = [];
-    for (const r of rows){ const v = []; for (const b of r){ const o = await w.recognize(rvCrop(im, b)); v.push(rvToken(o.data.text)); }
+    for (const r of rows){ let v = []; for (const b of r){ const o = await w.recognize(rvCrop(im, b)); v.push(rvToken(o.data.text)); }
+      if (v.length === 1) v = [v[0], v[0], v[0], v[0]]; // menu unique : même réglage pour les 4 ressources
       // une ligne utile : au moins 3 menus sur 4 lus comme code de ville, OFF ou REFINE (les lignes ALL et illisibles sont sautées)
       if (v.filter(x => x.code || x.off || x.refine).length < 3) continue; lus.push(v); if (lus.length === 2) break; }
     await w.terminate();
