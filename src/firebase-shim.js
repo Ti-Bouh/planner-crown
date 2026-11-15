@@ -120,7 +120,7 @@
         onSnapshot: (next, err) => F.onSnapshot(q(), s => next(wrapQuery(s)), e => err && err(mapErr(e)))
       };
     }
-    const dbApi = { doc: docRef, collection: p => colRef(p) };
+    const dbApi = { doc: docRef, collection: p => colRef(p), email: (currentUser && currentUser.email || "").toLowerCase() };
 
     // vérifier que ce compte a accès
     try { await F.getDoc(F.doc(fdb, "reglages/acces")); }

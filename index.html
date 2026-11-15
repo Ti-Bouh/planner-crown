@@ -110,6 +110,59 @@ table.reg{border-collapse:collapse;width:100%;min-width:980px;font-size:13px}
 .rvsep{width:1px;height:16px;background:var(--line);margin:0 4px}
 .rvleg{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);margin-top:8px;align-items:center}
 .rvleg .rvb{width:22px;height:20px;font-size:11px;cursor:default;margin-right:4px}
+.cg{background:#c9b48c;color:#2b2113;border-radius:12px;padding:14px 16px;font-family:var(--f-display)}
+.cg .sc{font-variant:small-caps;letter-spacing:.03em;font-size:15px}
+.cg .k,.cg .dt,.cg .no,.cg .hint{font-family:var(--f-body);font-size:12px;color:#4a3b22}
+.cg .no{color:#8a7650}
+.cg .old{color:#7a1f1f}
+.cgrow{display:grid;grid-template-columns:110px 112px repeat(4,minmax(96px,1fr)) 70px;column-gap:6px;align-items:center}
+.cghd>div{padding:0 0 6px;font-variant:small-caps;font-size:15px}
+.cgcity{border-top:1px solid #a8946a;padding:6px 0;cursor:pointer;border-radius:6px}
+.cgcity:hover,.cgcity:focus-visible{background:#d8c69f;outline:none}
+.cch{display:inline-block;border-radius:6px;font-family:var(--f-body);font-size:12px;font-weight:600;padding:2px 8px;white-space:nowrap}
+.cch.up{background:#B5D4F4;color:#0C447C}.cch.r{background:#FAC775;color:#633806}.cch.dn{background:#C0DD97;color:#27500A}
+.cgcity>.cgrow .nm{grid-row:span 2;padding-left:6px}
+.cgcity>.cgrow .dt{grid-row:span 2;text-align:right;padding-right:6px}
+.cgcity>.cgrow .c{padding:3px 0}
+.ctg{border:1px solid #6b5a3a;background:#14233d;color:#f1d98a;border-radius:6px;width:24px;height:22px;min-height:0;padding:0;font-size:12px;cursor:pointer;margin-right:6px;vertical-align:middle;box-shadow:none}
+.ctgsp{display:inline-block;width:30px}
+.ctgin{padding-left:30px}
+.csub{background:#e4d6b6;border:1px solid #a8946a;border-radius:10px;padding:10px 12px;margin:6px 6px 4px;cursor:default}
+.cgs{display:grid;grid-template-columns:150px repeat(4,minmax(0,1fr));gap:6px;align-items:center;margin-bottom:8px}
+.cgs .sc{font-size:13px}
+.cread{background:#e4d6b6;border:1px solid #a8946a;border-radius:10px;padding:10px 12px;margin-bottom:14px;font-family:var(--f-body);font-size:13px}
+.cread b{font-weight:600;color:#14233d}
+.cgf{display:grid;grid-template-columns:150px repeat(4,minmax(0,1fr));gap:8px;align-items:center;margin-bottom:10px}
+.csel{appearance:none;-webkit-appearance:none;width:100%;min-height:34px;border-radius:8px;border:1px solid #6b5a3a;background:#14233d url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23f1d98a' fill='none' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 9px center;color:#f1d98a;font-family:var(--f-display);font-variant:small-caps;font-size:15px;padding:0 26px 0 10px;cursor:pointer;box-shadow:none}
+.csel option{background:#14233d;color:#f1d98a}
+.cbtn{display:inline-block;position:relative;font-family:var(--f-display);font-variant:small-caps;font-size:15px;background:#14233d;color:#f1d98a;border:1px solid #6b5a3a;border-radius:8px;padding:6px 14px;cursor:pointer;box-shadow:none}
+.cdrop{position:relative;border:1.5px dashed #6b5a3a;border-radius:10px;background:#e4d6b6;display:flex;align-items:center;gap:12px;padding:10px 12px;margin-bottom:14px}
+.cdrop.over{background:#d8c69f}
+.cthumb{width:120px;height:76px;border-radius:6px;background:#14233d;display:grid;place-items:center;color:#f1d98a;font-size:12px;flex-shrink:0;overflow:hidden;cursor:zoom-in;border:0;padding:0}
+.cthumb img{width:100%;height:100%;object-fit:cover;display:block}
+.cbox{background:#14233d;color:#f1d98a;border-radius:10px;padding:12px 14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.cbox b{font-family:var(--f-display);font-variant:small-caps;font-weight:600;font-size:16px;display:block;margin-bottom:4px}
+.cbox p{font-size:12.5px;color:#d9cfb0;margin:0 0 3px;line-height:1.4}
+.cbox .w{color:#FAC775;font-weight:600}
+.cbal{background:#14233d;color:#f1d98a;border-radius:12px;padding:12px 16px;margin-bottom:12px}
+.cbt{font-family:var(--f-display);font-variant:small-caps;font-weight:600;font-size:18px}
+.cbal>summary{cursor:pointer;list-style:none;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.cbal>summary::-webkit-details-marker{display:none}
+.cbal>summary::before{content:"▸";color:#f1d98a;font-size:13px}
+.cbal[open]>summary::before{content:"▾"}
+.cbal[open]>summary{margin-bottom:10px}
+.cbs{font-size:12px;color:#d9cfb0}
+.cbs .w{color:#FAC775;font-weight:600}
+.cbr{display:grid;grid-template-columns:100px minmax(0,1fr) 230px;gap:10px;align-items:center;margin-bottom:8px}
+.cbn{font-family:var(--f-display);font-variant:small-caps;font-size:16px}
+.cbb{display:flex;height:22px;border-radius:6px;overflow:hidden;background:#2a3a57}
+.cbb span{display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden}
+.cbb .h{background:#B5D4F4;color:#0C447C}.cbb .f{background:#FAC775;color:#633806}.cbb .z{color:#9aa2b4;font-weight:400;padding-left:8px}
+.cbv{font-size:12px;color:#d9cfb0;line-height:1.4}
+.cbp{color:#9aa2b4;font-size:11px}
+.cbv .w{color:#FAC775;font-weight:600}
+#rvZoom{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.75);display:grid;place-items:center;padding:20px;cursor:zoom-out}
+#rvZoom img{max-width:100%;max-height:100%;border-radius:8px}
 .refnote{font-size:11.5px;color:var(--muted);white-space:nowrap}
 .wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-top:12px}
 #rechPanel{margin-bottom:16px}
@@ -238,6 +291,20 @@ body.wide .wrap{max-width:1880px}
 #tcGrid .wgrid input{width:100%;min-width:0;box-sizing:border-box}
 #tcTable td.n,#tcTable th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 #tcTable tr.tot td{font-weight:700;border-top:2px solid var(--line)}
+.rctiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.rctile{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--panel);display:grid;gap:2px;text-align:left;cursor:pointer;font:inherit;color:inherit}
+.rctile:hover{border-color:var(--brass)}
+.rctile[aria-pressed=true]{border-color:var(--brass);background:color-mix(in srgb,var(--brass) 14%,var(--panel))}
+.tcdet{margin-top:18px;border-top:1px solid var(--line);padding-top:10px}
+.tcdet>summary{cursor:pointer;font-weight:600;font-size:15px;padding:4px 0}
+.tcdet>summary small{color:var(--muted);font-weight:400}
+.rch{margin:18px 0 8px;font-size:15px}.rch small{color:var(--muted);font-weight:400;font-size:13px}
+.rcdet{margin-top:10px;border:1px solid var(--line);border-radius:10px;padding:10px 14px;max-width:560px}
+.rcdet h4{margin:0 0 6px}
+.rcrow{display:grid;grid-template-columns:1fr auto 150px;gap:12px;padding:5px 0;border-top:1px solid var(--line)}
+.rcrow .n{text-align:right;font-variant-numeric:tabular-nums}
+.rctile b{font-size:1.7rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.rctile span{color:var(--muted);font-size:14px}
 .tcchip{display:inline-block;margin:2px 6px 2px 0;padding:2px 8px;border-radius:999px;font-size:12px;white-space:nowrap;border:1px solid var(--line);background:var(--panel)}
 .tcchip b{font-variant-numeric:tabular-nums}
 .tcchip.off{border-color:color-mix(in srgb,var(--off,#b23a3a) 45%,transparent)}
@@ -401,6 +468,33 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
 .czoom{display:grid;gap:3px}.czbtns{display:flex;gap:4px;align-items:center}.czbtns button{width:32px;padding:4px 0;font-weight:700;font-size:16px;line-height:1}
 #cMap.panning{cursor:grabbing}
 .ctool select,.ctool input:not([type=checkbox]):not([type=range]):not([type=file]),.cform select,.cform input,#cAutres{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+/* ---------- thème « écran du jeu » : parchemin, bleu nuit et or (clair) / bleu nuit et or (sombre) ---------- */
+:root{
+  --bg:#d3c29b; --panel:#ece1c5; --ink:#2b2113; --muted:#5c4b2e; --line:#b6a076;
+  --brass:#14233d; --brass-soft:#e2d3ae; --gold:#f1d98a; --navy:#14233d;
+  --hub:#8a5a0c; --hub-soft:#f0deb0; --keep:#6b5a3a; --keep-soft:#e0d1ab;
+  --off-soft:#f1d4cc; --def-soft:#d6dfee; --mix-soft:#e5d9ea; --ref-soft:#d7e6cc;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1626; --panel:#14233d; --ink:#f1e6c6; --muted:#c2b48e; --line:#2e4062;
+  --brass:#f1d98a; --brass-soft:#2a3a57; --gold:#f1d98a; --navy:#0b1424;
+  --hub:#f1d98a; --hub-soft:#3a3320; --keep:#c2b48e; --keep-soft:#22324f}}
+:root[data-theme="dark"]{
+  --bg:#0e1626; --panel:#14233d; --ink:#f1e6c6; --muted:#c2b48e; --line:#2e4062;
+  --brass:#f1d98a; --brass-soft:#2a3a57; --gold:#f1d98a; --navy:#0b1424;
+  --hub:#f1d98a; --hub-soft:#3a3320; --keep:#c2b48e; --keep-soft:#22324f}
+h1,h2,h3{color:var(--brass)}
+h1,h2,.tab,details.panel summary{font-variant:small-caps}
+.panel{box-shadow:0 1px 0 rgba(43,33,19,.08)}
+button.primary,.field button.primary{background:var(--navy);border-color:#6b5a3a;color:var(--gold);font-family:var(--f-display);font-variant:small-caps;font-size:1.02em;letter-spacing:.03em}
+button.primary:hover{filter:brightness(1.15)}
+select:not(.csel){appearance:none;-webkit-appearance:none;background:var(--navy) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23f1d98a' fill='none' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 9px center!important;color:var(--gold)!important;border:1px solid #6b5a3a!important;border-radius:8px;padding-right:28px!important;font-family:var(--f-display);font-variant:small-caps;font-size:15px}
+select:not(.csel) option{background:#14233d;color:#f1d98a}
+.field input,.field textarea,input[type="text"],input[type="number"],input[type="search"],input:not([type]){background:#fffdf7;color:#1a1a1a;border-color:#8a7a5a}
+.vbtn[aria-selected="true"]{background:var(--navy);color:var(--gold);box-shadow:none;font-family:var(--f-display);font-variant:small-caps;font-size:1.05em}
+.tab[aria-selected="true"]{box-shadow:inset 0 -3px #8a5a0c}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .field input,:root:not([data-theme="light"]) input[type="text"],:root:not([data-theme="light"]) input[type="number"]{background:#0b1424;color:#f1e6c6;border-color:#2e4062}}
+:root[data-theme="dark"] .field input,:root[data-theme="dark"] input[type="text"],:root[data-theme="dark"] input[type="number"]{background:#0b1424;color:#f1e6c6;border-color:#2e4062}
 </style>
 
 <div class="wrap">
@@ -591,20 +685,26 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
   </div>
 
   <div class="view" id="view-ravit" hidden>
-    <section class="panel" aria-label="Qui reçoit du hub">
-      <h2 id="rvTitle">Qui reçoit du hub</h2>
+    <section class="panel" aria-label="Bilan du hub par ressource">
+      <h2 id="rvTitle">Bilan des hubs</h2>
       <div id="rvSummary"></div>
     </section>
-    <section class="panel" aria-label="Réglages par ville">
+    <section class="panel" aria-label="Équilibre par hub" id="rvBalPanel">
+      <h2>Équilibre hub / raffinage, par hub</h2>
+      <p class="note" style="margin-top:0">En nombre de villes, par ressource : celles qui envoient leur surplus à ce hub, et celles qui le raffinent. La production par heure du CSV est donnée à titre indicatif : elle ne compte pas le butin des raids.</p>
+      <div id="rvBal"></div>
+    </section>
+    <section class="panel" aria-label="Réglages par ville" id="rvListPanel">
       <h2>Réglages par ville</h2>
       <p class="note" id="rvNote" style="margin-top:0"></p>
-      <div class="scroll"><table class="rvtab" id="rvTable"></table></div>
-      <div class="rvleg">
-        <span><span class="rvb on-up">↑</span>surplus envoyé au hub</span>
-        <span><span class="rvb on-r">R</span>surplus raffiné</span>
-        <span><span class="rvb on-dn">↓</span>reçoit du hub</span>
-        <span>rien d'allumé : ni envoi ni demande</span>
-      </div>
+      <div class="cg" id="rvList"></div>
+    </section>
+    <section class="panel" aria-label="Fiche d'une ville" id="rvFichePanel" hidden>
+      <div class="btns" style="margin:0 0 10px"><button type="button" id="rvBack">← Toutes les villes</button></div>
+      <div class="cg" id="rvFiche"></div>
+    </section>
+    <div id="rvZoom" hidden><img alt="Screen de l'écran d'échange"></div>
+  </div>
     </section>
   </div>
 
@@ -874,10 +974,15 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
           <label class="field"><span class="lbl">Troupe</span><select id="tc-f-unit"></select></label>
           <label class="field"><span class="lbl">Chercher</span><input id="tc-f-q" placeholder="pseudo"></label>
         </div>
+        <button type="button" class="addbtn" id="tc-import-btn" title="Fichier CSV : une colonne Joueur, une colonne par troupe">Importer un fichier</button>
+        <input type="file" id="tc-import" accept=".csv,.txt,text/csv" hidden>
         <button type="button" class="addbtn" data-open="tcPanel">+ Ajouter un joueur</button>
       </div>
     </div>
     <div class="kpis" id="tc-kpis" style="margin-top:0"></div>
+    <h3 class="rch">Châteaux par type <small id="rc-sub"></small></h3>
+    <div class="rctiles" id="rcTiles"></div>
+    <div id="rcDetail"></div>
     <details class="mform addp" id="tcPanel">
       <summary id="tcTitle">Ajouter un joueur</summary>
       <form id="tcForm" autocomplete="off">
@@ -890,8 +995,11 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
         <div class="btns"><button type="submit" class="primary" id="tc-save">Ajouter le joueur</button><button type="button" id="tc-cancel" hidden>Annuler</button></div>
       </form>
     </details>
-    <div class="scroll" style="margin-top:14px"><table class="env" id="tcTable"></table></div>
-    <p class="note">Laisse vide une troupe que le joueur n'a pas. Off ou Def en haut : n'affiche que ces troupes, chez les joueurs qui en ont, du plus gros TS au plus petit. Bordure rouge = off, bleue = def. Choisis une troupe dans le filtre pour voir qui en a, du plus gros au plus petit.</p>
+    <details class="tcdet" id="tcDetails">
+    <summary>Détail par joueur <small id="tc-nb"></small></summary>
+    <div class="scroll" style="margin-top:10px"><table class="env" id="tcTable"></table></div>
+    <p class="note">Laisse vide une troupe que le joueur n'a pas. Off ou Def en haut : n'affiche que ces troupes, chez les joueurs qui en ont, du plus gros TS au plus petit. Bordure rouge = off, bleue = def. Choisis une troupe dans le filtre pour voir qui en a, du plus gros au plus petit. « Importer un fichier » : un CSV avec une colonne Joueur et une colonne par troupe (séparateur ; ou ,) ; un joueur déjà noté est mis à jour, les colonnes « Mix … » vont dans sa note.</p>
+    </details>
   </section>
   </div>
 
@@ -935,6 +1043,16 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
     <p class="fmsg" id="nf-msg" role="status"></p>
     <div class="plist" id="playerList"></div>
     <p class="note">Une fiche par joueur. Une fois créée, choisis-la dans « Je suis » en haut à droite : imports et ordres iront à ton nom.</p>
+  </section>
+  <section class="panel" aria-label="Accès au planner">
+    <h2>Accès au planner</h2>
+    <form class="newfiche" id="accForm" autocomplete="off" style="margin-top:0">
+      <label class="field"><span class="lbl">Adresse Gmail à autoriser</span><input id="acc-mail" type="email" maxlength="120" placeholder="pseudo@gmail.com" required></label>
+      <button type="submit">Autoriser</button>
+    </form>
+    <p class="fmsg" id="acc-msg" role="status"></p>
+    <div class="plist" id="accList"></div>
+    <p class="note">La personne se connecte ensuite avec ce compte Google, puis tu crées sa fiche ci-dessus. Une adresse retirée perd l'accès à la prochaine action. Les adresses marquées « toujours » sont écrites dans les règles Firebase et ne peuvent pas être retirées d'ici.</p>
   </section>
   <section class="panel imp" aria-label="Import des exports du jeu">
     <h2>Mettre à jour depuis le jeu</h2>
@@ -1359,7 +1477,7 @@ function renderTabs(){
     : curView === "defense" ? "Vue commune : villes menacées, renforts engagés et ce que chacun doit envoyer."
     : curView === "carte" ? "Vue commune : terrain du continent, cases réservées, villes des autres joueurs et barons envoyés."
     : curView === "plans" ? "Vue commune : vos plans de ville, à coller et recopier dans le jeu."
-    : curView === "c33" ? "Vue commune : les troupes que les membres du continent C33 vous ont données, joueur par joueur."
+    : curView === "c33" ? "Vue commune : les troupes que les membres du continent C33 vous ont données, plus vos propres villes du C33 (ajoutées automatiquement depuis vos fiches)."
     : curView === "outils" ? "Joueurs, import des exports du jeu et poids TS."
     : curView === "rech" ? "Tes recherches de combat et de durabilité, et la foi des dieux commune à vous deux."
     : rv ? "Tes villes uniquement : ce qui part au hub, ce qui est raffiné et qui reçoit du hub."
@@ -1512,7 +1630,7 @@ let objTimer = null;
 }));
 function syncFicheSubs(){
   fiches.forEach(f => { if (subsFiche[f.id]) return;
-    subsFiche[f.id] = db.collection(`fiches/${f.id}/villes`).onSnapshot(snap => { allCities[f.id] = snap.docs.map(d => ({id:d.id, ...d.data()})); renderBinome(); renderAttaques(); renderDefense(); renderWelcome(); if (isAll()) render(); renderCarte(); if (curView === "ravit") renderRavit(); }, () => {}); });
+    subsFiche[f.id] = db.collection(`fiches/${f.id}/villes`).onSnapshot(snap => { allCities[f.id] = snap.docs.map(d => ({id:d.id, ...d.data()})); renderBinome(); renderAttaques(); renderDefense(); renderWelcome(); if (isAll()) render(); renderCarte(); if (curView === "ravit") renderRavit(); if (curView === "c33") renderTc(); }, () => {}); });
   renderBinome();
 }
 
@@ -2437,42 +2555,299 @@ $("nowOrders").addEventListener("click", async e => {
   try { await db.doc(r.ref).update({statut:next, maj:new Date().toISOString()}); } catch(err){ setStatus("Statut non enregistré : " + (err.message||err.code)); }
 });
 
-/* ---------- vue ravitaillement (fiche du joueur connecté uniquement) ---------- */
-function renderRavit(){
-  const sum = $("rvSummary"), tab = $("rvTable"), note = $("rvNote");
-  if (!moi){ sum.innerHTML = `<p class="note">Choisis qui tu es dans « Je suis » en haut à droite pour voir tes villes.</p>`; tab.innerHTML = ""; note.textContent = ""; $("rvTitle").textContent = "Qui reçoit du hub"; return; }
+/* ---------- vue ravitaillement (fiche du joueur connecté uniquement) ----------
+   Reprend l'écran d'échange du jeu. Par ville et par ressource :
+   - recoit.{res} (booléen) + recoitDe.{res} (id du hub) : « Demander au hub »
+   - res.{res} = hub / raffiner / garder + surplusVers.{res} (id du hub) : « Envoyer le surplus vers »
+   Le dernier screen de l'écran d'échange est rangé dans fiches/{moi}/ecrans/{ville} ; la ville garde sa date (ecranLe). */
+let rvOpen = "";
+const RV_OLD = 14 * 864e5;
+function rvData(){
   const all = allCities[moi] || (currentFiche === moi ? cities : []);
   const hubs = all.filter(c => effRole(c) === "hub");
-  const byId = Object.fromEntries(all.map(c => [c.id, c]));
-  const hubOf = c => byId[c.hubId] && effRole(byId[c.hubId]) === "hub" ? byId[c.hubId] : (hubs.length === 1 ? hubs[0] : null);
-  const label = c => `${esc(c.name)} <span class="mono" style="color:var(--muted)">${c.x}:${c.y}</span>`;
-  const list = all.filter(c => effRole(c) !== "hub").sort((a,b) => (continentOf(a.x,a.y)-continentOf(b.x,b.y)) || a.name.localeCompare(b.name,"fr"));
-  const groups = new Map(); hubs.forEach(h => groups.set(h.id, {hub:h, rows:[]}));
-  list.forEach(c => { if (!RES.some(([k]) => (c.recoit||{})[k])) return; const h = hubOf(c), key = h ? h.id : "";
-    if (!groups.has(key)) groups.set(key, {hub:h, rows:[]}); groups.get(key).rows.push(c); });
-  const gs = [...groups.values()];
-  $("rvTitle").textContent = gs.length === 1 && gs[0].hub ? `Qui reçoit du hub ${gs[0].hub.name}` : "Qui reçoit du hub";
-  sum.innerHTML = gs.length ? gs.map(g => (gs.length > 1 ? `<h3 class="rgh">${g.hub ? "Hub " + esc(g.hub.name) : "Hub non choisi"}</h3>` : "")
-    + `<div class="rvgrid">${RES.map(([k,l]) => { const r = g.rows.filter(c => (c.recoit||{})[k]);
-      return `<div class="rvcard"><b>${l}</b><span>${r.length ? r.map(label).join(" · ") : `<span style="color:var(--muted)">Aucune ville</span>`}</span></div>`; }).join("")}</div>`).join("")
-    : `<p class="note">Aucune ville ne reçoit encore du hub. Allume ↓ sur une ressource ci-dessous.</p>`;
-  tab.innerHTML = list.length ? `<thead><tr><th>Ville</th>${RES.map(([,l]) => `<th>${l}</th>`).join("")}</tr></thead><tbody>${list.map(c => `<tr><td>${label(c)}</td>${RES.map(([k,l]) => {
-      const m = (c.res||{})[k], d = !!(c.recoit||{})[k], A = `data-cid="${esc(c.id)}" data-res="${k}"`;
-      return `<td><span class="rvset"><button type="button" class="rvb${m==="hub"?" on-up":""}" data-rv="up" ${A} aria-pressed="${m==="hub"}" aria-label="${l} : surplus envoyé au hub">↑</button><button type="button" class="rvb${m==="raffiner"?" on-r":""}" data-rv="r" ${A} aria-pressed="${m==="raffiner"}" aria-label="${l} : surplus raffiné">R</button><span class="rvsep"></span><button type="button" class="rvb${d?" on-dn":""}" data-rv="dn" ${A} aria-pressed="${d}" aria-label="${l} : reçoit du hub">↓</button></span></td>`; }).join("")}</tr>`).join("")}</tbody>` : "";
-  note.textContent = !list.length ? "Aucune ville dans ta fiche pour l'instant : importe tes CSV d'abord."
-    : !hubs.length ? "Aucune de tes villes n'a le rôle Hub : choisis-le dans Mes villes (Modifier) pour que la liste du haut sache à quel hub rattacher les villes."
-    : "↑ et R s'excluent (c'est la destination du surplus dans le jeu). ↓ est indépendant : une ville peut demander au hub et envoyer son surplus.";
+  const sort = (a,b) => (continentOf(a.x,a.y)-continentOf(b.x,b.y)) || a.name.localeCompare(b.name,"fr");
+  const list = [...hubs.slice().sort(sort), ...all.filter(c => effRole(c) !== "hub").sort(sort)];
+  return {all, hubs, list, byId:Object.fromEntries(all.map(c => [c.id, c]))};
 }
-$("rvTable").addEventListener("click", async e => {
-  const b = e.target.closest("[data-rv]"); if (!b || !db || !moi) return;
-  const c = (allCities[moi] || []).find(x => x.id === b.dataset.cid); if (!c) return;
-  const k = b.dataset.res, m = (c.res||{})[k];
-  const upd = b.dataset.rv === "dn" ? {recoit:{[k]: !(c.recoit||{})[k]}}
-    : {res:{[k]: b.dataset.rv === "up" ? (m === "hub" ? "garder" : "hub") : (m === "raffiner" ? "garder" : "raffiner")}};
-  b.disabled = true;
-  try { await db.doc(`fiches/${moi}/villes/${c.id}`).update(upd); } catch(err){ setStatus("Changement non enregistré : " + (err.message||err.code)); }
-  b.disabled = false;
+let rvHubOpen = new Set();
+// hub réellement visé : celui choisi pour la ressource, sinon le hub de rattachement de la ville (Mes villes), sinon le seul autre hub
+function rvHubFor(D, c, map, k){ const others = D.hubs.filter(h => h.id !== c.id), id = (map||{})[k];
+  return others.find(h => h.id === id) || others.find(h => h.id === c.hubId) || (others.length === 1 ? others[0] : null); }
+const rvUp = (D, c, k) => { const h = rvHubFor(D, c, c.surplusVers, k); return `<span class="cch up">↑ ${h ? esc(h.name) : "Hub"}</span>`; };
+const rvDn = (D, c, k) => { const h = rvHubFor(D, c, c.recoitDe, k); return `<span class="cch dn">↓ ${h ? esc(h.name) : "Hub"}</span>`; };
+const rvDate = iso => iso ? new Date(iso).toLocaleDateString("fr-FR", {day:"2-digit", month:"2-digit"}) : "";
+function renderRavit(){
+  const sum = $("rvSummary"), list = $("rvList"), note = $("rvNote");
+  if (!moi){ sum.innerHTML = `<p class="note">Choisis qui tu es dans « Je suis » en haut à droite pour voir tes villes.</p>`; list.innerHTML = ""; note.textContent = ""; $("rvFichePanel").hidden = true; $("rvListPanel").hidden = false; return; }
+  const D = rvData();
+  if (rvOpen && !D.byId[rvOpen]) rvOpen = "";
+  $("rvFichePanel").hidden = !rvOpen; $("rvListPanel").hidden = !!rvOpen; $("rvBalPanel").hidden = !!rvOpen;
+  // bilan par ressource
+  const nm = c => esc(c.name);
+  sum.innerHTML = D.list.length ? `<div class="cbox">${RES.map(([k,l]) => {
+    const up = D.list.filter(c => (c.res||{})[k] === "hub"), rf = D.list.filter(c => (c.res||{})[k] === "raffiner"), dn = D.list.filter(c => (c.recoit||{})[k]);
+    const per = new Map(); up.forEach(c => { const h = rvHubFor(D, c, c.surplusVers, k), n = h ? h.name : "hub non choisi"; per.set(n, (per.get(n)||0) + 1); });
+    const det = D.hubs.length > 1 && per.size ? ` (${[...per].map(([n,x]) => esc(n) + " : " + x).join(", ")})` : "";
+    return `<div><b>${l}</b><p>Envoient au hub : ${up.length}${det}</p><p>Raffinent : ${rf.length}</p><p>Demandent : ${dn.length ? dn.map(nm).join(", ") : "aucune"}</p>${dn.length && !up.length ? `<p class="w">⚠ Personne n'alimente ${D.hubs.length > 1 ? "les hubs" : "le hub"}</p>` : ""}</div>`; }).join("")}</div>`
+    : `<p class="note">Aucune ville dans ta fiche pour l'instant : importe tes CSV d'abord.</p>`;
+  note.textContent = !D.list.length ? "" : !D.hubs.length ? "Aucune de tes villes n'a le rôle Hub : choisis-le dans Mes villes (Modifier) pour pouvoir la choisir comme hub."
+    : "Clic sur une ville pour ouvrir sa fiche, régler comme dans le jeu et coller son screen." + (D.hubs.length ? " Flèche d'un hub : ses envois vers les autres hubs." : "") + " Date en rouge : plus de 14 jours ou aucun screen.";
+  // liste : deux lignes par ville
+  const now = Date.now();
+  list.innerHTML = D.list.length ? `<div class="cgrow cghd"><div>Ville</div><div></div>${RES.map(([,l]) => `<div>${l}</div>`).join("")}<div style="text-align:right">Screen</div></div>`
+    + D.list.map(c => { const r = c.recoit||{}, m = c.res||{}, old = !c.ecranLe || now - new Date(c.ecranLe) > RV_OLD, isHub = effRole(c) === "hub", open = isHub && rvHubOpen.has(c.id);
+      const tg = isHub ? `<button type="button" class="ctg" data-rvhub="${esc(c.id)}" aria-expanded="${open}" aria-label="${open ? "Replier" : "Déplier"} les envois de ${nm(c)} vers les autres hubs">${open ? "▾" : "▸"}</button>` : `<span class="ctgsp"></span>`;
+      return `<div class="cgcity" tabindex="0" role="button" data-rvopen="${esc(c.id)}" aria-label="Ouvrir la fiche de ${nm(c)}"><div class="cgrow">
+        <div class="nm sc">${tg}${nm(c)}${isHub ? `<br><span class="k ctgin">hub</span>` : ""}</div>
+        <div class="k">${isHub ? "Reçoit d'un hub" : "Reçoit du hub"}</div>${RES.map(([k]) => `<div class="c">${r[k] ? rvDn(D, c, k) : `<span class="no">—</span>`}</div>`).join("")}
+        <div class="dt${old ? " old" : ""}">${c.ecranLe ? rvDate(c.ecranLe) : "aucun"}</div>
+        <div class="k">Surplus</div>${RES.map(([k]) => `<div class="c">${m[k] === "hub" ? rvUp(D, c, k) : m[k] === "raffiner" ? `<span class="cch r">Raffine</span>` : `<span class="no">—</span>`}</div>`).join("")}
+      </div>${open ? rvHubPanel(D, c) : ""}</div>`; }).join("") : "";
+  if (!rvOpen) renderRvBal(D);
+  if (rvOpen) renderRvFiche(D);
+}
+let rvBalOpen = new Set();
+function renderRvBal(D){
+  const el = $("rvBal"), panel = $("rvBalPanel"); panel.hidden = !D.hubs.length || !!rvOpen;
+  if (!D.hubs.length) { el.innerHTML = ""; return; }
+  const prod = (c, k) => +(((c.stats||{})[k]||{}).parHeure) || 0;
+  const f = n => Math.round(n).toLocaleString("fr-FR");
+  // hub « maison » d'une ville (pour son raffinage) : hub de Mes villes, sinon le hub vers lequel elle envoie ou demande le plus, sinon le seul hub
+  const home = c => { if (effRole(c) === "hub") return c;
+    const h = D.hubs.find(x => x.id === c.hubId); if (h) return h;
+    const n = new Map(); RES.forEach(([k]) => { const r = c.res||{}, q = c.recoit||{};
+      const u = r[k] === "hub" ? D.hubs.find(x => x.id === (c.surplusVers||{})[k]) : null, d = q[k] ? D.hubs.find(x => x.id === (c.recoitDe||{})[k]) : null;
+      [u, d].forEach(x => { if (x) n.set(x, (n.get(x)||0) + 1); }); });
+    if (n.size) return [...n].sort((a,b) => b[1] - a[1])[0][0];
+    return D.hubs.length === 1 ? D.hubs[0] : null; };
+  const dest = (c, map, k) => { const others = D.hubs.filter(h => h.id !== c.id); return others.find(h => h.id === (map||{})[k]) || (home(c) !== c ? home(c) : null) || (others.length === 1 ? others[0] : null); };
+  const NONE = {id:"__none", name:""};
+  const keyOf = h => h ? h : NONE;
+  const blocks = [...D.hubs, NONE].map(h => {
+    const sentC = k => D.list.filter(c => c.id !== h.id && (c.res||{})[k] === "hub" && keyOf(dest(c, c.surplusVers, k)) === h);
+    const refC = k => D.list.filter(c => (c.res||{})[k] === "raffiner" && keyOf(home(c)) === h);
+    const demC = k => D.list.filter(c => c.id !== h.id && (c.recoit||{})[k] && keyOf(dest(c, c.recoitDe, k)) === h);
+    const att = new Set(); RES.forEach(([k]) => [...sentC(k), ...refC(k), ...demC(k)].forEach(c => { if (c.id !== h.id) att.add(c.id); }));
+    if (h === NONE && !att.size) return "";
+    let alerts = 0;
+    const rows = RES.map(([k,l]) => {
+      // équilibre en nombre de villes : la production par heure du CSV ne compte pas le butin des raids (souvent toute la pierre et le fer)
+      const S = sentC(k), R = refC(k), sent = S.length, ref = R.length, dem = demC(k).length;
+      const pS = S.reduce((a,c) => a + prod(c, k), 0), pR = R.reduce((a,c) => a + prod(c, k), 0);
+      const tot = sent + ref, ps = tot ? Math.round(sent / tot * 100) : 0, pr = tot ? 100 - ps : 0;
+      if (dem && !sent && h !== NONE) alerts++;
+      const bar = tot ? `${ps ? `<span class="h" style="width:${ps}%">${ps >= 25 ? "Envoyé " : ""}${ps} %</span>` : ""}${pr ? `<span class="f" style="width:${pr}%">${pr >= 25 ? "Raffiné " : ""}${pr} %</span>` : ""}` : `<span class="z">Aucune ville n'envoie ni ne raffine</span>`;
+      const dtxt = !dem ? "Demandes : aucune" : (sent || h === NONE) ? `Demandes : ${dem} ville${dem > 1 ? "s" : ""}` : `<span class="w">⚠ ${dem} ville${dem > 1 ? "s" : ""} demande${dem > 1 ? "nt" : ""}, rien n'arrive</span>`;
+      const pv = pS || pR ? `<br><span class="cbp">Production connue : ${f(pS)}/h envoyés · ${f(pR)}/h raffinés</span>` : "";
+      return `<div class="cbr"><div class="cbn">${l}</div><div class="cbb">${bar}</div><div class="cbv">${sent} ville${sent > 1 ? "s" : ""} envoie${sent > 1 ? "nt" : ""} · ${ref} raffine${ref > 1 ? "nt" : ""}<br>${dtxt}${pv}</div></div>`;
+    }).join("");
+    const title = h === NONE ? "Hub non déterminé" : "Hub " + esc(h.name);
+    const sub = h === NONE ? `${att.size} ville${att.size > 1 ? "s" : ""} sans hub connu : choisis leur hub dans Mes villes (Modifier) ou dans leur fiche`
+      : `${att.size} ville${att.size > 1 ? "s" : ""} rattachée${att.size > 1 ? "s" : ""}${alerts ? ` · <span class="w">⚠ ${alerts} alerte${alerts > 1 ? "s" : ""}</span>` : ""}`;
+    return `<details class="cbal" data-bal="${esc(h.id)}"${rvBalOpen.has(h.id) ? " open" : ""}><summary><span class="cbt">${title}</span><span class="cbs">${sub}</span></summary>${rows}</details>`;
+  }).join("");
+  el.innerHTML = blocks;
+}
+$("rvBal").addEventListener("toggle", e => { const d = e.target.closest("[data-bal]"); if (!d) return; d.open ? rvBalOpen.add(d.dataset.bal) : rvBalOpen.delete(d.dataset.bal); }, true);
+function rvSelects(D, c, cid){
+  const others = D.hubs.filter(h => h.id !== c.id), A = cid ? ` data-cid="${esc(cid)}"` : "";
+  const hubOpt = (sel, pre) => (others.length ? others : [{id:"", name:""}]).map(h => `<option value="${pre}${esc(h.id)}"${sel === h.id ? " selected" : ""}>Hub${h.name ? " " + esc(h.name) : ""}</option>`).join("");
+  const r = c.recoit||{}, m = c.res||{}, cur = (map, k) => (rvHubFor(D, c, map, k) || {}).id;
+  return {
+    dn: RES.map(([k,l]) => `<select class="csel" data-rvset="dn" data-res="${k}"${A} aria-label="${l} : demander au hub"><option value="">Off</option>${hubOpt(r[k] ? cur(c.recoitDe, k) : null, "")}</select>`).join(""),
+    up: RES.map(([k,l]) => `<select class="csel" data-rvset="up" data-res="${k}"${A} aria-label="${l} : envoyer le surplus vers"><option value="raffiner"${m[k] === "raffiner" ? " selected" : ""}>Raffiner</option>${hubOpt(m[k] === "hub" ? cur(c.surplusVers, k) : null, "hub:")}<option value="garder"${m[k] !== "hub" && m[k] !== "raffiner" ? " selected" : ""}>Off</option></select>`).join("")
+  };
+}
+function rvHubPanel(D, h){
+  const S = rvSelects(D, h, h.id);
+  const feed = k => { const f = D.list.filter(c => c.id !== h.id && (c.res||{})[k] === "hub" && (rvHubFor(D, c, c.surplusVers, k) || {}).id === h.id);
+    return f.length ? f.map(c => esc(c.name)).join(", ") : "aucune ville"; };
+  return `<div class="csub" data-nopen="1">
+    ${D.hubs.length > 1 ? `<div class="cgs"><div class="sc">Demander à un hub</div>${S.dn}</div><div class="cgs"><div class="sc">Envoyer le surplus vers</div>${S.up}</div>` : `<p class="hint" style="margin:0 0 8px">Tu n'as qu'un hub : les envois entre hubs apparaîtront quand une autre ville aura le rôle Hub.</p>`}
+    <div class="cgs" style="margin-bottom:0;border-top:1px solid #a8946a;padding-top:8px"><div class="sc">Alimenté par</div>${RES.map(([k]) => `<div class="k">${feed(k)}</div>`).join("")}</div>
+  </div>`;
+}
+function renderRvFiche(D){
+  const c = D.byId[rvOpen], box = $("rvFiche"); if (!c) return;
+  const r = c.recoit||{}, m = c.res||{}, S = rvSelects(D, c, "");
+  const old = !c.ecranLe || Date.now() - new Date(c.ecranLe) > RV_OLD;
+  box.innerHTML = `
+    <div class="cgf" style="margin-bottom:14px"><div class="sc">Ville</div>
+      <div style="grid-column:span 2"><select class="csel" id="rvCity">${D.list.map(x => `<option value="${esc(x.id)}"${x.id === c.id ? " selected" : ""}>${esc(x.name)}${effRole(x) === "hub" ? " (hub)" : ""}</option>`).join("")}</select></div>
+      <div style="grid-column:span 2" class="dt${old ? " old" : ""}">${c.ecranLe ? "Dernier screen : " + new Date(c.ecranLe).toLocaleDateString("fr-FR") : "Pas encore de screen"}</div></div>
+    <div class="cdrop" id="rvDrop">
+      <button type="button" class="cthumb" id="rvThumb" aria-label="Agrandir le screen">${c.ecranLe ? "…" : "Aucun screen"}</button>
+      <div style="flex:1"><div style="font-family:var(--f-body);font-size:13px">Colle (Ctrl+V) ou glisse ici le screen de l'écran d'échange</div><div class="hint">Il est enregistré sur la ville choisie au-dessus et remplace le précédent. Clic sur la vignette pour l'agrandir.</div></div>
+      ${c.ecranLe ? `<button type="button" class="cbtn" id="rvReread" style="background:#e4d6b6;color:#2b2113">Relire</button>` : ""}
+      <label class="cbtn" for="rvFile" id="rvPick" role="button" tabindex="0">Importer</label><input type="file" id="rvFile" accept=".png,.jpg,.jpeg,.webp,.gif,.bmp" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
+    </div>
+    <div id="rvRead"></div>
+    <div class="cgf"><div class="sc">Ressource</div>${RES.map(([,l]) => `<div class="sc" style="text-align:center">${l}</div>`).join("")}</div>
+    <div class="cgf"><div class="sc">Demander au hub</div>${S.dn}</div>
+    <div class="cgf"><div class="sc">Envoyer le surplus vers</div>${S.up}</div>
+    <div class="cgf" style="border-top:1px solid #a8946a;padding-top:10px;margin-bottom:0"><div class="sc">Résumé</div>${RES.map(([k]) => `<div style="text-align:center">${m[k] === "hub" ? rvUp(D, c, k) : m[k] === "raffiner" ? `<span class="cch r">Raffine</span>` : `<span class="no">—</span>`} ${r[k] ? rvDn(D, c, k) : ""}</div>`).join("")}</div>`;
+  if (rvReadHtml && rvReadHtml.id === c.id) $("rvRead").innerHTML = rvReadHtml.html;
+  if (c.ecranLe && db) db.doc(`fiches/${moi}/ecrans/${c.id}`).get().then(d => { const t = $("rvThumb"); if (!t || rvOpen !== c.id) return;
+    t.innerHTML = d.exists && d.data().img ? `<img alt="" src="${d.data().img}">` : "Aucun screen"; }).catch(() => {});
+}
+function rvShow(id){ rvOpen = id; renderRavit(); window.scrollTo({top:0}); }
+$("rvList").addEventListener("click", e => {
+  const g = e.target.closest("[data-rvhub]");
+  if (g){ const id = g.dataset.rvhub; rvHubOpen.has(id) ? rvHubOpen.delete(id) : rvHubOpen.add(id); renderRavit(); return; }
+  if (e.target.closest("[data-nopen]")) return;
+  const t = e.target.closest("[data-rvopen]"); if (t) rvShow(t.dataset.rvopen); });
+$("rvList").addEventListener("keydown", e => { if (e.target.closest("[data-nopen],[data-rvhub]")) return; const t = e.target.closest("[data-rvopen]"); if (t && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); rvShow(t.dataset.rvopen); } });
+$("rvBack").addEventListener("click", () => rvShow(""));
+async function rvSet(sel, cid){
+  if (!db || !moi || !cid) return;
+  const k = sel.dataset.res, v = sel.value;
+  const upd = sel.dataset.rvset === "dn" ? (v ? {recoit:{[k]:true}, recoitDe:{[k]:v}} : {recoit:{[k]:false}})
+    : v.startsWith("hub:") ? {res:{[k]:"hub"}, ...(v.length > 4 ? {surplusVers:{[k]:v.slice(4)}} : {})} : {res:{[k]:v}};
+  upd.reglageLe = new Date().toISOString();
+  try { await db.doc(`fiches/${moi}/villes/${cid}`).update(upd); } catch(err){ setStatus("Réglage non enregistré : " + (err.message||err.code)); }
+}
+$("rvFiche").addEventListener("change", e => {
+  if (e.target.id === "rvCity") return rvShow(e.target.value);
+  if (e.target.id === "rvFile"){ const f = e.target.files && e.target.files[0]; e.target.value = ""; if (f) rvSaveImage(f); return; }
+  const s = e.target.closest("[data-rvset]"); if (s) rvSet(s, rvOpen);
 });
+$("rvList").addEventListener("change", e => { const s = e.target.closest("[data-rvset]"); if (s) rvSet(s, s.dataset.cid); });
+async function rvSaveImage(file){
+  if (!file || !db || !moi || !rvOpen) return;
+  if (!/^image\//.test(file.type) && !/\.(png|jpe?g|webp|gif|bmp)$/i.test(file.name || "")){ setStatus("Ce fichier n'est pas une image."); return; }
+  const id = rvOpen, url0 = URL.createObjectURL(file);
+  try {
+    const im = await loadImg(url0); if (!im) throw new Error("image illisible");
+    const k = Math.min(1, 1600 / im.width), cv = document.createElement("canvas");
+    cv.width = Math.round(im.width * k); cv.height = Math.round(im.height * k);
+    cv.getContext("2d").drawImage(im, 0, 0, cv.width, cv.height);
+    let url = null; for (const q of [.85, .75, .62, .5, .4]){ const u = cv.toDataURL("image/jpeg", q); if (u.length < 900000){ url = u; break; } }
+    if (!url) throw new Error("image trop lourde");
+    const at = new Date().toISOString();
+    await db.doc(`fiches/${moi}/ecrans/${id}`).set({img:url, at});
+    await db.doc(`fiches/${moi}/villes/${id}`).update({ecranLe:at});
+    setStatus("Screen enregistré. Lecture des réglages…");
+    rvRead(im, id);
+  } catch(err){ setStatus("Screen non enregistré : " + (err.message||err.code)); }
+  finally { URL.revokeObjectURL(url0); }
+}
+$("rvFiche").addEventListener("click", e => {
+  const t = e.target.closest("#rvThumb"), img = t && t.querySelector("img");
+  if (img){ $("rvZoom").querySelector("img").src = img.src; $("rvZoom").hidden = false; }
+});
+$("rvFiche").addEventListener("keydown", e => { if (e.target.id === "rvPick" && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); $("rvFile").click(); } });
+$("rvFiche").addEventListener("dragover", e => { const d = e.target.closest("#rvDrop"); if (d){ e.preventDefault(); d.classList.add("over"); } });
+$("rvFiche").addEventListener("dragleave", e => { const d = e.target.closest("#rvDrop"); if (d) d.classList.remove("over"); });
+$("rvFiche").addEventListener("drop", e => { const d = e.target.closest("#rvDrop"); if (!d) return; e.preventDefault(); d.classList.remove("over"); rvSaveImage([...e.dataTransfer.files].find(f => /^image\//.test(f.type))); });
+document.addEventListener("paste", e => {
+  if (curView !== "ravit" || !rvOpen) return;
+  const f = [...(e.clipboardData?.items || [])].find(i => i.kind === "file" && /^image\//.test(i.type));
+  if (f){ e.preventDefault(); rvSaveImage(f.getAsFile()); }
+});
+$("rvZoom").addEventListener("click", () => { $("rvZoom").hidden = true; });
+
+/* ---------- lecture du screen de l'écran d'échange (Tesseract.js, dans le navigateur) ----------
+   1. repère les menus bleu nuit de l'image (zones sombres rectangulaires, 4 par ligne)
+   2. lit le texte doré de chaque menu (code de ville, OFF, REFINE ; les lignes ALL sont ignorées)
+   3. propose les réglages : la première ligne lue = « Request missing resources from »,
+      la seconde = « Send excess resources to ». Rien n'est enregistré sans « Appliquer ». */
+let rvTess = null, rvProp = null, rvReadHtml = null;
+function rvTesseract(){
+  if (window.Tesseract) return Promise.resolve(window.Tesseract);
+  if (!rvTess) rvTess = new Promise((ok, ko) => { const sc = document.createElement("script");
+    sc.src = window.__TESS_SRC__ || "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+    sc.onload = () => ok(window.Tesseract); sc.onerror = () => { rvTess = null; ko(new Error("outil de lecture non chargé")); };
+    document.head.appendChild(sc); });
+  return rvTess;
+}
+function rvBoxes(im){
+  const W = Math.min(800, im.width), k = W / im.width, H = Math.round(im.height * k);
+  const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  const g = cv.getContext("2d"); g.drawImage(im, 0, 0, W, H);
+  const d = g.getImageData(0, 0, W, H).data, m = new Uint8Array(W * H);
+  for (let i = 0; i < W * H; i++){ const r = d[i*4], gg = d[i*4+1], b = d[i*4+2]; m[i] = (r + gg + b < 170 && b >= r) ? 1 : 0; }
+  const seen = new Uint8Array(W * H), boxes = [], st = [];
+  for (let i = 0; i < W * H; i++){ if (!m[i] || seen[i]) continue;
+    let x0 = W, y0 = H, x1 = 0, y1 = 0, n = 0; st.push(i); seen[i] = 1;
+    while (st.length){ const j = st.pop(), x = j % W, y = (j / W) | 0; n++;
+      if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      for (const q of [j - 1, j + 1, j - W, j + W]){ if (q < 0 || q >= W * H || seen[q] || !m[q]) continue; if ((q === j - 1 && x === 0) || (q === j + 1 && x === W - 1)) continue; seen[q] = 1; st.push(q); } }
+    const w = x1 - x0 + 1, h = y1 - y0 + 1;
+    // un menu normal (1 ressource) ou un menu large (case « … from/to same city » cochée : 1 menu pour les 4 ressources)
+    const ok1 = w > W * 0.08 && w < W * 0.4 && w / h > 2.5 && w / h < 9, ok4 = w >= W * 0.45 && w / h >= 9 && w / h < 40;
+    if (h > 10 && (ok1 || ok4) && n > w * h * 0.5) boxes.push({x:x0/k, y:y0/k, w:w/k, h:h/k, large:ok4});
+  }
+  boxes.sort((a,b) => a.y - b.y); const rows = [];
+  boxes.forEach(b => { const r = rows.find(r => Math.abs(r.cy - (b.y + b.h/2)) < b.h * 0.5); if (r) r.b.push(b); else rows.push({cy:b.y + b.h/2, b:[b]}); });
+  return rows.map(r => r.b.sort((a,b) => a.x - b.x)).filter(b => b.length >= 4 || (b.length === 1 && b[0].large)).map(b => b.length === 1 ? b : b.slice(0, 4));
+}
+function rvCrop(im, b){
+  const pad = 2, S = 4, w = Math.round(b.w - 2*pad), h = Math.round(b.h - 2*pad);
+  const cv = document.createElement("canvas"); cv.width = w * S; cv.height = h * S;
+  const g = cv.getContext("2d"); g.imageSmoothingQuality = "high"; g.drawImage(im, b.x + pad, b.y + pad, w, h, 0, 0, w * S, h * S);
+  const id = g.getImageData(0, 0, cv.width, cv.height), d = id.data;
+  for (let i = 0; i < d.length; i += 4){ const t = d[i] > 150 && d[i+1] > 130 && d[i] > d[i+2] + 20; d[i] = d[i+1] = d[i+2] = t ? 0 : 255; d[i+3] = 255; }
+  g.putImageData(id, 0, 0); return cv;
+}
+const rvToken = t => { t = (t || "").toUpperCase().replace(/\s+/g, " ").trim();
+  const c = t.replace(/O(?=\d)|(?<=\d)O/g, "0").match(/(?:^|[^0-9])C?\s?(\d{2})\s?[-–]\s?(\d{3})/); if (c) return {code:`C${c[1]}-${c[2]}`};
+  if (/A[L1I|]{2}\b/.test(t)) return {all:true}; if (/OFF|0FF/.test(t)) return {off:true}; if (/REF|EFIN/.test(t)) return {refine:true}; return {raw:t}; };
+async function rvRead(im, id){
+  const box = () => rvOpen === id ? $("rvRead") : null;
+  const say = h => { rvReadHtml = {id, html:`<div class="cread">${h}</div>`}; const b = box(); if (b) b.innerHTML = rvReadHtml.html; };
+  say("Lecture du screen…");
+  try {
+    const rows = rvBoxes(im);
+    const T = await rvTesseract();
+    const w = await T.createWorker("eng", 1, window.__TESS_OPTS__ || {});
+    await w.setParameters({tessedit_char_whitelist:"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789- ", tessedit_pageseg_mode:"7"});
+    const lus = [];
+    for (const r of rows){ let v = []; for (const b of r){ const o = await w.recognize(rvCrop(im, b)); v.push(rvToken(o.data.text)); }
+      if (v.length === 1) v = [v[0], v[0], v[0], v[0]]; // menu unique : même réglage pour les 4 ressources
+      // une ligne utile : au moins 3 menus sur 4 lus comme code de ville, OFF ou REFINE (les lignes ALL et illisibles sont sautées)
+      if (v.filter(x => x.code || x.off || x.refine).length < 3) continue; lus.push(v); if (lus.length === 2) break; }
+    await w.terminate();
+    if (lus.length < 2) return say(`Je n'ai pas trouvé les deux lignes de menus dans ce screen. Prends tout l'écran d'échange (de « For resource » à « Send excess resources to ») et recolle-le, ou règle les menus à la main.`);
+    rvPropose(id, lus[0], lus[1]);
+  } catch(err){ say("Lecture impossible : " + esc(err.message || String(err)) + ". Règle les menus à la main."); setStatus("Screen enregistré, lecture impossible."); }
+}
+function rvPropose(id, dn, up){
+  const D = rvData(), c = D.byId[id]; if (!c) return;
+  const find = code => D.all.find(x => (x.name || "").toUpperCase().replace(/\s/g, "").startsWith(code));
+  const pb = [], upd = {recoit:{}, recoitDe:{}, res:{}, surplusVers:{}}, cells = [];
+  RES.forEach(([k,l], i) => {
+    const a = dn[i], b = up[i]; let ta, tb;
+    if (a.off) { upd.recoit[k] = false; ta = "Off"; }
+    else if (a.code){ const h = find(a.code); if (!h) { pb.push(`${l} : ${a.code} introuvable dans tes villes`); ta = a.code + " ?"; } else { if (effRole(h) !== "hub") pb.push(`${l} : ${esc(h.name)} n'a pas le rôle Hub dans Mes villes`); upd.recoit[k] = true; upd.recoitDe[k] = h.id; ta = "Hub " + esc(h.name); } }
+    else { pb.push(`${l} (demande) : illisible`); ta = "?"; }
+    if (b.refine) { upd.res[k] = "raffiner"; tb = "Raffiner"; }
+    else if (b.off) { upd.res[k] = "garder"; tb = "Off"; }
+    else if (b.code){ const h = find(b.code); if (!h) { pb.push(`${l} : ${b.code} introuvable dans tes villes`); tb = b.code + " ?"; } else { if (effRole(h) !== "hub") pb.push(`${l} : ${esc(h.name)} n'a pas le rôle Hub dans Mes villes`); upd.res[k] = "hub"; upd.surplusVers[k] = h.id; tb = "Hub " + esc(h.name); } }
+    else { pb.push(`${l} (surplus) : illisible`); tb = "?"; }
+    cells.push([ta, tb]);
+  });
+  ["recoit","recoitDe","res","surplusVers"].forEach(f => { if (!Object.keys(upd[f]).length) delete upd[f]; });
+  rvProp = {id, upd};
+  rvReadHtml = {id, html:`<div class="cread"><div class="sc" style="font-size:15px;margin-bottom:6px">Lu sur le screen</div>
+    <div class="cgf" style="margin-bottom:4px"><div class="k">Demander au hub</div>${cells.map(x => `<div class="k" style="text-align:center"><b>${x[0]}</b></div>`).join("")}</div>
+    <div class="cgf" style="margin-bottom:8px"><div class="k">Surplus vers</div>${cells.map(x => `<div class="k" style="text-align:center"><b>${x[1]}</b></div>`).join("")}</div>
+    ${pb.length ? `<div class="k old" style="margin-bottom:8px">${pb.map(x => "⚠ " + x).join("<br>")}<br>Ces cases ne seront pas modifiées.</div>` : ""}
+    <button type="button" class="cbtn" id="rvApply">Appliquer</button> <button type="button" class="cbtn" id="rvIgnore" style="background:#e4d6b6;color:#2b2113">Ignorer</button></div>`};
+  const b = rvOpen === id ? $("rvRead") : null; if (b) b.innerHTML = rvReadHtml.html;
+  setStatus("Screen lu : vérifie puis clique sur Appliquer.");
+}
+$("rvFiche").addEventListener("click", async e => {
+  if (e.target.closest("#rvReread") && db && moi && rvOpen){ const id = rvOpen;
+    try { const d = await db.doc(`fiches/${moi}/ecrans/${id}`).get(), im = d.exists && d.data().img ? await loadImg(d.data().img) : null;
+      if (im) rvRead(im, id); else setStatus("Pas de screen enregistré pour cette ville."); } catch(err){ setStatus("Screen introuvable : " + (err.message||err.code)); }
+    return; }
+  if (e.target.closest("#rvIgnore")){ rvProp = null; rvReadHtml = null; $("rvRead").innerHTML = ""; return; }
+  if (!e.target.closest("#rvApply") || !rvProp || !db || !moi) return;
+  const {id, upd} = rvProp; upd.reglageLe = new Date().toISOString(); upd.reglageDepuisEcran = upd.reglageLe;
+  try { rvProp = null; rvReadHtml = null; const rb = $("rvRead"); if (rb) rb.innerHTML = ""; await db.doc(`fiches/${moi}/villes/${id}`).update(upd); setStatus("Réglages du screen appliqués."); }
+  catch(err){ setStatus("Réglages non enregistrés : " + (err.message||err.code)); }
+});
+
 
 /* ---------- boutons « + Ajouter » : ouvrent / ferment le formulaire de la liste ---------- */
 document.addEventListener("click", e => {
@@ -2483,7 +2858,7 @@ document.addEventListener("click", e => {
   if (d.open) requestAnimationFrame(() => { const i = d.querySelector("input:not([type=hidden]):not([type=checkbox]),select,textarea"); d.scrollIntoView({block:"nearest"}); if (i) i.focus({preventScroll:true}); });
 });
 
-/* ---------- vue troupes C33 (membres du continent, hors fiches du site) ---------- */
+/* ---------- vue troupes C33 (membres du continent + villes C33 des fiches du site) ---------- */
 let tcList = [], editTc = null;
 const TC_GROUPS = [["Offensives",["Vanquisher","Sorcerer","Horseman","Druid"]],["Siège",["Ram","Scorpion"]],
   ["Défensives",["Guard","Ranger","Triari","Priestess","Arbalist","Praetor","Ballista"]],["Navales",["Warship","Stinger","Galley"]],["Autres",["Scout","Senator"]]];
@@ -2501,8 +2876,9 @@ function buildTcGrid(){
   $("tcGrid").innerHTML = TC_GROUPS.map(([g, list]) => `<h3>${g}</h3><div class="wgrid">${list.map(u => `<label class="field"><span class="lbl">${TC_FR[u]||u}</span><input type="number" min="0" step="1" inputmode="numeric" data-tc="${u}" placeholder="0"></label>`).join("")}</div>`).join("");
 }
 function renderTc(){
+  const tcList = tcAll();
   if (!$("tcTable")) return;
-  buildTcGrid();
+  buildTcGrid(); renderRecap(); $("tc-nb").textContent = "(" + tcList.length + " joueur" + (tcList.length > 1 ? "s" : "") + ")";
   const fu = $("tc-f-unit"), keep = fu.value;
   const owned = TC_UNITS.filter(u => tcIn(u) && tcList.some(p => tcN(p, u) > 0));
   fu.innerHTML = `<option value="">Toutes</option>` + owned.map(u => `<option value="${u}"${u===keep?" selected":""}>${TC_FR[u]||u}</option>`).join("");
@@ -2518,7 +2894,7 @@ function renderTc(){
     return us.length ? us.map(u => `<span class="tcchip ${TROOP_CLASS[u]||"neu"}${u === unit ? " hl" : ""}"><b>${fmt(get(u))}</b> ${esc(TC_FR[u]||u)}</span>`).join("") : `<span class="note">aucune troupe notée</span>`; };
   $("tcTable").innerHTML = `<thead><tr><th>Joueur</th><th>Troupes</th><th class="n">TS off</th><th class="n">TS def</th><th>Mis à jour</th><th>Note</th><th></th></tr></thead><tbody>`
     + list.map(p => `<tr><td><strong>${esc(p.nom)}</strong></td><td>${chips(u => tcN(p, u))}</td><td class="n">${fmt(tcTs(p, "off"))}</td><td class="n">${fmt(tcTs(p, "def"))}</td><td class="mono">${tcDate(p.maj)}</td><td>${esc(p.note||"")}</td>
-      <td style="white-space:nowrap"><button class="link" data-tcedit="${esc(p.id)}">Modifier</button><button class="link danger" data-tcdel="${esc(p.id)}">Supprimer</button></td></tr>`).join("")
+      <td style="white-space:nowrap">${p.auto ? `<span class="note" title="Calculé depuis sa fiche du site : se met à jour quand il réimporte ses exports">auto</span>` : `<button class="link" data-tcedit="${esc(p.id)}">Modifier</button><button class="link danger" data-tcdel="${esc(p.id)}">Supprimer</button>`}</td></tr>`).join("")
     + (list.length > 1 ? `<tr class="tot"><td>Total (${list.length})</td><td>${chips(u => list.reduce((t, p) => t + tcN(p, u), 0))}</td><td class="n">${fmt(list.reduce((t, p) => t + tcTs(p, "off"), 0))}</td><td class="n">${fmt(list.reduce((t, p) => t + tcTs(p, "def"), 0))}</td><td></td><td></td><td></td></tr>` : "")
     + `</tbody>`;
 }
@@ -2531,7 +2907,7 @@ $("tc-nom").addEventListener("change", () => {
   if (editTc) return; const p = tcList.find(x => tcKey(x.nom) === tcKey($("tc-nom").value)); if (!p) return;
   tcFill(p); $("tc-warn").className = "fmsg"; $("tc-warn").textContent = p.nom + " est déjà noté : ses troupes sont chargées, modifie-les puis enregistre.";
 });
-["tc-f-unit","tc-f-q"].forEach(id => $(id).addEventListener("input", renderTc));
+["tc-f-unit","tc-f-q"].forEach(id => $(id).addEventListener("input", () => { $("tcDetails").open = true; renderTc(); }));
 $("tcRoleTabs").addEventListener("click", e => { const b = e.target.closest("[data-tcrole]"); if (b){ tcRoleF = b.dataset.tcrole; renderTc(); } });
 $("tc-cancel").addEventListener("click", resetTc);
 $("tcForm").addEventListener("submit", async e => {
@@ -2552,8 +2928,146 @@ $("tcTable").addEventListener("click", e => {
   if (ed){ const p = tcList.find(x => x.id === ed.dataset.tcedit); if (!p) return; tcFill(p); requestAnimationFrame(() => { $("tcPanel").scrollIntoView({block:"nearest"}); $("tc-nom").focus(); }); return; }
   if (del) armDelete(del, async () => { try { await db.doc("troupesC33/" + del.dataset.tcdel).delete(); if (editTc === del.dataset.tcdel) resetTc(); setStatus("Joueur retiré de la liste."); } catch(err){ setStatus("Suppression impossible : " + (err.message || err.code)); } });
 });
+/* joueurs du site : leurs villes du C33 sont ajoutées automatiquement depuis leur fiche */
+const TC_ORDER = ["Guard","Ranger","Triari","Priestess","Arbalist","Scout","Praetor","Ballista","Vanquisher","Sorcerer","Horseman","Druid","Ram","Scorpion","Warship","Stinger","Galley"];
+const TC_PL = {Guard:"Guards",Ranger:"Rangers",Triari:"Triari",Priestess:"Priestesses",Arbalist:"Arbalists",Scout:"Scouts",Praetor:"Praetors",Ballista:"Ballistas",Vanquisher:"Vanquishers",
+  Sorcerer:"Sorcerers",Horseman:"Horsemen",Druid:"Druids",Ram:"Rams",Scorpion:"Scorpions",Warship:"Warships",Stinger:"Stingers",Galley:"Galleys"};
+function tcFromFiches(){
+  return fiches.map(f => {
+    const vs = (allCities[f.id] || []).filter(c => c.units && continentOf(c.x, c.y) === 33);
+    const troupes = {}, chateaux = {}; let n = 0, last = "";
+    vs.forEach(c => { const u = {}; let tot = 0;
+      for (const t in c.units){ const k = +c.units[t].total || 0; if (!k || t === "Senator") continue; u[t] = k; tot += k; troupes[t] = (troupes[t]||0) + k; }
+      if (c.units.Senator) troupes.Senator = (troupes.Senator||0) + (+c.units.Senator.total||0);
+      if (!tot) return; n++;
+      const type = TC_ORDER.filter(t => u[t] >= tot * 0.1).map(t => TC_PL[t]).join("/"); if (type) chateaux[type] = (chateaux[type]||0) + 1; });
+    if (!n) return null;
+    const iso = Date.parse(f.importTroupes) ? new Date(f.importTroupes).toISOString() : "";
+    return {id:"fiche:" + f.id, nom:f.nom, troupes, chateaux, auto:true, maj:iso, note:`Auto : fiche du site, ${n} ville${n > 1 ? "s" : ""} sur le C33`};
+  }).filter(Boolean);
+}
+function tcAll(){ const auto = tcFromFiches(), keys = new Set(auto.map(p => tcKey(p.nom))); return auto.concat(tcList.filter(p => !keys.has(tcKey(p.nom)))); }
+
+/* import CSV : une ligne par joueur, une colonne par troupe ; « Mix … » va en note, Total est ignoré */
+const tcNorm = s => String(s||"").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\(.*?\)/g, "").trim().toLowerCase();
+const TC_ALIAS = (() => { const m = {}; TC_UNITS.forEach(u => [u, TC_FR[u], UNIT_FR[u]].forEach(n => { if (n) m[tcNorm(n)] = u; }));
+  return Object.assign(m, {zerk:"Vanquisher", mage:"Sorcerer", cava:"Horseman"}); })();
+function tcUnitOf(h){ const n = tcNorm(h); if (!n) return null;
+  for (const c of [n, n.replace(/men$/, "man"), n.replace(/es$/, ""), n.replace(/s$/, "")]) if (TC_ALIAS[c]) return TC_ALIAS[c];
+  return null; }
+function tcNum(v){ let t = String(v||"").replace(/[\s  ]/g, "");
+  if (/^\d{1,3}([.,]\d{3})+$/.test(t)) t = t.replace(/[.,]/g, ""); else t = t.replace(",", ".");
+  const n = +t; return isFinite(n) ? Math.max(0, Math.round(n)) : 0; }
+function tcParseCsv(txt){
+  txt = txt.replace(/^﻿/, ""); const first = txt.split(/\r?\n/)[0] || "";
+  const sep = [";", ",", "\t"].map(c => [c, first.split(c).length]).sort((a, b) => b[1] - a[1])[0][0];
+  const rows = []; let row = [], cell = "", q = false;
+  for (let i = 0; i < txt.length; i++){ const c = txt[i];
+    if (q){ if (c === '"'){ if (txt[i+1] === '"'){ cell += '"'; i++; } else q = false; } else cell += c; }
+    else if (c === '"') q = true;
+    else if (c === sep){ row.push(cell); cell = ""; }
+    else if (c === "\n" || c === "\r"){ if (c === "\r" && txt[i+1] === "\n") i++; row.push(cell); rows.push(row); row = []; cell = ""; }
+    else cell += c; }
+  if (cell || row.length){ row.push(cell); rows.push(row); }
+  return rows.filter(r => r.some(x => x.trim()));
+}
+async function tcImport(file){
+  if (!db){ setStatus("Base indisponible : recharge la page."); return; }
+  let rows; try { rows = tcParseCsv(await file.text()); } catch { setStatus("Fichier illisible."); return; }
+  if (rows.length < 2){ setStatus("Fichier vide : il faut une ligne d'en-tête puis une ligne par joueur."); return; }
+  const head = rows[0].map(h => h.trim());
+  const iNom = head.findIndex(h => /^(joueur|pseudo|nom|player)$/.test(tcNorm(h)));
+  if (iNom < 0){ setStatus("Import impossible : colonne « Joueur » introuvable dans la première ligne."); return; }
+  const iNote = head.findIndex(h => tcNorm(h) === "note");
+  const cols = head.map((h, i) => { if (i === iNom || i === iNote || /^total/.test(tcNorm(h)) || !h) return null;
+    if (/^villes?\s/.test(tcNorm(h))) return {ville:h.replace(/^villes?\s*/i, "").trim()};
+    const u = tcUnitOf(h); if (u) return {u}; if (/^mix/.test(tcNorm(h))) return {mix:h.replace(/^mix\s*/i, "").trim()}; return {skip:h}; });
+  const ignored = [...new Set(cols.filter(c => c && c.skip).map(c => c.skip))];
+  const byKey = new Map();
+  rows.slice(1).forEach(r => { const nom = (r[iNom]||"").trim(); if (!nom || /^total/.test(tcNorm(nom))) return;
+    const troupes = {}; TC_UNITS.forEach(u => troupes[u] = 0); const mix = [], chateaux = {}, mixes = {};
+    cols.forEach((c, i) => { if (!c || c.skip) return; const n = tcNum(r[i]); if (!n) return; if (c.ville) chateaux[c.ville] = (chateaux[c.ville]||0) + n; else if (c.u) troupes[c.u] += n; else { mix.push(c.mix + " : " + fmt(n)); mixes[c.mix] = (mixes[c.mix]||0) + n; } });
+    const note = [iNote >= 0 ? (r[iNote]||"").trim() : "", mix.length ? "Mix " + mix.join(", ") : ""].filter(Boolean).join(" — ");
+    byKey.set(tcKey(nom), {nom, troupes, note, chateaux, mixes}); });
+  const hasMix = cols.some(c => c && c.mix);
+  const hasVilles = cols.some(c => c && c.ville);
+  const items = [...byKey.values()];
+  if (!items.length){ setStatus("Aucun joueur trouvé dans le fichier."); return; }
+  const neufs = items.filter(it => !tcList.some(p => tcKey(p.nom) === tcKey(it.nom))).length;
+  if (!confirm(`Importer ${items.length} joueur(s) : ${neufs} nouveau(x), ${items.length - neufs} déjà noté(s) dont les troupes seront remplacées par celles du fichier.`
+    + (ignored.length ? `\n\nColonnes non reconnues, ignorées : ${ignored.join(", ")}` : ""))) return;
+  let ok = 0, ko = 0; const now = new Date().toISOString();
+  for (const it of items){ const p = tcList.find(x => tcKey(x.nom) === tcKey(it.nom));
+    const data = {nom:p ? p.nom : it.nom, troupes:it.troupes, note:it.note || (p && p.note) || "", par:moi || "", maj:now};
+    if (hasVilles) data.chateaux = it.chateaux;
+    if (hasMix) data.mix = it.mixes;
+    try { if (p && (hasVilles || hasMix)){ const {id, ...rest} = p; await db.doc("troupesC33/" + p.id).set({...rest, ...data}); }
+      else if (p) await db.doc("troupesC33/" + p.id).update(data); else await db.collection("troupesC33").add({...data, creeLe:now}); ok++; }
+    catch(err){ ko++; console.error(err); } }
+  setStatus(`Import terminé : ${ok} joueur(s) enregistré(s)` + (ko ? `, ${ko} en échec` : "") + ".");
+}
+$("tc-import-btn").addEventListener("click", () => $("tc-import").click());
+$("tc-import").addEventListener("change", e => { const f = e.target.files[0]; e.target.value = ""; if (f) tcImport(f); });
+/* récap C33 : villes par type et troupes par unité, tous joueurs confondus */
+/* cases « Châteaux par type » en haut de Troupes C33 ; clic = joueurs qui en ont, avec leurs troupes de ce type */
+const RC_GRP = [["Zerks",/^vanquishers?$/,["Vanquisher"]],["Sorciers",/^sorcerers?$/,["Sorcerer"]],["Druides",/^druids?$/,["Druid"]],["Cavaliers",/^horsem[ae]n$/,["Horseman"]],
+  ["Siège",/scorpion|ram/,["Ram","Scorpion"]],["Rangers",/^rangers?$/,["Ranger"]],["Triari",/^triari$/,["Triari"]],["Rangers + Triari",/^rangers?\/triari$/,["Ranger","Triari"]],
+  ["Zerks + Triari",/^triari\/vanquishers?$/,["Triari","Vanquisher"]],["Rangers + Triari + Zerks",/^rangers?\/triari\/vanquishers?$/,["Ranger","Triari","Vanquisher"]],
+  ["Priestess",/^priestess(es)?$/,["Priestess"]],["Arbalètes",/^arbalists?/,["Arbalist"]],["Praetors",/^praetors?/,["Praetor"]],["Balistes",/^ballistas?$/,["Ballista"]],
+  ["Navires",/stinger|galley|warship/,["Stinger","Galley","Warship"]]];
+let rcSel = "";
+const rcGrpOf = t => (RC_GRP.find(g => g[1].test(tcNorm(t))) || [t, null, []]);
+function renderRecap(){
+  const tcList = tcAll();
+  if (!$("rcTiles")) return;
+  const cnt = {}, who = {}; let tot = 0;
+  tcList.forEach(p => Object.entries(p.chateaux || {}).forEach(([t, n]) => { n = +n || 0; if (!n) return;
+    const g = rcGrpOf(t); cnt[g[0]] = (cnt[g[0]]||0) + n; tot += n; (who[g[0]] = who[g[0]] || {})[p.id] = ((who[g[0]]||{})[p.id] || 0) + n; }));
+  const list = Object.entries(cnt).sort((a, b) => b[1] - a[1]);
+  if (!cnt[rcSel]) rcSel = "";
+  $("rc-sub").textContent = list.length ? `· ${fmt(tot)} au total · clique une case pour voir qui les a` : "";
+  $("rcTiles").innerHTML = list.length ? list.map(([g, n]) => `<button type="button" class="rctile" data-rc="${esc(g)}" aria-pressed="${g === rcSel}"><b>${fmt(n)}</b><span>${esc(g)}</span></button>`).join("")
+    : `<p class="note">Aucun château noté : importe le fichier avec les colonnes « Villes … ».</p>`;
+  if (!rcSel){ $("rcDetail").innerHTML = ""; return; }
+  const grp = RC_GRP.find(g => g[0] === rcSel), units = grp ? grp[2] : [];
+  const rows = Object.entries(who[rcSel]).map(([id, n]) => { const p = tcList.find(x => x.id === id);
+    const tr = units.reduce((t, u) => t + tcN(p, u), 0) + Object.entries(p.mix || {}).reduce((t, [k, v]) => t + (grp && rcGrpOf(k)[0] === rcSel ? +v || 0 : 0), 0);
+    return {nom:p.nom, n, tr}; }).sort((a, b) => b.n - a.n || b.tr - a.tr);
+  $("rcDetail").innerHTML = `<div class="rcdet"><h4>${esc(rcSel)}</h4>` + rows.map(r => `<div class="rcrow"><strong>${esc(r.nom)}</strong><span>${r.n} château${r.n > 1 ? "x" : ""}</span><span class="n">${r.tr ? fmt(r.tr) + " troupes" : "—"}</span></div>`).join("") + `</div>`;
+}
+$("rcTiles").addEventListener("click", e => { const b = e.target.closest("[data-rc]"); if (!b) return; rcSel = rcSel === b.dataset.rc ? "" : b.dataset.rc; renderRecap(); });
 function startTc(){
-  db.collection("troupesC33").onSnapshot(s => { tcList = s.docs.map(d => ({id:d.id, ...d.data()})); if (curView === "c33") renderTc(); }, () => {});
+  db.collection("troupesC33").onSnapshot(s => { tcList = s.docs.map(d => ({id:d.id, ...d.data()})); if (curView === "c33") renderTc(); if (curView === "recap") renderRecap(); }, () => {});
+}
+
+/* ---------- accès au planner (reglages/acces.emails, lu par les règles Firestore) ---------- */
+const ACC_FIXES = ["ti.bouh.55@gmail.com", "charles.d.qc@gmail.com"];   /* recopiés des règles Firestore */
+let accMails = [], accLoaded = false;
+const accNorm = m => String(m || "").trim().toLowerCase();
+function renderAcc(){
+  if (!$("accList")) return;
+  const me = db && db.email || "";
+  const row = (m, fixe) => `<span>${esc(m)}${m === me ? " (toi)" : ""}${fixe ? ` <small style="color:var(--muted)">toujours</small>` : ` <button type="button" class="pdel" data-accdel="${esc(m)}">Retirer</button>`}</span>`;
+  $("accList").innerHTML = ACC_FIXES.map(m => row(m, true)).join("") + accMails.filter(m => !ACC_FIXES.includes(m)).map(m => row(m, false)).join("");
+}
+async function accSave(list, msg){
+  try { await db.doc("reglages/acces").set({emails:list, maj:new Date().toISOString()}); $("acc-msg").className = "fmsg ok"; $("acc-msg").textContent = msg; setStatus(msg); }
+  catch(err){ $("acc-msg").className = "fmsg ko"; $("acc-msg").textContent = "Non enregistré : " + (err.message || err.code) + ". Les règles Firebase ont-elles bien été mises à jour ?"; }
+}
+$("accForm").addEventListener("submit", async e => {
+  e.preventDefault(); if (!db) return;
+  const m = accNorm($("acc-mail").value);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m)){ $("acc-msg").className = "fmsg ko"; $("acc-msg").textContent = "Adresse invalide."; return; }
+  if (ACC_FIXES.includes(m) || accMails.includes(m)){ $("acc-msg").className = "fmsg"; $("acc-msg").textContent = m + " a déjà accès."; return; }
+  await accSave([...accMails, m], m + " peut maintenant se connecter. Crée sa fiche dans Joueurs.");
+  $("acc-mail").value = "";
+});
+$("accList").addEventListener("click", e => {
+  const d = e.target.closest("[data-accdel]"); if (!d) return;
+  armDelete(d, () => accSave(accMails.filter(m => m !== d.dataset.accdel), d.dataset.accdel + " n'a plus accès."));
+});
+function startAcc(){
+  db.doc("reglages/acces").onSnapshot(d => { accMails = ((d.exists && d.data().emails) || []).map(accNorm); accLoaded = true; renderAcc(); }, () => renderAcc());
 }
 
 /* ---------- vues ---------- */
@@ -3066,7 +3580,7 @@ buildCompo(); buildForm(); buildTsGrid(); resetForm(); fillUnitSelect(""); rende
   db.doc("reglages/foi").onSnapshot(d => { foiAlliance = (d.exists && d.data().foi) || {}; renderRech(); renderDefense(); }, () => {});
   db.doc("reglages/objectif").onSnapshot(d => { if (d.exists){ objectif = {pct:+d.data().pct||50, ts:+d.data().ts||null};
     if (document.activeElement?.id !== "obj-pct") $("obj-pct").value = objectif.pct; if (document.activeElement?.id !== "obj-ts") $("obj-ts").value = objectif.ts || ""; renderBinome(); } }, () => {});
-  startAttaques(); startDefense(); startBarons(); startCarte(); startSuggestions(); startPlans(); startTc();
+  startAttaques(); startDefense(); startBarons(); startCarte(); startSuggestions(); startPlans(); startTc(); startAcc();
   db.collection("fiches").orderBy("creeLe").onSnapshot(snap => {
     fiches = snap.docs.map(d => ({id:d.id, nom:d.data().nom || d.id, importVilles:d.data().importVilles || "", importTroupes:d.data().importTroupes || "", recherches:d.data().recherches || {}, durabilite:d.data().durabilite || {}}));
     renderAge(); renderRech(); renderDefense();
