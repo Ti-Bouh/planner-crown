@@ -130,6 +130,8 @@ table.reg{border-collapse:collapse;width:100%;min-width:980px;font-size:13px}
 .csub{background:#e4d6b6;border:1px solid #a8946a;border-radius:10px;padding:10px 12px;margin:6px 6px 4px;cursor:default}
 .cgs{display:grid;grid-template-columns:150px repeat(4,minmax(0,1fr));gap:6px;align-items:center;margin-bottom:8px}
 .cgs .sc{font-size:13px}
+.cread{background:#e4d6b6;border:1px solid #a8946a;border-radius:10px;padding:10px 12px;margin-bottom:14px;font-family:var(--f-body);font-size:13px}
+.cread b{font-weight:600;color:#14233d}
 .cgf{display:grid;grid-template-columns:150px repeat(4,minmax(0,1fr));gap:8px;align-items:center;margin-bottom:10px}
 .csel{appearance:none;-webkit-appearance:none;width:100%;min-height:34px;border-radius:8px;border:1px solid #6b5a3a;background:#14233d url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23f1d98a' fill='none' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 9px center;color:#f1d98a;font-family:var(--f-display);font-variant:small-caps;font-size:15px;padding:0 26px 0 10px;cursor:pointer;box-shadow:none}
 .csel option{background:#14233d;color:#f1d98a}
@@ -2583,12 +2585,15 @@ function renderRvFiche(D){
     <div class="cdrop" id="rvDrop">
       <button type="button" class="cthumb" id="rvThumb" aria-label="Agrandir le screen">${c.ecranLe ? "…" : "Aucun screen"}</button>
       <div style="flex:1"><div style="font-family:var(--f-body);font-size:13px">Colle (Ctrl+V) ou glisse ici le screen de l'écran d'échange</div><div class="hint">Il est enregistré sur la ville choisie au-dessus et remplace le précédent. Clic sur la vignette pour l'agrandir.</div></div>
+      ${c.ecranLe ? `<button type="button" class="cbtn" id="rvReread" style="background:#e4d6b6;color:#2b2113">Relire</button>` : ""}
       <label class="cbtn" for="rvFile" id="rvPick" role="button" tabindex="0">Importer</label><input type="file" id="rvFile" accept=".png,.jpg,.jpeg,.webp,.gif,.bmp" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
     </div>
+    <div id="rvRead"></div>
     <div class="cgf"><div class="sc">Ressource</div>${RES.map(([,l]) => `<div class="sc" style="text-align:center">${l}</div>`).join("")}</div>
     <div class="cgf"><div class="sc">Demander au hub</div>${S.dn}</div>
     <div class="cgf"><div class="sc">Envoyer le surplus vers</div>${S.up}</div>
     <div class="cgf" style="border-top:1px solid #a8946a;padding-top:10px;margin-bottom:0"><div class="sc">Résumé</div>${RES.map(([k]) => `<div style="text-align:center">${m[k] === "hub" ? rvUp(D, c, k) : m[k] === "raffiner" ? `<span class="cch r">Raffine</span>` : `<span class="no">—</span>`} ${r[k] ? rvDn(D, c, k) : ""}</div>`).join("")}</div>`;
+  if (rvReadHtml && rvReadHtml.id === c.id) $("rvRead").innerHTML = rvReadHtml.html;
   if (c.ecranLe && db) db.doc(`fiches/${moi}/ecrans/${c.id}`).get().then(d => { const t = $("rvThumb"); if (!t || rvOpen !== c.id) return;
     t.innerHTML = d.exists && d.data().img ? `<img alt="" src="${d.data().img}">` : "Aucun screen"; }).catch(() => {});
 }
@@ -2628,7 +2633,8 @@ async function rvSaveImage(file){
     const at = new Date().toISOString();
     await db.doc(`fiches/${moi}/ecrans/${id}`).set({img:url, at});
     await db.doc(`fiches/${moi}/villes/${id}`).update({ecranLe:at});
-    setStatus("Screen enregistré.");
+    setStatus("Screen enregistré. Lecture des réglages…");
+    rvRead(im, id);
   } catch(err){ setStatus("Screen non enregistré : " + (err.message||err.code)); }
   finally { URL.revokeObjectURL(url0); }
 }
@@ -2646,6 +2652,106 @@ document.addEventListener("paste", e => {
   if (f){ e.preventDefault(); rvSaveImage(f.getAsFile()); }
 });
 $("rvZoom").addEventListener("click", () => { $("rvZoom").hidden = true; });
+
+/* ---------- lecture du screen de l'écran d'échange (Tesseract.js, dans le navigateur) ----------
+   1. repère les menus bleu nuit de l'image (zones sombres rectangulaires, 4 par ligne)
+   2. lit le texte doré de chaque menu (code de ville, OFF, REFINE ; les lignes ALL sont ignorées)
+   3. propose les réglages : la première ligne lue = « Request missing resources from »,
+      la seconde = « Send excess resources to ». Rien n'est enregistré sans « Appliquer ». */
+let rvTess = null, rvProp = null, rvReadHtml = null;
+function rvTesseract(){
+  if (window.Tesseract) return Promise.resolve(window.Tesseract);
+  if (!rvTess) rvTess = new Promise((ok, ko) => { const sc = document.createElement("script");
+    sc.src = window.__TESS_SRC__ || "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+    sc.onload = () => ok(window.Tesseract); sc.onerror = () => { rvTess = null; ko(new Error("outil de lecture non chargé")); };
+    document.head.appendChild(sc); });
+  return rvTess;
+}
+function rvBoxes(im){
+  const W = Math.min(800, im.width), k = W / im.width, H = Math.round(im.height * k);
+  const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  const g = cv.getContext("2d"); g.drawImage(im, 0, 0, W, H);
+  const d = g.getImageData(0, 0, W, H).data, m = new Uint8Array(W * H);
+  for (let i = 0; i < W * H; i++){ const r = d[i*4], gg = d[i*4+1], b = d[i*4+2]; m[i] = (r + gg + b < 170 && b >= r) ? 1 : 0; }
+  const seen = new Uint8Array(W * H), boxes = [], st = [];
+  for (let i = 0; i < W * H; i++){ if (!m[i] || seen[i]) continue;
+    let x0 = W, y0 = H, x1 = 0, y1 = 0, n = 0; st.push(i); seen[i] = 1;
+    while (st.length){ const j = st.pop(), x = j % W, y = (j / W) | 0; n++;
+      if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      for (const q of [j - 1, j + 1, j - W, j + W]){ if (q < 0 || q >= W * H || seen[q] || !m[q]) continue; if ((q === j - 1 && x === 0) || (q === j + 1 && x === W - 1)) continue; seen[q] = 1; st.push(q); } }
+    const w = x1 - x0 + 1, h = y1 - y0 + 1;
+    if (w > W * 0.08 && w < W * 0.4 && h > 10 && w / h > 2.5 && w / h < 9 && n > w * h * 0.5) boxes.push({x:x0/k, y:y0/k, w:w/k, h:h/k});
+  }
+  boxes.sort((a,b) => a.y - b.y); const rows = [];
+  boxes.forEach(b => { const r = rows.find(r => Math.abs(r.cy - (b.y + b.h/2)) < b.h * 0.5); if (r) r.b.push(b); else rows.push({cy:b.y + b.h/2, b:[b]}); });
+  return rows.filter(r => r.b.length >= 4).map(r => r.b.sort((a,b) => a.x - b.x).slice(0, 4));
+}
+function rvCrop(im, b){
+  const pad = 2, S = 4, w = Math.round(b.w - 2*pad), h = Math.round(b.h - 2*pad);
+  const cv = document.createElement("canvas"); cv.width = w * S; cv.height = h * S;
+  const g = cv.getContext("2d"); g.imageSmoothingQuality = "high"; g.drawImage(im, b.x + pad, b.y + pad, w, h, 0, 0, w * S, h * S);
+  const id = g.getImageData(0, 0, cv.width, cv.height), d = id.data;
+  for (let i = 0; i < d.length; i += 4){ const t = d[i] > 150 && d[i+1] > 130 && d[i] > d[i+2] + 20; d[i] = d[i+1] = d[i+2] = t ? 0 : 255; d[i+3] = 255; }
+  g.putImageData(id, 0, 0); return cv;
+}
+const rvToken = t => { t = (t || "").toUpperCase().replace(/\s+/g, " ").trim();
+  const c = t.replace(/O(?=\d)|(?<=\d)O/g, "0").match(/(?:^|[^0-9])C?\s?(\d{2})\s?[-–]\s?(\d{3})/); if (c) return {code:`C${c[1]}-${c[2]}`};
+  if (/A[L1I|]{2}\b/.test(t)) return {all:true}; if (/OFF|0FF/.test(t)) return {off:true}; if (/REF|EFIN/.test(t)) return {refine:true}; return {raw:t}; };
+async function rvRead(im, id){
+  const box = () => rvOpen === id ? $("rvRead") : null;
+  const say = h => { rvReadHtml = {id, html:`<div class="cread">${h}</div>`}; const b = box(); if (b) b.innerHTML = rvReadHtml.html; };
+  say("Lecture du screen…");
+  try {
+    const rows = rvBoxes(im);
+    const T = await rvTesseract();
+    const w = await T.createWorker("eng", 1, window.__TESS_OPTS__ || {});
+    await w.setParameters({tessedit_char_whitelist:"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789- ", tessedit_pageseg_mode:"7"});
+    const lus = [];
+    for (const r of rows){ const v = []; for (const b of r){ const o = await w.recognize(rvCrop(im, b)); v.push(rvToken(o.data.text)); }
+      // une ligne utile : au moins 3 menus sur 4 lus comme code de ville, OFF ou REFINE (les lignes ALL et illisibles sont sautées)
+      if (v.filter(x => x.code || x.off || x.refine).length < 3) continue; lus.push(v); if (lus.length === 2) break; }
+    await w.terminate();
+    if (lus.length < 2) return say(`Je n'ai pas trouvé les deux lignes de menus dans ce screen. Prends tout l'écran d'échange (de « For resource » à « Send excess resources to ») et recolle-le, ou règle les menus à la main.`);
+    rvPropose(id, lus[0], lus[1]);
+  } catch(err){ say("Lecture impossible : " + esc(err.message || String(err)) + ". Règle les menus à la main."); setStatus("Screen enregistré, lecture impossible."); }
+}
+function rvPropose(id, dn, up){
+  const D = rvData(), c = D.byId[id]; if (!c) return;
+  const find = code => D.all.find(x => (x.name || "").toUpperCase().replace(/\s/g, "").startsWith(code));
+  const pb = [], upd = {recoit:{}, recoitDe:{}, res:{}, surplusVers:{}}, cells = [];
+  RES.forEach(([k,l], i) => {
+    const a = dn[i], b = up[i]; let ta, tb;
+    if (a.off) { upd.recoit[k] = false; ta = "Off"; }
+    else if (a.code){ const h = find(a.code); if (!h) { pb.push(`${l} : ${a.code} introuvable dans tes villes`); ta = a.code + " ?"; } else { if (effRole(h) !== "hub") pb.push(`${l} : ${esc(h.name)} n'a pas le rôle Hub dans Mes villes`); upd.recoit[k] = true; upd.recoitDe[k] = h.id; ta = "Hub " + esc(h.name); } }
+    else { pb.push(`${l} (demande) : illisible`); ta = "?"; }
+    if (b.refine) { upd.res[k] = "raffiner"; tb = "Raffiner"; }
+    else if (b.off) { upd.res[k] = "garder"; tb = "Off"; }
+    else if (b.code){ const h = find(b.code); if (!h) { pb.push(`${l} : ${b.code} introuvable dans tes villes`); tb = b.code + " ?"; } else { if (effRole(h) !== "hub") pb.push(`${l} : ${esc(h.name)} n'a pas le rôle Hub dans Mes villes`); upd.res[k] = "hub"; upd.surplusVers[k] = h.id; tb = "Hub " + esc(h.name); } }
+    else { pb.push(`${l} (surplus) : illisible`); tb = "?"; }
+    cells.push([ta, tb]);
+  });
+  ["recoit","recoitDe","res","surplusVers"].forEach(f => { if (!Object.keys(upd[f]).length) delete upd[f]; });
+  rvProp = {id, upd};
+  rvReadHtml = {id, html:`<div class="cread"><div class="sc" style="font-size:15px;margin-bottom:6px">Lu sur le screen</div>
+    <div class="cgf" style="margin-bottom:4px"><div class="k">Demander au hub</div>${cells.map(x => `<div class="k" style="text-align:center"><b>${x[0]}</b></div>`).join("")}</div>
+    <div class="cgf" style="margin-bottom:8px"><div class="k">Surplus vers</div>${cells.map(x => `<div class="k" style="text-align:center"><b>${x[1]}</b></div>`).join("")}</div>
+    ${pb.length ? `<div class="k old" style="margin-bottom:8px">${pb.map(x => "⚠ " + x).join("<br>")}<br>Ces cases ne seront pas modifiées.</div>` : ""}
+    <button type="button" class="cbtn" id="rvApply">Appliquer</button> <button type="button" class="cbtn" id="rvIgnore" style="background:#e4d6b6;color:#2b2113">Ignorer</button></div>`};
+  const b = rvOpen === id ? $("rvRead") : null; if (b) b.innerHTML = rvReadHtml.html;
+  setStatus("Screen lu : vérifie puis clique sur Appliquer.");
+}
+$("rvFiche").addEventListener("click", async e => {
+  if (e.target.closest("#rvReread") && db && moi && rvOpen){ const id = rvOpen;
+    try { const d = await db.doc(`fiches/${moi}/ecrans/${id}`).get(), im = d.exists && d.data().img ? await loadImg(d.data().img) : null;
+      if (im) rvRead(im, id); else setStatus("Pas de screen enregistré pour cette ville."); } catch(err){ setStatus("Screen introuvable : " + (err.message||err.code)); }
+    return; }
+  if (e.target.closest("#rvIgnore")){ rvProp = null; rvReadHtml = null; $("rvRead").innerHTML = ""; return; }
+  if (!e.target.closest("#rvApply") || !rvProp || !db || !moi) return;
+  const {id, upd} = rvProp; upd.reglageLe = new Date().toISOString(); upd.reglageDepuisEcran = upd.reglageLe;
+  try { rvProp = null; rvReadHtml = null; const rb = $("rvRead"); if (rb) rb.innerHTML = ""; await db.doc(`fiches/${moi}/villes/${id}`).update(upd); setStatus("Réglages du screen appliqués."); }
+  catch(err){ setStatus("Réglages non enregistrés : " + (err.message||err.code)); }
+});
+
 
 /* ---------- boutons « + Ajouter » : ouvrent / ferment le formulaire de la liste ---------- */
 document.addEventListener("click", e => {
