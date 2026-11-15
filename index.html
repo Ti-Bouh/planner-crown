@@ -2623,20 +2623,25 @@ function renderRvBal(D){
   if (!D.hubs.length) { el.innerHTML = ""; return; }
   const prod = (c, k) => +(((c.stats||{})[k]||{}).parHeure) || 0;
   const f = n => Math.round(n).toLocaleString("fr-FR");
-  // hub « maison » d'une ville (pour son raffinage) : hub de Mes villes, sinon le hub vers lequel elle envoie ou demande le plus, sinon le seul hub
-  const home = c => { if (effRole(c) === "hub") return c;
-    const h = D.hubs.find(x => x.id === c.hubId); if (h) return h;
-    const n = new Map(); RES.forEach(([k]) => { const r = c.res||{}, q = c.recoit||{};
-      const u = r[k] === "hub" ? D.hubs.find(x => x.id === (c.surplusVers||{})[k]) : null, d = q[k] ? D.hubs.find(x => x.id === (c.recoitDe||{})[k]) : null;
+  // hub d'une ville pour son raffinage (le raffinage ne part vers aucun hub, il faut bien le ranger quelque part) :
+  // 1. pour cette ressource, le hub auquel la ville la demande ;
+  // 2. sinon le hub avec lequel la ville échange le plus d'après ses réglages (envois + demandes) ;
+  // 3. sinon son hub de rattachement de Mes villes (souvent le premier hub, mis à l'import) ; 4. sinon le seul hub.
+  const byHub = id => D.hubs.find(x => x.id === id);
+  const home = (c, k) => { if (effRole(c) === "hub") return c;
+    if (k && (c.recoit||{})[k] && byHub((c.recoitDe||{})[k])) return byHub(c.recoitDe[k]);
+    const n = new Map(); RES.forEach(([r]) => {
+      const u = (c.res||{})[r] === "hub" ? byHub((c.surplusVers||{})[r]) : null, d = (c.recoit||{})[r] ? byHub((c.recoitDe||{})[r]) : null;
       [u, d].forEach(x => { if (x) n.set(x, (n.get(x)||0) + 1); }); });
-    if (n.size) return [...n].sort((a,b) => b[1] - a[1])[0][0];
-    return D.hubs.length === 1 ? D.hubs[0] : null; };
+    if (n.size){ const best = Math.max(...n.values()), top = [...n].filter(([,v]) => v === best).map(([h]) => h);
+      return top.find(h => h.id === c.hubId) || top[0]; }
+    return byHub(c.hubId) || (D.hubs.length === 1 ? D.hubs[0] : null); };
   const dest = (c, map, k) => { const others = D.hubs.filter(h => h.id !== c.id); return others.find(h => h.id === (map||{})[k]) || (home(c) !== c ? home(c) : null) || (others.length === 1 ? others[0] : null); };
   const NONE = {id:"__none", name:""};
   const keyOf = h => h ? h : NONE;
   const blocks = [...D.hubs, NONE].map(h => {
     const sentC = k => D.list.filter(c => c.id !== h.id && (c.res||{})[k] === "hub" && keyOf(dest(c, c.surplusVers, k)) === h);
-    const refC = k => D.list.filter(c => (c.res||{})[k] === "raffiner" && keyOf(home(c)) === h);
+    const refC = k => D.list.filter(c => (c.res||{})[k] === "raffiner" && keyOf(home(c, k)) === h);
     const demC = k => D.list.filter(c => c.id !== h.id && (c.recoit||{})[k] && keyOf(dest(c, c.recoitDe, k)) === h);
     const att = new Set(); RES.forEach(([k]) => [...sentC(k), ...refC(k), ...demC(k)].forEach(c => { if (c.id !== h.id) att.add(c.id); }));
     if (h === NONE && !att.size) return "";
