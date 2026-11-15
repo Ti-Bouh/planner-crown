@@ -23,9 +23,11 @@ Ligne « Voir la fiche de » : Tous, une fiche par joueur, puis deux sous-onglet
   `fiches/{fiche}.importVilles` et `.importTroupes`, délai d'alerte dans Réglages.
 - **Fortifications** (fiche d'une ville) : niveau du mur (repris de l'import des troupes) et postes de Rangers / Triaires
   (nombre et niveau, `villes/{id}.postes`).
-- **Ravitaillement** : par ressource, ↑ = surplus envoyé au hub, R = surplus raffiné (les deux s'excluent,
-  `res.{ressource}` = `hub` / `raffiner` / `garder`), ↓ = reçoit du hub (`recoit.{ressource}`, indépendant).
-  En haut, les villes qui reçoivent du hub, par ressource. Pas de quantités.
+- **Ravitaillement** : reprend l'écran d'échange du jeu (style du jeu). Liste des villes sur deux lignes
+  (« Reçoit du hub » / « Surplus ») et bilan par ressource ; clic sur une ville pour sa fiche : « Demander au hub »
+  (`recoit.{ressource}` + `recoitDe.{ressource}`) et « Envoyer le surplus vers » (`res.{ressource}` = `hub` /
+  `raffiner` / `garder` + `surplusVers.{ressource}`). Le dernier screen de l'écran d'échange est collé sur la ville
+  (`fiches/{fiche}/ecrans/{ville}`, JPEG réduit < 900 Ko ; date dans `ecranLe`). Pas de quantités.
 - **Recherches** : recherches de combat par unité (`fiches/{fiche}.recherches`, niveaux 0 à 12), durabilité des
   bâtiments et fortifications (`fiches/{fiche}.durabilite`, enregistrée mais non utilisée dans la def conseillée, elle
   joue contre le siège) et foi des dieux Naera, Vexemis, Cyndros, Ylanna, commune à l'alliance (`reglages/foi`).

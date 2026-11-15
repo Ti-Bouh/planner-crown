@@ -110,6 +110,34 @@ table.reg{border-collapse:collapse;width:100%;min-width:980px;font-size:13px}
 .rvsep{width:1px;height:16px;background:var(--line);margin:0 4px}
 .rvleg{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);margin-top:8px;align-items:center}
 .rvleg .rvb{width:22px;height:20px;font-size:11px;cursor:default;margin-right:4px}
+.cg{background:#c9b48c;color:#2b2113;border-radius:12px;padding:14px 16px;font-family:var(--f-display)}
+.cg .sc{font-variant:small-caps;letter-spacing:.03em;font-size:15px}
+.cg .k,.cg .dt,.cg .no,.cg .hint{font-family:var(--f-body);font-size:12px;color:#4a3b22}
+.cg .no{color:#8a7650}
+.cg .old{color:#7a1f1f}
+.cgrow{display:grid;grid-template-columns:110px 112px repeat(4,minmax(96px,1fr)) 70px;column-gap:6px;align-items:center}
+.cghd>div{padding:0 0 6px;font-variant:small-caps;font-size:15px}
+.cgcity{border-top:1px solid #a8946a;padding:6px 0;cursor:pointer;border-radius:6px}
+.cgcity:hover,.cgcity:focus-visible{background:#d8c69f;outline:none}
+.cgcity .nm{grid-row:span 2;padding-left:6px}
+.cgcity .dt{grid-row:span 2;text-align:right;padding-right:6px}
+.cgcity .c{padding:3px 0}
+.cch{display:inline-block;border-radius:6px;font-family:var(--f-body);font-size:12px;font-weight:600;padding:2px 8px;white-space:nowrap}
+.cch.up{background:#B5D4F4;color:#0C447C}.cch.r{background:#FAC775;color:#633806}.cch.dn{background:#C0DD97;color:#27500A}
+.cgf{display:grid;grid-template-columns:150px repeat(4,minmax(0,1fr));gap:8px;align-items:center;margin-bottom:10px}
+.csel{appearance:none;-webkit-appearance:none;width:100%;min-height:34px;border-radius:8px;border:1px solid #6b5a3a;background:#14233d url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23f1d98a' fill='none' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 9px center;color:#f1d98a;font-family:var(--f-display);font-variant:small-caps;font-size:15px;padding:0 26px 0 10px;cursor:pointer;box-shadow:none}
+.csel option{background:#14233d;color:#f1d98a}
+.cbtn{font-family:var(--f-display);font-variant:small-caps;font-size:15px;background:#14233d;color:#f1d98a;border:1px solid #6b5a3a;border-radius:8px;padding:6px 14px;cursor:pointer;box-shadow:none}
+.cdrop{border:1.5px dashed #6b5a3a;border-radius:10px;background:#e4d6b6;display:flex;align-items:center;gap:12px;padding:10px 12px;margin-bottom:14px}
+.cdrop.over{background:#d8c69f}
+.cthumb{width:120px;height:76px;border-radius:6px;background:#14233d;display:grid;place-items:center;color:#f1d98a;font-size:12px;flex-shrink:0;overflow:hidden;cursor:zoom-in;border:0;padding:0}
+.cthumb img{width:100%;height:100%;object-fit:cover;display:block}
+.cbox{background:#14233d;color:#f1d98a;border-radius:10px;padding:12px 14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.cbox b{font-family:var(--f-display);font-variant:small-caps;font-weight:600;font-size:16px;display:block;margin-bottom:4px}
+.cbox p{font-size:12.5px;color:#d9cfb0;margin:0 0 3px;line-height:1.4}
+.cbox .w{color:#FAC775;font-weight:600}
+#rvZoom{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.75);display:grid;place-items:center;padding:20px;cursor:zoom-out}
+#rvZoom img{max-width:100%;max-height:100%;border-radius:8px}
 .refnote{font-size:11.5px;color:var(--muted);white-space:nowrap}
 .wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-top:12px}
 #rechPanel{margin-bottom:16px}
@@ -605,20 +633,21 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
   </div>
 
   <div class="view" id="view-ravit" hidden>
-    <section class="panel" aria-label="Qui reçoit du hub">
-      <h2 id="rvTitle">Qui reçoit du hub</h2>
+    <section class="panel" aria-label="Bilan du hub par ressource">
+      <h2 id="rvTitle">Bilan du hub</h2>
       <div id="rvSummary"></div>
     </section>
-    <section class="panel" aria-label="Réglages par ville">
+    <section class="panel" aria-label="Réglages par ville" id="rvListPanel">
       <h2>Réglages par ville</h2>
       <p class="note" id="rvNote" style="margin-top:0"></p>
-      <div class="scroll"><table class="rvtab" id="rvTable"></table></div>
-      <div class="rvleg">
-        <span><span class="rvb on-up">↑</span>surplus envoyé au hub</span>
-        <span><span class="rvb on-r">R</span>surplus raffiné</span>
-        <span><span class="rvb on-dn">↓</span>reçoit du hub</span>
-        <span>rien d'allumé : ni envoi ni demande</span>
-      </div>
+      <div class="cg" id="rvList"></div>
+    </section>
+    <section class="panel" aria-label="Fiche d'une ville" id="rvFichePanel" hidden>
+      <div class="btns" style="margin:0 0 10px"><button type="button" id="rvBack">← Toutes les villes</button></div>
+      <div class="cg" id="rvFiche"></div>
+    </section>
+    <div id="rvZoom" hidden><img alt="Screen de l'écran d'échange"></div>
+  </div>
     </section>
   </div>
 
@@ -2469,42 +2498,115 @@ $("nowOrders").addEventListener("click", async e => {
   try { await db.doc(r.ref).update({statut:next, maj:new Date().toISOString()}); } catch(err){ setStatus("Statut non enregistré : " + (err.message||err.code)); }
 });
 
-/* ---------- vue ravitaillement (fiche du joueur connecté uniquement) ---------- */
-function renderRavit(){
-  const sum = $("rvSummary"), tab = $("rvTable"), note = $("rvNote");
-  if (!moi){ sum.innerHTML = `<p class="note">Choisis qui tu es dans « Je suis » en haut à droite pour voir tes villes.</p>`; tab.innerHTML = ""; note.textContent = ""; $("rvTitle").textContent = "Qui reçoit du hub"; return; }
+/* ---------- vue ravitaillement (fiche du joueur connecté uniquement) ----------
+   Reprend l'écran d'échange du jeu. Par ville et par ressource :
+   - recoit.{res} (booléen) + recoitDe.{res} (id du hub) : « Demander au hub »
+   - res.{res} = hub / raffiner / garder + surplusVers.{res} (id du hub) : « Envoyer le surplus vers »
+   Le dernier screen de l'écran d'échange est rangé dans fiches/{moi}/ecrans/{ville} ; la ville garde sa date (ecranLe). */
+let rvOpen = "";
+const RV_OLD = 14 * 864e5;
+function rvData(){
   const all = allCities[moi] || (currentFiche === moi ? cities : []);
   const hubs = all.filter(c => effRole(c) === "hub");
-  const byId = Object.fromEntries(all.map(c => [c.id, c]));
-  const hubOf = c => byId[c.hubId] && effRole(byId[c.hubId]) === "hub" ? byId[c.hubId] : (hubs.length === 1 ? hubs[0] : null);
-  const label = c => `${esc(c.name)} <span class="mono" style="color:var(--muted)">${c.x}:${c.y}</span>`;
-  const list = all.filter(c => effRole(c) !== "hub").sort((a,b) => (continentOf(a.x,a.y)-continentOf(b.x,b.y)) || a.name.localeCompare(b.name,"fr"));
-  const groups = new Map(); hubs.forEach(h => groups.set(h.id, {hub:h, rows:[]}));
-  list.forEach(c => { if (!RES.some(([k]) => (c.recoit||{})[k])) return; const h = hubOf(c), key = h ? h.id : "";
-    if (!groups.has(key)) groups.set(key, {hub:h, rows:[]}); groups.get(key).rows.push(c); });
-  const gs = [...groups.values()];
-  $("rvTitle").textContent = gs.length === 1 && gs[0].hub ? `Qui reçoit du hub ${gs[0].hub.name}` : "Qui reçoit du hub";
-  sum.innerHTML = gs.length ? gs.map(g => (gs.length > 1 ? `<h3 class="rgh">${g.hub ? "Hub " + esc(g.hub.name) : "Hub non choisi"}</h3>` : "")
-    + `<div class="rvgrid">${RES.map(([k,l]) => { const r = g.rows.filter(c => (c.recoit||{})[k]);
-      return `<div class="rvcard"><b>${l}</b><span>${r.length ? r.map(label).join(" · ") : `<span style="color:var(--muted)">Aucune ville</span>`}</span></div>`; }).join("")}</div>`).join("")
-    : `<p class="note">Aucune ville ne reçoit encore du hub. Allume ↓ sur une ressource ci-dessous.</p>`;
-  tab.innerHTML = list.length ? `<thead><tr><th>Ville</th>${RES.map(([,l]) => `<th>${l}</th>`).join("")}</tr></thead><tbody>${list.map(c => `<tr><td>${label(c)}</td>${RES.map(([k,l]) => {
-      const m = (c.res||{})[k], d = !!(c.recoit||{})[k], A = `data-cid="${esc(c.id)}" data-res="${k}"`;
-      return `<td><span class="rvset"><button type="button" class="rvb${m==="hub"?" on-up":""}" data-rv="up" ${A} aria-pressed="${m==="hub"}" aria-label="${l} : surplus envoyé au hub">↑</button><button type="button" class="rvb${m==="raffiner"?" on-r":""}" data-rv="r" ${A} aria-pressed="${m==="raffiner"}" aria-label="${l} : surplus raffiné">R</button><span class="rvsep"></span><button type="button" class="rvb${d?" on-dn":""}" data-rv="dn" ${A} aria-pressed="${d}" aria-label="${l} : reçoit du hub">↓</button></span></td>`; }).join("")}</tr>`).join("")}</tbody>` : "";
-  note.textContent = !list.length ? "Aucune ville dans ta fiche pour l'instant : importe tes CSV d'abord."
-    : !hubs.length ? "Aucune de tes villes n'a le rôle Hub : choisis-le dans Mes villes (Modifier) pour que la liste du haut sache à quel hub rattacher les villes."
-    : "↑ et R s'excluent (c'est la destination du surplus dans le jeu). ↓ est indépendant : une ville peut demander au hub et envoyer son surplus.";
+  const sort = (a,b) => (continentOf(a.x,a.y)-continentOf(b.x,b.y)) || a.name.localeCompare(b.name,"fr");
+  const list = [...hubs.slice().sort(sort), ...all.filter(c => effRole(c) !== "hub").sort(sort)];
+  return {all, hubs, list, byId:Object.fromEntries(all.map(c => [c.id, c]))};
 }
-$("rvTable").addEventListener("click", async e => {
-  const b = e.target.closest("[data-rv]"); if (!b || !db || !moi) return;
-  const c = (allCities[moi] || []).find(x => x.id === b.dataset.cid); if (!c) return;
-  const k = b.dataset.res, m = (c.res||{})[k];
-  const upd = b.dataset.rv === "dn" ? {recoit:{[k]: !(c.recoit||{})[k]}}
-    : {res:{[k]: b.dataset.rv === "up" ? (m === "hub" ? "garder" : "hub") : (m === "raffiner" ? "garder" : "raffiner")}};
-  b.disabled = true;
-  try { await db.doc(`fiches/${moi}/villes/${c.id}`).update(upd); } catch(err){ setStatus("Changement non enregistré : " + (err.message||err.code)); }
-  b.disabled = false;
+const rvDate = iso => iso ? new Date(iso).toLocaleDateString("fr-FR", {day:"2-digit", month:"2-digit"}) : "";
+function renderRavit(){
+  const sum = $("rvSummary"), list = $("rvList"), note = $("rvNote");
+  if (!moi){ sum.innerHTML = `<p class="note">Choisis qui tu es dans « Je suis » en haut à droite pour voir tes villes.</p>`; list.innerHTML = ""; note.textContent = ""; $("rvFichePanel").hidden = true; $("rvListPanel").hidden = false; return; }
+  const D = rvData();
+  if (rvOpen && !D.byId[rvOpen]) rvOpen = "";
+  $("rvFichePanel").hidden = !rvOpen; $("rvListPanel").hidden = !!rvOpen;
+  // bilan par ressource
+  const nm = c => esc(c.name);
+  sum.innerHTML = D.list.length ? `<div class="cbox">${RES.map(([k,l]) => {
+    const up = D.list.filter(c => (c.res||{})[k] === "hub"), rf = D.list.filter(c => (c.res||{})[k] === "raffiner"), dn = D.list.filter(c => (c.recoit||{})[k]);
+    return `<div><b>${l}</b><p>Envoient au hub : ${up.length}</p><p>Raffinent : ${rf.length}</p><p>Demandent : ${dn.length ? dn.map(nm).join(", ") : "aucune"}</p>${dn.length && !up.length ? `<p class="w">⚠ Personne n'alimente le hub</p>` : ""}</div>`; }).join("")}</div>`
+    : `<p class="note">Aucune ville dans ta fiche pour l'instant : importe tes CSV d'abord.</p>`;
+  note.textContent = !D.list.length ? "" : !D.hubs.length ? "Aucune de tes villes n'a le rôle Hub : choisis-le dans Mes villes (Modifier) pour pouvoir la choisir comme hub."
+    : "Clic sur une ville pour ouvrir sa fiche, régler comme dans le jeu et coller son screen. Date en rouge : plus de 14 jours ou aucun screen.";
+  // liste : deux lignes par ville
+  const now = Date.now();
+  list.innerHTML = D.list.length ? `<div class="cgrow cghd"><div>Ville</div><div></div>${RES.map(([,l]) => `<div>${l}</div>`).join("")}<div style="text-align:right">Screen</div></div>`
+    + D.list.map(c => { const r = c.recoit||{}, m = c.res||{}, old = !c.ecranLe || now - new Date(c.ecranLe) > RV_OLD;
+      return `<div class="cgrow cgcity" tabindex="0" role="button" data-rvopen="${esc(c.id)}" aria-label="Ouvrir la fiche de ${nm(c)}">
+        <div class="nm sc">${nm(c)}${effRole(c) === "hub" ? `<br><span class="k">hub</span>` : ""}</div>
+        <div class="k">Reçoit du hub</div>${RES.map(([k]) => `<div class="c">${r[k] ? `<span class="cch dn">↓ Oui</span>` : `<span class="no">—</span>`}</div>`).join("")}
+        <div class="dt${old ? " old" : ""}">${c.ecranLe ? rvDate(c.ecranLe) : "aucun"}</div>
+        <div class="k">Surplus</div>${RES.map(([k]) => `<div class="c">${m[k] === "hub" ? `<span class="cch up">↑ Hub</span>` : m[k] === "raffiner" ? `<span class="cch r">Raffine</span>` : `<span class="no">—</span>`}</div>`).join("")}
+      </div>`; }).join("") : "";
+  if (rvOpen) renderRvFiche(D);
+}
+function renderRvFiche(D){
+  const c = D.byId[rvOpen], box = $("rvFiche"); if (!c) return;
+  const others = D.hubs.filter(h => h.id !== c.id);
+  const hubOpt = (sel, pre) => (others.length ? others : [{id:"", name:""}]).map(h => `<option value="${pre}${esc(h.id)}"${sel === h.id ? " selected" : ""}>Hub${h.name ? " " + esc(h.name) : ""}</option>`).join("");
+  const r = c.recoit||{}, rd = c.recoitDe||{}, m = c.res||{}, sv = c.surplusVers||{};
+  const pick = (map, k) => map[k] && others.some(h => h.id === map[k]) ? map[k] : (others[0] || {}).id;
+  const old = !c.ecranLe || Date.now() - new Date(c.ecranLe) > RV_OLD;
+  box.innerHTML = `
+    <div class="cgf" style="margin-bottom:14px"><div class="sc">Ville</div>
+      <div style="grid-column:span 2"><select class="csel" id="rvCity">${D.list.map(x => `<option value="${esc(x.id)}"${x.id === c.id ? " selected" : ""}>${esc(x.name)}${effRole(x) === "hub" ? " (hub)" : ""}</option>`).join("")}</select></div>
+      <div style="grid-column:span 2" class="dt${old ? " old" : ""}">${c.ecranLe ? "Dernier screen : " + new Date(c.ecranLe).toLocaleDateString("fr-FR") : "Pas encore de screen"}</div></div>
+    <div class="cdrop" id="rvDrop">
+      <button type="button" class="cthumb" id="rvThumb" aria-label="Agrandir le screen">${c.ecranLe ? "…" : "Aucun screen"}</button>
+      <div style="flex:1"><div style="font-family:var(--f-body);font-size:13px">Colle (Ctrl+V) ou glisse ici le screen de l'écran d'échange</div><div class="hint">Il est enregistré sur la ville choisie au-dessus et remplace le précédent. Clic sur la vignette pour l'agrandir.</div></div>
+      <button type="button" class="cbtn" id="rvPick">Importer</button><input type="file" id="rvFile" accept="image/*" hidden>
+    </div>
+    <div class="cgf"><div class="sc">Ressource</div>${RES.map(([,l]) => `<div class="sc" style="text-align:center">${l}</div>`).join("")}</div>
+    <div class="cgf"><div class="sc">Demander au hub</div>${RES.map(([k,l]) => `<select class="csel" data-rvset="dn" data-res="${k}" aria-label="${l} : demander au hub"><option value="">Off</option>${hubOpt(r[k] ? pick(rd, k) : null, "")}</select>`).join("")}</div>
+    <div class="cgf"><div class="sc">Envoyer le surplus vers</div>${RES.map(([k,l]) => `<select class="csel" data-rvset="up" data-res="${k}" aria-label="${l} : envoyer le surplus vers"><option value="raffiner"${m[k] === "raffiner" ? " selected" : ""}>Raffiner</option>${hubOpt(m[k] === "hub" ? pick(sv, k) : null, "hub:")}<option value="garder"${m[k] !== "hub" && m[k] !== "raffiner" ? " selected" : ""}>Off</option></select>`).join("")}</div>
+    <div class="cgf" style="border-top:1px solid #a8946a;padding-top:10px;margin-bottom:0"><div class="sc">Résumé</div>${RES.map(([k]) => `<div style="text-align:center">${m[k] === "hub" ? `<span class="cch up">↑ Hub</span>` : m[k] === "raffiner" ? `<span class="cch r">Raffine</span>` : `<span class="no">—</span>`} ${r[k] ? `<span class="cch dn">↓ Hub</span>` : ""}</div>`).join("")}</div>`;
+  if (c.ecranLe && db) db.doc(`fiches/${moi}/ecrans/${c.id}`).get().then(d => { const t = $("rvThumb"); if (!t || rvOpen !== c.id) return;
+    t.innerHTML = d.exists && d.data().img ? `<img alt="" src="${d.data().img}">` : "Aucun screen"; }).catch(() => {});
+}
+function rvShow(id){ rvOpen = id; renderRavit(); window.scrollTo({top:0}); }
+$("rvList").addEventListener("click", e => { const t = e.target.closest("[data-rvopen]"); if (t) rvShow(t.dataset.rvopen); });
+$("rvList").addEventListener("keydown", e => { const t = e.target.closest("[data-rvopen]"); if (t && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); rvShow(t.dataset.rvopen); } });
+$("rvBack").addEventListener("click", () => rvShow(""));
+$("rvFiche").addEventListener("change", async e => {
+  if (e.target.id === "rvCity") return rvShow(e.target.value);
+  const s = e.target.closest("[data-rvset]"); if (!s || !db || !moi || !rvOpen) return;
+  const k = s.dataset.res, v = s.value;
+  const upd = s.dataset.rvset === "dn" ? (v ? {recoit:{[k]:true}, recoitDe:{[k]:v}} : {recoit:{[k]:false}})
+    : v.startsWith("hub:") ? {res:{[k]:"hub"}, ...(v.length > 4 ? {surplusVers:{[k]:v.slice(4)}} : {})} : {res:{[k]:v}};
+  upd.reglageLe = new Date().toISOString();
+  try { await db.doc(`fiches/${moi}/villes/${rvOpen}`).update(upd); } catch(err){ setStatus("Réglage non enregistré : " + (err.message||err.code)); }
 });
+async function rvSaveImage(file){
+  if (!file || !/^image\//.test(file.type) || !db || !moi || !rvOpen) return;
+  const id = rvOpen, url0 = URL.createObjectURL(file);
+  try {
+    const im = await loadImg(url0); if (!im) throw new Error("image illisible");
+    const k = Math.min(1, 1600 / im.width), cv = document.createElement("canvas");
+    cv.width = Math.round(im.width * k); cv.height = Math.round(im.height * k);
+    cv.getContext("2d").drawImage(im, 0, 0, cv.width, cv.height);
+    let url = null; for (const q of [.85, .75, .62, .5, .4]){ const u = cv.toDataURL("image/jpeg", q); if (u.length < 900000){ url = u; break; } }
+    if (!url) throw new Error("image trop lourde");
+    const at = new Date().toISOString();
+    await db.doc(`fiches/${moi}/ecrans/${id}`).set({img:url, at});
+    await db.doc(`fiches/${moi}/villes/${id}`).update({ecranLe:at});
+    setStatus("Screen enregistré.");
+  } catch(err){ setStatus("Screen non enregistré : " + (err.message||err.code)); }
+  finally { URL.revokeObjectURL(url0); }
+}
+$("rvFiche").addEventListener("click", e => {
+  if (e.target.closest("#rvPick")) $("rvFile").click();
+  const t = e.target.closest("#rvThumb"), img = t && t.querySelector("img");
+  if (img){ $("rvZoom").querySelector("img").src = img.src; $("rvZoom").hidden = false; }
+});
+$("rvFiche").addEventListener("input", e => { if (e.target.id === "rvFile"){ rvSaveImage(e.target.files[0]); e.target.value = ""; } });
+$("rvFiche").addEventListener("dragover", e => { const d = e.target.closest("#rvDrop"); if (d){ e.preventDefault(); d.classList.add("over"); } });
+$("rvFiche").addEventListener("dragleave", e => { const d = e.target.closest("#rvDrop"); if (d) d.classList.remove("over"); });
+$("rvFiche").addEventListener("drop", e => { const d = e.target.closest("#rvDrop"); if (!d) return; e.preventDefault(); d.classList.remove("over"); rvSaveImage([...e.dataTransfer.files].find(f => /^image\//.test(f.type))); });
+document.addEventListener("paste", e => {
+  if (curView !== "ravit" || !rvOpen) return;
+  const f = [...(e.clipboardData?.items || [])].find(i => i.kind === "file" && /^image\//.test(i.type));
+  if (f){ e.preventDefault(); rvSaveImage(f.getAsFile()); }
+});
+$("rvZoom").addEventListener("click", () => { $("rvZoom").hidden = true; });
 
 /* ---------- boutons « + Ajouter » : ouvrent / ferment le formulaire de la liste ---------- */
 document.addEventListener("click", e => {
