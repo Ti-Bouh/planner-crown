@@ -144,6 +144,16 @@ table.reg{border-collapse:collapse;width:100%;min-width:980px;font-size:13px}
 .cbox b{font-family:var(--f-display);font-variant:small-caps;font-weight:600;font-size:16px;display:block;margin-bottom:4px}
 .cbox p{font-size:12.5px;color:#d9cfb0;margin:0 0 3px;line-height:1.4}
 .cbox .w{color:#FAC775;font-weight:600}
+.cbal{background:#14233d;color:#f1d98a;border-radius:12px;padding:12px 16px;margin-bottom:12px}
+.cbt{font-family:var(--f-display);font-variant:small-caps;font-weight:600;font-size:18px}
+.cbs{font-size:12px;color:#d9cfb0;margin:0 0 10px}
+.cbr{display:grid;grid-template-columns:100px minmax(0,1fr) 230px;gap:10px;align-items:center;margin-bottom:8px}
+.cbn{font-family:var(--f-display);font-variant:small-caps;font-size:16px}
+.cbb{display:flex;height:22px;border-radius:6px;overflow:hidden;background:#2a3a57}
+.cbb span{display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden}
+.cbb .h{background:#B5D4F4;color:#0C447C}.cbb .f{background:#FAC775;color:#633806}.cbb .z{color:#9aa2b4;font-weight:400;padding-left:8px}
+.cbv{font-size:12px;color:#d9cfb0;line-height:1.4}
+.cbv .w{color:#FAC775;font-weight:600}
 #rvZoom{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.75);display:grid;place-items:center;padding:20px;cursor:zoom-out}
 #rvZoom img{max-width:100%;max-height:100%;border-radius:8px}
 .refnote{font-size:11.5px;color:var(--muted);white-space:nowrap}
@@ -644,6 +654,11 @@ table.env{border-collapse:collapse;width:100%;min-width:640px;font-size:13px}
     <section class="panel" aria-label="Bilan du hub par ressource">
       <h2 id="rvTitle">Bilan des hubs</h2>
       <div id="rvSummary"></div>
+    </section>
+    <section class="panel" aria-label="Équilibre par hub" id="rvBalPanel">
+      <h2>Équilibre hub / raffinage, par hub</h2>
+      <p class="note" style="margin-top:0">Production par heure du dernier import CSV. C'est un maximum : le jeu n'envoie ou ne raffine que ce qui dépasse le seuil de la ville.</p>
+      <div id="rvBal"></div>
     </section>
     <section class="panel" aria-label="Réglages par ville" id="rvListPanel">
       <h2>Réglages par ville</h2>
@@ -2532,7 +2547,7 @@ function renderRavit(){
   if (!moi){ sum.innerHTML = `<p class="note">Choisis qui tu es dans « Je suis » en haut à droite pour voir tes villes.</p>`; list.innerHTML = ""; note.textContent = ""; $("rvFichePanel").hidden = true; $("rvListPanel").hidden = false; return; }
   const D = rvData();
   if (rvOpen && !D.byId[rvOpen]) rvOpen = "";
-  $("rvFichePanel").hidden = !rvOpen; $("rvListPanel").hidden = !!rvOpen;
+  $("rvFichePanel").hidden = !rvOpen; $("rvListPanel").hidden = !!rvOpen; $("rvBalPanel").hidden = !!rvOpen;
   // bilan par ressource
   const nm = c => esc(c.name);
   sum.innerHTML = D.list.length ? `<div class="cbox">${RES.map(([k,l]) => {
@@ -2554,7 +2569,29 @@ function renderRavit(){
         <div class="dt${old ? " old" : ""}">${c.ecranLe ? rvDate(c.ecranLe) : "aucun"}</div>
         <div class="k">Surplus</div>${RES.map(([k]) => `<div class="c">${m[k] === "hub" ? rvUp(D, c, k) : m[k] === "raffiner" ? `<span class="cch r">Raffine</span>` : `<span class="no">—</span>`}</div>`).join("")}
       </div>${open ? rvHubPanel(D, c) : ""}</div>`; }).join("") : "";
+  if (!rvOpen) renderRvBal(D);
   if (rvOpen) renderRvFiche(D);
+}
+function renderRvBal(D){
+  const el = $("rvBal"), panel = $("rvBalPanel"); panel.hidden = !D.hubs.length;
+  if (!D.hubs.length) { el.innerHTML = ""; return; }
+  const prod = (c, k) => +(((c.stats||{})[k]||{}).parHeure) || 0;
+  const home = c => effRole(c) === "hub" ? c : (D.hubs.find(h => h.id === c.hubId) || (D.hubs.length === 1 ? D.hubs[0] : null));
+  const f = n => Math.round(n).toLocaleString("fr-FR");
+  const noStats = !D.list.some(c => RES.some(([k]) => prod(c, k)));
+  el.innerHTML = (noStats ? `<p class="note">Aucune production par heure connue : importe l'export CotG_Dashboard (bouton « Importer mes CSV ») pour remplir les barres.</p>` : "")
+    + D.hubs.map(h => {
+      const att = D.list.filter(c => c.id !== h.id && (home(c) === h || RES.some(([k]) => ((c.res||{})[k] === "hub" && rvHubFor(D, c, c.surplusVers, k) === h) || ((c.recoit||{})[k] && rvHubFor(D, c, c.recoitDe, k) === h))));
+      return `<div class="cbal"><div class="cbt">Hub ${esc(h.name)}</div><div class="cbs">${att.length} ville${att.length > 1 ? "s" : ""} rattachée${att.length > 1 ? "s" : ""}</div>`
+        + RES.map(([k,l]) => {
+          const sent = D.list.filter(c => c.id !== h.id && (c.res||{})[k] === "hub" && rvHubFor(D, c, c.surplusVers, k) === h).reduce((a,c) => a + prod(c, k), 0);
+          const ref = D.list.filter(c => (c.res||{})[k] === "raffiner" && home(c) === h).reduce((a,c) => a + prod(c, k), 0);
+          const dem = D.list.filter(c => c.id !== h.id && (c.recoit||{})[k] && rvHubFor(D, c, c.recoitDe, k) === h);
+          const tot = sent + ref, ps = tot ? Math.round(sent / tot * 100) : 0, pr = tot ? 100 - ps : 0;
+          const bar = tot ? `${ps ? `<span class="h" style="width:${ps}%">${ps >= 25 ? "Envoyé " : ""}${ps} %</span>` : ""}${pr ? `<span class="f" style="width:${pr}%">${pr >= 25 ? "Raffiné " : ""}${pr} %</span>` : ""}` : `<span class="z">Aucune production comptée</span>`;
+          return `<div class="cbr"><div class="cbn">${l}</div><div class="cbb">${bar}</div><div class="cbv">${f(sent)}/h reçus · ${f(ref)}/h raffinés<br>${dem.length ? (sent ? "Demandent : " + dem.map(c => esc(c.name)).join(", ") : `<span class="w">⚠ ${dem.map(c => esc(c.name)).join(", ")} demande${dem.length > 1 ? "nt" : ""}, rien n'arrive</span>`) : "Demandent : aucune"}</div></div>`;
+        }).join("") + `</div>`;
+    }).join("");
 }
 function rvSelects(D, c, cid){
   const others = D.hubs.filter(h => h.id !== c.id), A = cid ? ` data-cid="${esc(cid)}"` : "";
