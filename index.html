@@ -133,8 +133,8 @@ table.reg{border-collapse:collapse;width:100%;min-width:980px;font-size:13px}
 .cgf{display:grid;grid-template-columns:150px repeat(4,minmax(0,1fr));gap:8px;align-items:center;margin-bottom:10px}
 .csel{appearance:none;-webkit-appearance:none;width:100%;min-height:34px;border-radius:8px;border:1px solid #6b5a3a;background:#14233d url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23f1d98a' fill='none' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 9px center;color:#f1d98a;font-family:var(--f-display);font-variant:small-caps;font-size:15px;padding:0 26px 0 10px;cursor:pointer;box-shadow:none}
 .csel option{background:#14233d;color:#f1d98a}
-.cbtn{font-family:var(--f-display);font-variant:small-caps;font-size:15px;background:#14233d;color:#f1d98a;border:1px solid #6b5a3a;border-radius:8px;padding:6px 14px;cursor:pointer;box-shadow:none}
-.cdrop{border:1.5px dashed #6b5a3a;border-radius:10px;background:#e4d6b6;display:flex;align-items:center;gap:12px;padding:10px 12px;margin-bottom:14px}
+.cbtn{display:inline-block;position:relative;font-family:var(--f-display);font-variant:small-caps;font-size:15px;background:#14233d;color:#f1d98a;border:1px solid #6b5a3a;border-radius:8px;padding:6px 14px;cursor:pointer;box-shadow:none}
+.cdrop{position:relative;border:1.5px dashed #6b5a3a;border-radius:10px;background:#e4d6b6;display:flex;align-items:center;gap:12px;padding:10px 12px;margin-bottom:14px}
 .cdrop.over{background:#d8c69f}
 .cthumb{width:120px;height:76px;border-radius:6px;background:#14233d;display:grid;place-items:center;color:#f1d98a;font-size:12px;flex-shrink:0;overflow:hidden;cursor:zoom-in;border:0;padding:0}
 .cthumb img{width:100%;height:100%;object-fit:cover;display:block}
@@ -2583,7 +2583,7 @@ function renderRvFiche(D){
     <div class="cdrop" id="rvDrop">
       <button type="button" class="cthumb" id="rvThumb" aria-label="Agrandir le screen">${c.ecranLe ? "…" : "Aucun screen"}</button>
       <div style="flex:1"><div style="font-family:var(--f-body);font-size:13px">Colle (Ctrl+V) ou glisse ici le screen de l'écran d'échange</div><div class="hint">Il est enregistré sur la ville choisie au-dessus et remplace le précédent. Clic sur la vignette pour l'agrandir.</div></div>
-      <button type="button" class="cbtn" id="rvPick">Importer</button><input type="file" id="rvFile" accept="image/*" hidden>
+      <label class="cbtn" for="rvFile" id="rvPick" role="button" tabindex="0">Importer</label><input type="file" id="rvFile" accept=".png,.jpg,.jpeg,.webp,.gif,.bmp" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
     </div>
     <div class="cgf"><div class="sc">Ressource</div>${RES.map(([,l]) => `<div class="sc" style="text-align:center">${l}</div>`).join("")}</div>
     <div class="cgf"><div class="sc">Demander au hub</div>${S.dn}</div>
@@ -2610,11 +2610,13 @@ async function rvSet(sel, cid){
 }
 $("rvFiche").addEventListener("change", e => {
   if (e.target.id === "rvCity") return rvShow(e.target.value);
+  if (e.target.id === "rvFile"){ const f = e.target.files && e.target.files[0]; e.target.value = ""; if (f) rvSaveImage(f); return; }
   const s = e.target.closest("[data-rvset]"); if (s) rvSet(s, rvOpen);
 });
 $("rvList").addEventListener("change", e => { const s = e.target.closest("[data-rvset]"); if (s) rvSet(s, s.dataset.cid); });
 async function rvSaveImage(file){
-  if (!file || !/^image\//.test(file.type) || !db || !moi || !rvOpen) return;
+  if (!file || !db || !moi || !rvOpen) return;
+  if (!/^image\//.test(file.type) && !/\.(png|jpe?g|webp|gif|bmp)$/i.test(file.name || "")){ setStatus("Ce fichier n'est pas une image."); return; }
   const id = rvOpen, url0 = URL.createObjectURL(file);
   try {
     const im = await loadImg(url0); if (!im) throw new Error("image illisible");
@@ -2631,11 +2633,10 @@ async function rvSaveImage(file){
   finally { URL.revokeObjectURL(url0); }
 }
 $("rvFiche").addEventListener("click", e => {
-  if (e.target.closest("#rvPick")) $("rvFile").click();
   const t = e.target.closest("#rvThumb"), img = t && t.querySelector("img");
   if (img){ $("rvZoom").querySelector("img").src = img.src; $("rvZoom").hidden = false; }
 });
-$("rvFiche").addEventListener("input", e => { if (e.target.id === "rvFile"){ rvSaveImage(e.target.files[0]); e.target.value = ""; } });
+$("rvFiche").addEventListener("keydown", e => { if (e.target.id === "rvPick" && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); $("rvFile").click(); } });
 $("rvFiche").addEventListener("dragover", e => { const d = e.target.closest("#rvDrop"); if (d){ e.preventDefault(); d.classList.add("over"); } });
 $("rvFiche").addEventListener("dragleave", e => { const d = e.target.closest("#rvDrop"); if (d) d.classList.remove("over"); });
 $("rvFiche").addEventListener("drop", e => { const d = e.target.closest("#rvDrop"); if (!d) return; e.preventDefault(); d.classList.remove("over"); rvSaveImage([...e.dataTransfer.files].find(f => /^image\//.test(f.type))); });
