@@ -711,8 +711,9 @@ select:not(.csel) option{background:#14233d;color:#f1d98a}
   <div class="view" id="view-binome" hidden>
   <section class="panel" id="binome" aria-label="Équilibre off / def du binôme">
     <div class="toolbar" style="align-items:flex-start">
-      <h2 style="margin:0">Binôme : équilibre off / def</h2>
+      <h2 style="margin:0">Binôme : équilibre off / def <small id="b-cont-lbl" style="font-size:.8em;color:var(--muted)"></small></h2>
       <div class="row">
+        <label class="field w-sel" style="flex-basis:150px"><span class="lbl">Continent</span><select id="b-cont"></select></label>
         <label class="field w-num" style="flex-basis:120px"><span class="lbl">Objectif off (%)</span><input id="obj-pct" type="number" min="0" max="100" step="5" value="50"></label>
         <label class="field w-num" style="flex-basis:170px"><span class="lbl">TS d'une nouvelle ville</span><input id="obj-ts" type="number" min="0" step="1000" placeholder="auto"></label>
       </div>
@@ -1559,10 +1560,20 @@ function gapTo(st, t){
   if (share < t) return {need:"off", ts:(t*T - st.tsOff)/(1-t), share};
   return {need:"def", ts:((1-t)*T - st.tsDef)/t, share};
 }
+// filtre continent de la vue Binôme (mémorisé sur cet appareil)
+let bCont = ""; try { bCont = localStorage.getItem("bCont") || ""; } catch {}
+function bCities(fid){ const l = allCities[fid] || []; return bCont ? l.filter(c => String(continentOf(c.x, c.y)) === bCont) : l; }
+function fillBCont(){
+  const conts = [...new Set(fiches.flatMap(f => (allCities[f.id]||[]).map(c => continentOf(c.x, c.y))).filter(c => c !== null))].sort((a,b) => a - b);
+  if (bCont && !conts.includes(+bCont)) conts.push(+bCont);
+  $("b-cont").innerHTML = `<option value="">Tous</option>` + conts.map(c => `<option value="${c}"${String(c) === bCont ? " selected" : ""}>C${c}</option>`).join("");
+}
+$("b-cont").addEventListener("change", e => { bCont = e.target.value; try { localStorage.setItem("bCont", bCont); } catch {} renderBinome(); });
 function renderBinome(){
+  fillBCont(); $("b-cont-lbl").textContent = bCont ? "· continent C" + bCont : "";
   const t = Math.min(Math.max((+objectif.pct||50)/100, 0.05), 0.95);
-  const rows = fiches.map(f => ({fid:f.id, nom:f.nom, st:statsOf(allCities[f.id]||[])}));
-  const team = statsOf(fiches.flatMap(f => allCities[f.id]||[]));
+  const rows = fiches.map(f => ({fid:f.id, nom:f.nom, st:statsOf(bCities(f.id))}));
+  const team = statsOf(fiches.flatMap(f => bCities(f.id)));
   const all = rows.length > 1 ? [...rows, {nom:`Ensemble (${rows.length} joueurs)`, st:team, team:true}] : rows;
   // chart
   const W = Math.max(280, Math.round($("chartWrap").clientWidth || 640)), L = 0, R = 84, rowH = 52, H = Math.max(all.length,1)*rowH + 4;
@@ -1587,7 +1598,7 @@ function renderBinome(){
   svg.innerHTML = `<title id="bChartTitle">TS off et def par joueur et pour le binôme</title>` + g;
   svg._rows = all;
   // troop types
-  const cols = all.map((r,i) => ({nom:r.nom, list: r.team ? fiches.flatMap(f => allCities[f.id]||[]) : (allCities[fiches[i].id]||[])}));
+  const cols = all.map((r,i) => ({nom:r.nom, list: r.team ? fiches.flatMap(f => bCities(f.id)) : bCities(fiches[i].id)}));
   const agg = cols.map(c => { const o = {}; c.list.forEach(v => { for (const t in (v.units||{})){ const u = v.units[t]; o[t] ||= {n:0, ts:0}; o[t].n += +u.total||0; o[t].ts += (+u.total||0)*(+tsW[t]||0); } }); return o; });
   const present = ALL_TYPES.filter(t => agg.some(a => a[t] && a[t].n > 0));
   const tmax = Math.max(1, ...present.flatMap(t => agg.map(a => a[t]?.ts||0)));
