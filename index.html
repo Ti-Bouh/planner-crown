@@ -2519,9 +2519,9 @@ function rvData(){
   return {all, hubs, list, byId:Object.fromEntries(all.map(c => [c.id, c]))};
 }
 let rvHubOpen = new Set();
-// hub réellement visé : celui enregistré s'il est encore hub, sinon le seul autre hub s'il n'y en a qu'un
+// hub réellement visé : celui choisi pour la ressource, sinon le hub de rattachement de la ville (Mes villes), sinon le seul autre hub
 function rvHubFor(D, c, map, k){ const others = D.hubs.filter(h => h.id !== c.id), id = (map||{})[k];
-  return others.find(h => h.id === id) || (others.length === 1 ? others[0] : null); }
+  return others.find(h => h.id === id) || others.find(h => h.id === c.hubId) || (others.length === 1 ? others[0] : null); }
 const rvUp = (D, c, k) => { const h = rvHubFor(D, c, c.surplusVers, k); return `<span class="cch up">↑ ${h ? esc(h.name) : "Hub"}</span>`; };
 const rvDn = (D, c, k) => { const h = rvHubFor(D, c, c.recoitDe, k); return `<span class="cch dn">↓ ${h ? esc(h.name) : "Hub"}</span>`; };
 const rvDate = iso => iso ? new Date(iso).toLocaleDateString("fr-FR", {day:"2-digit", month:"2-digit"}) : "";
