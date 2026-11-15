@@ -146,13 +146,20 @@ table.reg{border-collapse:collapse;width:100%;min-width:980px;font-size:13px}
 .cbox .w{color:#FAC775;font-weight:600}
 .cbal{background:#14233d;color:#f1d98a;border-radius:12px;padding:12px 16px;margin-bottom:12px}
 .cbt{font-family:var(--f-display);font-variant:small-caps;font-weight:600;font-size:18px}
-.cbs{font-size:12px;color:#d9cfb0;margin:0 0 10px}
+.cbal>summary{cursor:pointer;list-style:none;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.cbal>summary::-webkit-details-marker{display:none}
+.cbal>summary::before{content:"▸";color:#f1d98a;font-size:13px}
+.cbal[open]>summary::before{content:"▾"}
+.cbal[open]>summary{margin-bottom:10px}
+.cbs{font-size:12px;color:#d9cfb0}
+.cbs .w{color:#FAC775;font-weight:600}
 .cbr{display:grid;grid-template-columns:100px minmax(0,1fr) 230px;gap:10px;align-items:center;margin-bottom:8px}
 .cbn{font-family:var(--f-display);font-variant:small-caps;font-size:16px}
 .cbb{display:flex;height:22px;border-radius:6px;overflow:hidden;background:#2a3a57}
 .cbb span{display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden}
 .cbb .h{background:#B5D4F4;color:#0C447C}.cbb .f{background:#FAC775;color:#633806}.cbb .z{color:#9aa2b4;font-weight:400;padding-left:8px}
 .cbv{font-size:12px;color:#d9cfb0;line-height:1.4}
+.cbp{color:#9aa2b4;font-size:11px}
 .cbv .w{color:#FAC775;font-weight:600}
 #rvZoom{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.75);display:grid;place-items:center;padding:20px;cursor:zoom-out}
 #rvZoom img{max-width:100%;max-height:100%;border-radius:8px}
@@ -684,7 +691,7 @@ select:not(.csel) option{background:#14233d;color:#f1d98a}
     </section>
     <section class="panel" aria-label="Équilibre par hub" id="rvBalPanel">
       <h2>Équilibre hub / raffinage, par hub</h2>
-      <p class="note" style="margin-top:0">Production par heure du dernier import CSV. C'est un maximum : le jeu n'envoie ou ne raffine que ce qui dépasse le seuil de la ville.</p>
+      <p class="note" style="margin-top:0">En nombre de villes, par ressource : celles qui envoient leur surplus à ce hub, et celles qui le raffinent. La production par heure du CSV est donnée à titre indicatif : elle ne compte pas le butin des raids.</p>
       <div id="rvBal"></div>
     </section>
     <section class="panel" aria-label="Réglages par ville" id="rvListPanel">
@@ -2599,27 +2606,49 @@ function renderRavit(){
   if (!rvOpen) renderRvBal(D);
   if (rvOpen) renderRvFiche(D);
 }
+let rvBalOpen = new Set();
 function renderRvBal(D){
-  const el = $("rvBal"), panel = $("rvBalPanel"); panel.hidden = !D.hubs.length;
+  const el = $("rvBal"), panel = $("rvBalPanel"); panel.hidden = !D.hubs.length || !!rvOpen;
   if (!D.hubs.length) { el.innerHTML = ""; return; }
   const prod = (c, k) => +(((c.stats||{})[k]||{}).parHeure) || 0;
-  const home = c => effRole(c) === "hub" ? c : (D.hubs.find(h => h.id === c.hubId) || (D.hubs.length === 1 ? D.hubs[0] : null));
   const f = n => Math.round(n).toLocaleString("fr-FR");
-  const noStats = !D.list.some(c => RES.some(([k]) => prod(c, k)));
-  el.innerHTML = (noStats ? `<p class="note">Aucune production par heure connue : importe l'export CotG_Dashboard (bouton « Importer mes CSV ») pour remplir les barres.</p>` : "")
-    + D.hubs.map(h => {
-      const att = D.list.filter(c => c.id !== h.id && (home(c) === h || RES.some(([k]) => ((c.res||{})[k] === "hub" && rvHubFor(D, c, c.surplusVers, k) === h) || ((c.recoit||{})[k] && rvHubFor(D, c, c.recoitDe, k) === h))));
-      return `<div class="cbal"><div class="cbt">Hub ${esc(h.name)}</div><div class="cbs">${att.length} ville${att.length > 1 ? "s" : ""} rattachée${att.length > 1 ? "s" : ""}</div>`
-        + RES.map(([k,l]) => {
-          const sent = D.list.filter(c => c.id !== h.id && (c.res||{})[k] === "hub" && rvHubFor(D, c, c.surplusVers, k) === h).reduce((a,c) => a + prod(c, k), 0);
-          const ref = D.list.filter(c => (c.res||{})[k] === "raffiner" && home(c) === h).reduce((a,c) => a + prod(c, k), 0);
-          const dem = D.list.filter(c => c.id !== h.id && (c.recoit||{})[k] && rvHubFor(D, c, c.recoitDe, k) === h);
-          const tot = sent + ref, ps = tot ? Math.round(sent / tot * 100) : 0, pr = tot ? 100 - ps : 0;
-          const bar = tot ? `${ps ? `<span class="h" style="width:${ps}%">${ps >= 25 ? "Envoyé " : ""}${ps} %</span>` : ""}${pr ? `<span class="f" style="width:${pr}%">${pr >= 25 ? "Raffiné " : ""}${pr} %</span>` : ""}` : `<span class="z">Aucune production comptée</span>`;
-          return `<div class="cbr"><div class="cbn">${l}</div><div class="cbb">${bar}</div><div class="cbv">${f(sent)}/h reçus · ${f(ref)}/h raffinés<br>${dem.length ? (sent ? "Demandent : " + dem.map(c => esc(c.name)).join(", ") : `<span class="w">⚠ ${dem.map(c => esc(c.name)).join(", ")} demande${dem.length > 1 ? "nt" : ""}, rien n'arrive</span>`) : "Demandent : aucune"}</div></div>`;
-        }).join("") + `</div>`;
+  // hub « maison » d'une ville (pour son raffinage) : hub de Mes villes, sinon le hub vers lequel elle envoie ou demande le plus, sinon le seul hub
+  const home = c => { if (effRole(c) === "hub") return c;
+    const h = D.hubs.find(x => x.id === c.hubId); if (h) return h;
+    const n = new Map(); RES.forEach(([k]) => { const r = c.res||{}, q = c.recoit||{};
+      const u = r[k] === "hub" ? D.hubs.find(x => x.id === (c.surplusVers||{})[k]) : null, d = q[k] ? D.hubs.find(x => x.id === (c.recoitDe||{})[k]) : null;
+      [u, d].forEach(x => { if (x) n.set(x, (n.get(x)||0) + 1); }); });
+    if (n.size) return [...n].sort((a,b) => b[1] - a[1])[0][0];
+    return D.hubs.length === 1 ? D.hubs[0] : null; };
+  const dest = (c, map, k) => { const others = D.hubs.filter(h => h.id !== c.id); return others.find(h => h.id === (map||{})[k]) || (home(c) !== c ? home(c) : null) || (others.length === 1 ? others[0] : null); };
+  const NONE = {id:"__none", name:""};
+  const keyOf = h => h ? h : NONE;
+  const blocks = [...D.hubs, NONE].map(h => {
+    const sentC = k => D.list.filter(c => c.id !== h.id && (c.res||{})[k] === "hub" && keyOf(dest(c, c.surplusVers, k)) === h);
+    const refC = k => D.list.filter(c => (c.res||{})[k] === "raffiner" && keyOf(home(c)) === h);
+    const demC = k => D.list.filter(c => c.id !== h.id && (c.recoit||{})[k] && keyOf(dest(c, c.recoitDe, k)) === h);
+    const att = new Set(); RES.forEach(([k]) => [...sentC(k), ...refC(k), ...demC(k)].forEach(c => { if (c.id !== h.id) att.add(c.id); }));
+    if (h === NONE && !att.size) return "";
+    let alerts = 0;
+    const rows = RES.map(([k,l]) => {
+      // équilibre en nombre de villes : la production par heure du CSV ne compte pas le butin des raids (souvent toute la pierre et le fer)
+      const S = sentC(k), R = refC(k), sent = S.length, ref = R.length, dem = demC(k).length;
+      const pS = S.reduce((a,c) => a + prod(c, k), 0), pR = R.reduce((a,c) => a + prod(c, k), 0);
+      const tot = sent + ref, ps = tot ? Math.round(sent / tot * 100) : 0, pr = tot ? 100 - ps : 0;
+      if (dem && !sent && h !== NONE) alerts++;
+      const bar = tot ? `${ps ? `<span class="h" style="width:${ps}%">${ps >= 25 ? "Envoyé " : ""}${ps} %</span>` : ""}${pr ? `<span class="f" style="width:${pr}%">${pr >= 25 ? "Raffiné " : ""}${pr} %</span>` : ""}` : `<span class="z">Aucune ville n'envoie ni ne raffine</span>`;
+      const dtxt = !dem ? "Demandes : aucune" : (sent || h === NONE) ? `Demandes : ${dem} ville${dem > 1 ? "s" : ""}` : `<span class="w">⚠ ${dem} ville${dem > 1 ? "s" : ""} demande${dem > 1 ? "nt" : ""}, rien n'arrive</span>`;
+      const pv = pS || pR ? `<br><span class="cbp">Production connue : ${f(pS)}/h envoyés · ${f(pR)}/h raffinés</span>` : "";
+      return `<div class="cbr"><div class="cbn">${l}</div><div class="cbb">${bar}</div><div class="cbv">${sent} ville${sent > 1 ? "s" : ""} envoie${sent > 1 ? "nt" : ""} · ${ref} raffine${ref > 1 ? "nt" : ""}<br>${dtxt}${pv}</div></div>`;
     }).join("");
+    const title = h === NONE ? "Hub non déterminé" : "Hub " + esc(h.name);
+    const sub = h === NONE ? `${att.size} ville${att.size > 1 ? "s" : ""} sans hub connu : choisis leur hub dans Mes villes (Modifier) ou dans leur fiche`
+      : `${att.size} ville${att.size > 1 ? "s" : ""} rattachée${att.size > 1 ? "s" : ""}${alerts ? ` · <span class="w">⚠ ${alerts} alerte${alerts > 1 ? "s" : ""}</span>` : ""}`;
+    return `<details class="cbal" data-bal="${esc(h.id)}"${rvBalOpen.has(h.id) ? " open" : ""}><summary><span class="cbt">${title}</span><span class="cbs">${sub}</span></summary>${rows}</details>`;
+  }).join("");
+  el.innerHTML = blocks;
 }
+$("rvBal").addEventListener("toggle", e => { const d = e.target.closest("[data-bal]"); if (!d) return; d.open ? rvBalOpen.add(d.dataset.bal) : rvBalOpen.delete(d.dataset.bal); }, true);
 function rvSelects(D, c, cid){
   const others = D.hubs.filter(h => h.id !== c.id), A = cid ? ` data-cid="${esc(cid)}"` : "";
   const hubOpt = (sel, pre) => (others.length ? others : [{id:"", name:""}]).map(h => `<option value="${pre}${esc(h.id)}"${sel === h.id ? " selected" : ""}>Hub${h.name ? " " + esc(h.name) : ""}</option>`).join("");
