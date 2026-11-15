@@ -27,7 +27,8 @@ Ligne « Voir la fiche de » : Tous, une fiche par joueur, puis deux sous-onglet
   (« Reçoit du hub » / « Surplus ») et bilan par ressource ; clic sur une ville pour sa fiche : « Demander au hub »
   (`recoit.{ressource}` + `recoitDe.{ressource}`) et « Envoyer le surplus vers » (`res.{ressource}` = `hub` /
   `raffiner` / `garder` + `surplusVers.{ressource}`). Le dernier screen de l'écran d'échange est collé sur la ville
-  (`fiches/{fiche}/ecrans/{ville}`, JPEG réduit < 900 Ko ; date dans `ecranLe`). Pas de quantités.
+  (`fiches/{fiche}/ecrans/{ville}`, JPEG réduit < 900 Ko ; date dans `ecranLe`). Chaque hub a un panneau dépliant
+  pour ses envois et demandes vers les autres hubs, et la liste des villes qui l'alimentent. Pas de quantités.
 - **Recherches** : recherches de combat par unité (`fiches/{fiche}.recherches`, niveaux 0 à 12), durabilité des
   bâtiments et fortifications (`fiches/{fiche}.durabilite`, enregistrée mais non utilisée dans la def conseillée, elle
   joue contre le siège) et foi des dieux Naera, Vexemis, Cyndros, Ylanna, commune à l'alliance (`reglages/foi`).
